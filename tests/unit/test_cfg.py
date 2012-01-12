@@ -25,6 +25,45 @@ import stubout
 from openstack.common.cfg import *
 
 
+class ExceptionsTestCase(unittest.TestCase):
+
+    def test_error(self):
+        msg = str(Error('foobar'))
+        self.assertEquals(msg, 'foobar')
+
+    def test_args_already_parsed_error(self):
+        msg = str(ArgsAlreadyParsedError('foobar'))
+        self.assertEquals(msg, 'arguments already parsed: foobar')
+
+    def test_no_such_opt_error(self):
+        msg = str(NoSuchOptError('foo'))
+        self.assertEquals(msg, 'no such option: foo')
+
+    def test_no_such_opt_error_with_group(self):
+        msg = str(NoSuchOptError('foo', OptGroup('bar')))
+        self.assertEquals(msg, 'no such option in group bar: foo')
+
+    def test_no_such_group_error(self):
+        msg = str(NoSuchGroupError('bar'))
+        self.assertEquals(msg, 'no such group: bar')
+
+    def test_duplicate_opt_error(self):
+        msg = str(DuplicateOptError('foo'))
+        self.assertEquals(msg, 'duplicate option: foo')
+
+    def test_template_substitution_error(self):
+        msg = str(TemplateSubstitutionError('foobar'))
+        self.assertEquals(msg, 'template substitution error: foobar')
+
+    def test_config_files_not_found_error(self):
+        msg = str(ConfigFilesNotFoundError(['foo', 'bar']))
+        self.assertEquals(msg, 'Failed to read some config files: foo,bar')
+
+    def test_config_file_parse_error(self):
+        msg = str(ConfigFileParseError('foo', 'foobar'))
+        self.assertEquals(msg, 'Failed to parse foo: foobar')
+
+
 class BaseTestCase(unittest.TestCase):
 
     def setUp(self):
