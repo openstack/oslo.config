@@ -93,11 +93,18 @@ class BaseTestCase(unittest.TestCase):
             os.remove(p)
 
 
+class UsageTestCase(BaseTestCase):
+
+    def test_print_usage(self):
+        f = StringIO.StringIO()
+        self.conf.print_usage(file=f)
+        self.assertTrue('Usage: test FOO BAR' in f.getvalue())
+
+
 class LeftoversTestCase(BaseTestCase):
 
     def test_leftovers(self):
-        self.conf.register_cli_opt(StrOpt('foo'))
-        self.conf.register_cli_opt(StrOpt('bar'))
+        self.conf.register_cli_opts([StrOpt('foo'), StrOpt('bar')])
 
         leftovers = self.conf(['those', '--foo', 'this',
                                'thems', '--bar', 'that', 'these'])
@@ -111,10 +118,10 @@ class FindConfigFilesTestCase(BaseTestCase):
         config_files = \
             [os.path.expanduser('~/.blaa/blaa.conf'), '/etc/foo.conf']
 
+        self.stubs.Set(sys, 'argv', ['foo'])
         self.stubs.Set(os.path, 'exists', lambda p: p in config_files)
 
-        self.assertEquals(find_config_files(project='blaa', prog='foo'),
-                          config_files)
+        self.assertEquals(find_config_files(project='blaa'), config_files)
 
 
 class CliOptsTestCase(BaseTestCase):
@@ -231,6 +238,46 @@ class ConfigFileOptsTestCase(BaseTestCase):
 
         self.assertTrue(hasattr(self.conf, 'foo'))
         self.assertEquals(self.conf.foo, 'baaar')
+
+    def test_conf_file_bool_default(self):
+        self.conf.register_opt(BoolOpt('foo', default=False))
+
+        paths = self.create_tempfiles([('test.conf',
+                                        '[DEFAULT]\n')])
+
+        self.conf(['--config-file', paths[0]])
+
+        self.assertTrue(hasattr(self.conf, 'foo'))
+        self.assertEquals(self.conf.foo, False)
+
+    def test_conf_file_bool_value(self):
+        self.conf.register_opt(BoolOpt('foo'))
+
+        paths = self.create_tempfiles([('test.conf',
+                                        '[DEFAULT]\n'
+                                        'foo = true\n')])
+
+        self.conf(['--config-file', paths[0]])
+
+        self.assertTrue(hasattr(self.conf, 'foo'))
+        self.assertEquals(self.conf.foo, True)
+
+    def test_conf_file_bool_value_override(self):
+        self.conf.register_cli_opt(BoolOpt('foo'))
+
+        paths = self.create_tempfiles([('1.conf',
+                                        '[DEFAULT]\n'
+                                        'foo = 0\n'),
+                                       ('2.conf',
+                                        '[DEFAULT]\n'
+                                        'foo = yes\n')])
+
+        self.conf(['--foo', 'bar',
+                   '--config-file', paths[0],
+                   '--config-file', paths[1]])
+
+        self.assertTrue(hasattr(self.conf, 'foo'))
+        self.assertEquals(self.conf.foo, True)
 
     def test_conf_file_int_default(self):
         self.conf.register_opt(IntOpt('foo', default=666))
@@ -395,11 +442,26 @@ class ConfigFileOptsTestCase(BaseTestCase):
         #                config files should be appended
         # self.assertEquals(self.conf.foo, ['bar', 'bar', 'bar'])
 
+    def test_conf_file_multiple_opts(self):
+        self.conf.register_opts([StrOpt('foo'), StrOpt('bar')])
+
+        paths = self.create_tempfiles([('test.conf',
+                                        '[DEFAULT]\n'
+                                        'foo = bar\n'
+                                        'bar = foo\n')])
+
+        self.conf(['--config-file', paths[0]])
+
+        self.assertTrue(hasattr(self.conf, 'foo'))
+        self.assertEquals(self.conf.foo, 'bar')
+        self.assertTrue(hasattr(self.conf, 'bar'))
+        self.assertEquals(self.conf.bar, 'foo')
+
 
 class OptGroupsTestCase(BaseTestCase):
 
     def test_arg_group(self):
-        blaa_group = OptGroup('blaa')
+        blaa_group = OptGroup('blaa', 'blaa options')
         self.conf.register_group(blaa_group)
         self.conf.register_cli_opt(StrOpt('foo'), group=blaa_group)
 
@@ -442,6 +504,22 @@ class OptGroupsTestCase(BaseTestCase):
         self.assertTrue(hasattr(self.conf, 'blaa'))
         self.assertTrue(hasattr(self.conf.blaa, 'foo'))
         self.assertEquals(self.conf.blaa.foo, 'bar')
+
+
+class ReRegisterOptTestCase(BaseTestCase):
+
+    def test_conf_file_re_register_opt(self):
+        opt = StrOpt('foo')
+        self.assertTrue(self.conf.register_opt(opt))
+        self.assertFalse(self.conf.register_opt(opt))
+
+    def test_conf_file_re_register_opt_in_group(self):
+        group = OptGroup('blaa')
+        self.conf.register_group(group)
+        self.conf.register_group(group)  # not an error
+        opt = StrOpt('foo')
+        self.assertTrue(self.conf.register_opt(opt, group=group))
+        self.assertFalse(self.conf.register_opt(opt, group='blaa'))
 
 
 class TemplateSubstitutionTestCase(BaseTestCase):
@@ -720,6 +798,14 @@ class SadPathTestCase(BaseTestCase):
 
     def _do_test_conf_file_bad_value(self, opt_class):
         self.conf.register_opt(opt_class('foo'))
+
+        paths = self.create_tempfiles([('test.conf',
+                                        '[DEFAULT]\n'
+                                        'foo = bar\n')])
+
+        self.conf(['--config-file', paths[0]])
+
+        self.assertRaises(ConfigFileValueError, getattr, self.conf, 'foo')
 
     def test_conf_file_bad_bool(self):
         self._do_test_conf_file_bad_value(BoolOpt)
