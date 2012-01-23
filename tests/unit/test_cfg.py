@@ -551,6 +551,14 @@ class TemplateSubstitutionTestCase(BaseTestCase):
 
         self._assert_str_sub()
 
+    def test_str_sub_default_from_default_recurse(self):
+        self.conf.register_cli_opt(StrOpt('blaa', default='blaa'))
+        self._prep_test_str_sub(foo_default='$blaa', bar_default='$foo')
+
+        self.conf([])
+
+        self._assert_str_sub()
+
     def test_str_sub_default_from_arg(self):
         self._prep_test_str_sub(bar_default='$foo')
 
