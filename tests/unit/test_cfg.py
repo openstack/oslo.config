@@ -518,6 +518,35 @@ class OptGroupsTestCase(BaseTestCase):
         self.assertEquals(self.conf.blaa.foo, 'bar')
 
 
+class MappingInterfaceTestCase(BaseTestCase):
+
+    def test_mapping_interface(self):
+        self.conf.register_cli_opt(StrOpt('foo'))
+
+        self.conf(['--foo', 'bar'])
+
+        self.assertTrue('foo' in self.conf)
+        self.assertTrue('config_file' in self.conf)
+        self.assertEquals(len(self.conf), 2)
+        self.assertEquals(self.conf['foo'], 'bar')
+        self.assertEquals(self.conf.get('foo'), 'bar')
+        self.assertTrue('bar' in self.conf.values())
+
+    def test_mapping_interface_with_group(self):
+        self.conf.register_group(OptGroup('blaa'))
+        self.conf.register_cli_opt(StrOpt('foo'), group='blaa')
+
+        self.conf(['--blaa-foo', 'bar'])
+
+        self.assertTrue('blaa' in self.conf)
+        self.assertTrue('foo' in self.conf['blaa'])
+        self.assertEquals(len(self.conf['blaa']), 1)
+        self.assertEquals(self.conf['blaa']['foo'], 'bar')
+        self.assertEquals(self.conf['blaa'].get('foo'), 'bar')
+        self.assertTrue('bar' in self.conf['blaa'].values())
+        self.assertEquals(self.conf.blaa, self.conf['blaa'])
+
+
 class ReRegisterOptTestCase(BaseTestCase):
 
     def test_conf_file_re_register_opt(self):
