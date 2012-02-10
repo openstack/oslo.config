@@ -469,6 +469,18 @@ class ConfigFileOptsTestCase(BaseTestCase):
         self.assertTrue(hasattr(self.conf, 'bar'))
         self.assertEquals(self.conf.bar, 'foo')
 
+    def test_conf_file_raw_value(self):
+        self.conf.register_opt(StrOpt('foo'))
+
+        paths = self.create_tempfiles([('test.conf',
+                                        '[DEFAULT]\n'
+                                        'foo = bar-%08x\n')])
+
+        self.conf(['--config-file', paths[0]])
+
+        self.assertTrue(hasattr(self.conf, 'foo'))
+        self.assertEquals(self.conf.foo, 'bar-%08x')
+
 
 class OptGroupsTestCase(BaseTestCase):
 
