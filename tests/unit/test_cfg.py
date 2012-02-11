@@ -115,8 +115,8 @@ class LeftoversTestCase(BaseTestCase):
 class FindConfigFilesTestCase(BaseTestCase):
 
     def test_find_config_files(self):
-        config_files = \
-            [os.path.expanduser('~/.blaa/blaa.conf'), '/etc/foo.conf']
+        config_files = [os.path.expanduser('~/.blaa/blaa.conf'),
+                        '/etc/foo.conf']
 
         self.stubs.Set(sys, 'argv', ['foo'])
         self.stubs.Set(os.path, 'exists', lambda p: p in config_files)
