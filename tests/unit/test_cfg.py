@@ -101,6 +101,16 @@ class UsageTestCase(BaseTestCase):
         self.assertTrue('Usage: test FOO BAR' in f.getvalue())
 
 
+class HelpTestCase(BaseTestCase):
+
+    def test_print_help(self):
+        f = StringIO.StringIO()
+        self.conf.print_help(file=f)
+        self.assertTrue('Usage: test FOO BAR' in f.getvalue())
+        self.assertTrue('Options:' in f.getvalue())
+        self.assertTrue('-h, --help' in f.getvalue())
+
+
 class LeftoversTestCase(BaseTestCase):
 
     def test_leftovers(self):
