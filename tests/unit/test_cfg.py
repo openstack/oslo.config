@@ -1,6 +1,6 @@
 # vim: tabstop=4 shiftwidth=4 softtabstop=4
 
-# Copyright 2011 Red Hat, Inc.
+# Copyright 2012 Red Hat, Inc.
 #
 #    Licensed under the Apache License, Version 2.0 (the "License"); you may
 #    not use this file except in compliance with the License. You may obtain
@@ -80,9 +80,13 @@ class BaseTestCase(unittest.TestCase):
         self.remove_tempfiles()
         self.stubs.UnsetAll()
 
-    def create_tempfiles(self, files):
+    def create_tempfiles(self, files, ext='.conf'):
         for (basename, contents) in files:
-            (fd, path) = tempfile.mkstemp(prefix=basename, suffix='.conf')
+            if not os.path.isabs(basename):
+                (fd, path) = tempfile.mkstemp(prefix=basename, suffix=ext)
+            else:
+                path = basename + ext
+                fd = os.open(path, os.O_CREAT|os.O_WRONLY)
             self.tempfiles.append(path)
             try:
                 os.write(fd, contents)
@@ -1000,6 +1004,43 @@ class SadPathTestCase(BaseTestCase):
         self.conf([])
         self.assertRaises(NoSuchGroupError,
                           self.conf.set_override, 'foo', 'bar', group='blaa')
+
+
+class FindFileTestCase(BaseTestCase):
+
+    def test_find_policy_file(self):
+        policy_file = '/etc/policy.json'
+
+        self.stubs.Set(os.path, 'exists', lambda p: p == policy_file)
+
+        self.assertEquals(self.conf.find_file('foo.json'), None)
+        self.assertEquals(self.conf.find_file('policy.json'), policy_file)
+
+    def test_find_policy_file_with_config_file(self):
+        dir = tempfile.mkdtemp()
+        self.tempdirs.append(dir)
+
+        paths = self.create_tempfiles([(os.path.join(dir, 'test.conf'),
+                                        '[DEFAULT]'),
+                                       (os.path.join(dir, 'policy.json'),
+                                        '{}')],
+                                      ext='')
+
+        self.conf(['--config-file', paths[0]])
+
+        self.assertEquals(self.conf.find_file('policy.json'), paths[1])
+
+    def test_find_policy_file_with_config_dir(self):
+        dir = tempfile.mkdtemp()
+        self.tempdirs.append(dir)
+
+        path = self.create_tempfiles([(os.path.join(dir, 'policy.json'),
+                                       '{}')],
+                                     ext='')[0]
+
+        self.conf(['--config-dir', dir])
+
+        self.assertEquals(self.conf.find_file('policy.json'), path)
 
 
 class OptDumpingTestCase(BaseTestCase):
