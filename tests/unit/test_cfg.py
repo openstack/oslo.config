@@ -530,6 +530,15 @@ class OptGroupsTestCase(BaseTestCase):
         self.assertTrue(hasattr(self.conf.blaa, 'foo'))
         self.assertEquals(self.conf.blaa.foo, 'bar')
 
+    def test_autocreate_group(self):
+        self.conf.register_cli_opt(StrOpt('foo'), group='blaa')
+
+        self.conf(['--blaa-foo', 'bar'])
+
+        self.assertTrue(hasattr(self.conf, 'blaa'))
+        self.assertTrue(hasattr(self.conf.blaa, 'foo'))
+        self.assertEquals(self.conf.blaa.foo, 'bar')
+
     def test_arg_group_by_name(self):
         self.conf.register_group(OptGroup('blaa'))
         self.conf.register_cli_opt(StrOpt('foo'), group='blaa')
@@ -1003,8 +1012,9 @@ class SadPathTestCase(BaseTestCase):
                           self.conf.register_cli_opt, StrOpt('bar', short='f'))
 
     def test_no_such_group(self):
+        group = OptGroup('blaa')
         self.assertRaises(NoSuchGroupError, self.conf.register_cli_opt,
-                          StrOpt('foo'), group='blaa')
+                          StrOpt('foo'), group=group)
 
     def test_already_parsed(self):
         self.conf([])
