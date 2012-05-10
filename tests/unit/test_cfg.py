@@ -52,6 +52,14 @@ class ExceptionsTestCase(unittest.TestCase):
         msg = str(DuplicateOptError('foo'))
         self.assertEquals(msg, 'duplicate option: foo')
 
+    def test_required_opt_error(self):
+        msg = str(RequiredOptError('foo'))
+        self.assertEquals(msg, 'value required for option: foo')
+
+    def test_required_opt_error_with_group(self):
+        msg = str(RequiredOptError('foo', OptGroup('bar')))
+        self.assertEquals(msg, 'value required for option: bar.foo')
+
     def test_template_substitution_error(self):
         msg = str(TemplateSubstitutionError('foobar'))
         self.assertEquals(msg, 'template substitution error: foobar')
@@ -861,6 +869,91 @@ class OverridesTestCase(BaseTestCase):
         self.conf.set_override('foo', 'bar', group='blaa')
         self.conf([])
         self.assertEquals(self.conf.blaa.foo, 'bar')
+
+
+class RequiredOptsTestCase(BaseTestCase):
+
+    def setUp(self):
+        BaseTestCase.setUp(self)
+        self.conf.register_opt(StrOpt('boo', required=False))
+
+    def test_required_opt(self):
+        self.conf.register_opt(StrOpt('foo', required=True))
+
+        paths = self.create_tempfiles([('test',
+                                        '[DEFAULT]\n'
+                                        'foo = bar')])
+
+        self.conf(['--config-file', paths[0]])
+        self.assertTrue(hasattr(self.conf, 'foo'))
+        self.assertEquals(self.conf.foo, 'bar')
+
+    def test_required_cli_opt(self):
+        self.conf.register_cli_opt(StrOpt('foo', required=True))
+
+        self.conf(['--foo', 'bar'])
+
+        self.assertTrue(hasattr(self.conf, 'foo'))
+        self.assertEquals(self.conf.foo, 'bar')
+
+    def test_missing_required_opt(self):
+        self.conf.register_opt(StrOpt('foo', required=True))
+        self.assertRaises(RequiredOptError, self.conf, [])
+
+    def test_missing_required_cli_opt(self):
+        self.conf.register_cli_opt(StrOpt('foo', required=True))
+        self.assertRaises(RequiredOptError, self.conf, [])
+
+    def test_required_group_opt(self):
+        self.conf.register_group(OptGroup('blaa'))
+        self.conf.register_opt(StrOpt('foo', required=True), group='blaa')
+
+        paths = self.create_tempfiles([('test',
+                                        '[blaa]\n'
+                                        'foo = bar')])
+
+        self.conf(['--config-file', paths[0]])
+        self.assertTrue(hasattr(self.conf, 'blaa'))
+        self.assertTrue(hasattr(self.conf.blaa, 'foo'))
+        self.assertEquals(self.conf.blaa.foo, 'bar')
+
+    def test_required_cli_group_opt(self):
+        self.conf.register_group(OptGroup('blaa'))
+        self.conf.register_cli_opt(StrOpt('foo', required=True), group='blaa')
+
+        self.conf(['--blaa-foo', 'bar'])
+
+        self.assertTrue(hasattr(self.conf, 'blaa'))
+        self.assertTrue(hasattr(self.conf.blaa, 'foo'))
+        self.assertEquals(self.conf.blaa.foo, 'bar')
+
+    def test_missing_required_group_opt(self):
+        self.conf.register_group(OptGroup('blaa'))
+        self.conf.register_opt(StrOpt('foo', required=True), group='blaa')
+        self.assertRaises(RequiredOptError, self.conf, [])
+
+    def test_missing_required_cli_group_opt(self):
+        self.conf.register_group(OptGroup('blaa'))
+        self.conf.register_cli_opt(StrOpt('foo', required=True), group='blaa')
+        self.assertRaises(RequiredOptError, self.conf, [])
+
+    def test_required_opt_with_default(self):
+        self.conf.register_cli_opt(StrOpt('foo', required=True))
+        self.conf.set_default('foo', 'bar')
+
+        self.conf([])
+
+        self.assertTrue(hasattr(self.conf, 'foo'))
+        self.assertEquals(self.conf.foo, 'bar')
+
+    def test_required_opt_with_override(self):
+        self.conf.register_cli_opt(StrOpt('foo', required=True))
+        self.conf.set_override('foo', 'bar')
+
+        self.conf([])
+
+        self.assertTrue(hasattr(self.conf, 'foo'))
+        self.assertEquals(self.conf.foo, 'bar')
 
 
 class SadPathTestCase(BaseTestCase):
