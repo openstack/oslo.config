@@ -880,6 +880,48 @@ class OverridesTestCase(BaseTestCase):
         self.assertEquals(self.conf.blaa.foo, 'bar')
 
 
+class ResetAndClearTestCase(BaseTestCase):
+
+    def test_clear(self):
+        self.conf.register_cli_opt(StrOpt('foo'))
+        self.conf.register_cli_opt(StrOpt('bar'), group='blaa')
+
+        self.assertEquals(self.conf.foo, None)
+        self.assertEquals(self.conf.blaa.bar, None)
+
+        self.conf(['--foo', 'foo', '--blaa-bar', 'bar'])
+
+        self.assertEquals(self.conf.foo, 'foo')
+        self.assertEquals(self.conf.blaa.bar, 'bar')
+
+        self.conf.clear()
+
+        self.assertEquals(self.conf.foo, None)
+        self.assertEquals(self.conf.blaa.bar, None)
+
+    def test_reset_and_clear_with_defaults_and_overrides(self):
+        self.conf.register_cli_opt(StrOpt('foo'))
+        self.conf.register_cli_opt(StrOpt('bar'), group='blaa')
+
+        self.conf.set_default('foo', 'foo')
+        self.conf.set_override('bar', 'bar', group='blaa')
+
+        self.conf(['--foo', 'foofoo'])
+
+        self.assertEquals(self.conf.foo, 'foofoo')
+        self.assertEquals(self.conf.blaa.bar, 'bar')
+
+        self.conf.clear()
+
+        self.assertEquals(self.conf.foo, 'foo')
+        self.assertEquals(self.conf.blaa.bar, 'bar')
+
+        self.conf.reset()
+
+        self.assertEquals(self.conf.foo, None)
+        self.assertEquals(self.conf.blaa.bar, None)
+
+
 class RequiredOptsTestCase(BaseTestCase):
 
     def setUp(self):
