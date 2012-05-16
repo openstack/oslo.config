@@ -94,7 +94,7 @@ class BaseTestCase(unittest.TestCase):
                 (fd, path) = tempfile.mkstemp(prefix=basename, suffix=ext)
             else:
                 path = basename + ext
-                fd = os.open(path, os.O_CREAT|os.O_WRONLY)
+                fd = os.open(path, os.O_CREAT | os.O_WRONLY)
             self.tempfiles.append(path)
             try:
                 os.write(fd, contents)
@@ -800,6 +800,7 @@ class TemplateSubstitutionTestCase(BaseTestCase):
         self.assertTrue(hasattr(self.conf, 'snafu'))
         self.assertTrue(hasattr(self.conf.snafu, 'bell'))
         self.assertEquals(self.conf.snafu.bell, 'whistle-03')
+
 
 class ReparseTestCase(BaseTestCase):
 
