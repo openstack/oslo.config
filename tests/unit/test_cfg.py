@@ -172,7 +172,8 @@ class FindConfigFilesTestCase(BaseTestCase):
 class CliOptsTestCase(BaseTestCase):
 
     def _do_cli_test(self, opt_class, default, cli_args, value):
-        self.conf.register_cli_opt(opt_class('foo', default=default))
+        self.conf.register_cli_opt(opt_class('foo', default=default,
+                                   deprecated_name='oldfoo'))
 
         self.conf(cli_args)
 
@@ -185,14 +186,23 @@ class CliOptsTestCase(BaseTestCase):
     def test_str_arg(self):
         self._do_cli_test(StrOpt, None, ['--foo', 'bar'], 'bar')
 
+    def test_str_arg_deprecated(self):
+        self._do_cli_test(StrOpt, None, ['--oldfoo', 'bar'], 'bar')
+
     def test_bool_default(self):
         self._do_cli_test(BoolOpt, False, [], False)
 
     def test_bool_arg(self):
         self._do_cli_test(BoolOpt, None, ['--foo'], True)
 
+    def test_bool_arg_deprecated(self):
+        self._do_cli_test(BoolOpt, None, ['--oldfoo'], True)
+
     def test_bool_arg_inverse(self):
         self._do_cli_test(BoolOpt, None, ['--foo', '--nofoo'], False)
+
+    def test_bool_arg_inverse_deprecated(self):
+        self._do_cli_test(BoolOpt, None, ['--oldfoo', '--nooldfoo'], False)
 
     def test_int_default(self):
         self._do_cli_test(IntOpt, 10, [], 10)
@@ -200,11 +210,17 @@ class CliOptsTestCase(BaseTestCase):
     def test_int_arg(self):
         self._do_cli_test(IntOpt, None, ['--foo=20'], 20)
 
+    def test_int_arg_deprecated(self):
+        self._do_cli_test(IntOpt, None, ['--oldfoo=20'], 20)
+
     def test_float_default(self):
         self._do_cli_test(FloatOpt, 1.0, [], 1.0)
 
     def test_float_arg(self):
         self._do_cli_test(FloatOpt, None, ['--foo', '2.0'], 2.0)
+
+    def test_float_arg_deprecated(self):
+        self._do_cli_test(FloatOpt, None, ['--oldfoo', '2.0'], 2.0)
 
     def test_list_default(self):
         self._do_cli_test(ListOpt, ['bar'], [], ['bar'])
@@ -213,12 +229,21 @@ class CliOptsTestCase(BaseTestCase):
         self._do_cli_test(ListOpt, None,
                           ['--foo', 'blaa,bar'], ['blaa', 'bar'])
 
+    def test_list_arg_deprecated(self):
+        self._do_cli_test(ListOpt, None,
+                          ['--oldfoo', 'blaa,bar'], ['blaa', 'bar'])
+
     def test_multistr_default(self):
         self._do_cli_test(MultiStrOpt, ['bar'], [], ['bar'])
 
     def test_multistr_arg(self):
         self._do_cli_test(MultiStrOpt, None,
                           ['--foo', 'blaa', '--foo', 'bar'], ['blaa', 'bar'])
+
+    def test_multistr_arg_deprecated(self):
+        self._do_cli_test(MultiStrOpt, None,
+                          ['--oldfoo', 'blaa', '--oldfoo', 'bar'],
+                          ['blaa', 'bar'])
 
     def test_help(self):
         self.stubs.Set(sys, 'stdout', StringIO.StringIO())
@@ -255,6 +280,28 @@ class CliOptsTestCase(BaseTestCase):
 
 
 class ConfigFileOptsTestCase(BaseTestCase):
+
+    def _do_deprecated_test_use(self, opt_class, value, result):
+        self.conf.register_opt(opt_class('newfoo', deprecated_name='oldfoo'))
+
+        paths = self.create_tempfiles([('test',
+                                        '[DEFAULT]\n'
+                                        'oldfoo = %s\n' % value)])
+
+        self.conf(['--config-file', paths[0]])
+        self.assertTrue(hasattr(self.conf, 'newfoo'))
+        self.assertEquals(self.conf.newfoo, result)
+
+    def _do_deprecated_test_ignore(self, opt_class, value, result):
+        self.conf.register_opt(opt_class('newfoo', deprecated_name='oldfoo'))
+
+        paths2 = self.create_tempfiles([('test',
+                                        '[DEFAULT]\n'
+                                        'newfoo = %s\n' % value)])
+
+        self.conf(['--config-file', paths2[0]])
+        self.assertTrue(hasattr(self.conf, 'newfoo'))
+        self.assertEquals(self.conf.newfoo, result)
 
     def test_conf_file_str_default(self):
         self.conf.register_opt(StrOpt('foo', default='bar'))
@@ -296,6 +343,31 @@ class ConfigFileOptsTestCase(BaseTestCase):
         self.assertTrue(hasattr(self.conf, 'foo'))
         self.assertEquals(self.conf.foo, 'baaar')
 
+    def test_conf_file_str_value_override_use_deprecated(self):
+        """last option should always win, even if last uses deprecated"""
+        self.conf.register_cli_opt(StrOpt('newfoo', deprecated_name='oldfoo'))
+
+        paths = self.create_tempfiles([('0',
+                                        '[DEFAULT]\n'
+                                        'newfoo = middle\n'),
+                                       ('1',
+                                        '[DEFAULT]\n'
+                                        'oldfoo = last\n')])
+
+        self.conf(['--newfoo', 'first',
+                   '--config-file', paths[0],
+                   '--config-file', paths[1]])
+
+        self.assertTrue(hasattr(self.conf, 'newfoo'))
+        self.assertFalse(hasattr(self.conf, 'oldfoo'))
+        self.assertEquals(self.conf.newfoo, 'last')
+
+    def test_conf_file_str_use_deprecated(self):
+        self._do_deprecated_test_use(StrOpt, 'value1', 'value1')
+
+    def test_conf_file_str_ignore_deprecated(self):
+        self._do_deprecated_test_ignore(StrOpt, 'value2', 'value2')
+
     def test_conf_file_bool_default(self):
         self.conf.register_opt(BoolOpt('foo', default=False))
 
@@ -335,6 +407,12 @@ class ConfigFileOptsTestCase(BaseTestCase):
 
         self.assertTrue(hasattr(self.conf, 'foo'))
         self.assertEquals(self.conf.foo, True)
+
+    def test_conf_file_bool_use_deprecated(self):
+        self._do_deprecated_test_use(BoolOpt, 'yes', True)
+
+    def test_conf_file_bool_ignore_deprecated(self):
+        self._do_deprecated_test_ignore(BoolOpt, 'no', False)
 
     def test_conf_file_int_default(self):
         self.conf.register_opt(IntOpt('foo', default=666))
@@ -376,6 +454,12 @@ class ConfigFileOptsTestCase(BaseTestCase):
         self.assertTrue(hasattr(self.conf, 'foo'))
         self.assertEquals(self.conf.foo, 666)
 
+    def test_conf_file_int_use_deprecated(self):
+        self._do_deprecated_test_use(IntOpt, '66', 66)
+
+    def test_conf_file_int_ignore_deprecated(self):
+        self._do_deprecated_test_ignore(IntOpt, '64', 64)
+
     def test_conf_file_float_default(self):
         self.conf.register_opt(FloatOpt('foo', default=6.66))
 
@@ -415,6 +499,12 @@ class ConfigFileOptsTestCase(BaseTestCase):
 
         self.assertTrue(hasattr(self.conf, 'foo'))
         self.assertEquals(self.conf.foo, 6.66)
+
+    def test_conf_file_float_use_deprecated(self):
+        self._do_deprecated_test_use(FloatOpt, '66.54', 66.54)
+
+    def test_conf_file_float_ignore_deprecated(self):
+        self._do_deprecated_test_ignore(FloatOpt, '64.54', 64.54)
 
     def test_conf_file_list_default(self):
         self.conf.register_opt(ListOpt('foo', default=['bar']))
@@ -456,6 +546,12 @@ class ConfigFileOptsTestCase(BaseTestCase):
         self.assertTrue(hasattr(self.conf, 'foo'))
         self.assertEquals(self.conf.foo, ['b', 'a', 'r'])
 
+    def test_conf_file_list_use_deprecated(self):
+        self._do_deprecated_test_use(ListOpt, 'a,b,c', ['a', 'b', 'c'])
+
+    def test_conf_file_list_ignore_deprecated(self):
+        self._do_deprecated_test_ignore(ListOpt, 'd,e,f', ['d', 'e', 'f'])
+
     def test_conf_file_multistr_default(self):
         self.conf.register_opt(MultiStrOpt('foo', default=['bar']))
 
@@ -479,6 +575,26 @@ class ConfigFileOptsTestCase(BaseTestCase):
         self.assertTrue(hasattr(self.conf, 'foo'))
         self.assertEquals(self.conf.foo, ['bar'])
 
+    def test_conf_file_multistr_values_append_deprecated(self):
+        self.conf.register_cli_opt(MultiStrOpt('foo',
+                deprecated_name='oldfoo'))
+
+        paths = self.create_tempfiles([('1',
+                                        '[DEFAULT]\n'
+                                        'foo = bar1\n'),
+                                       ('2',
+                                        '[DEFAULT]\n'
+                                        'oldfoo = bar2\n'
+                                        'oldfoo = bar3\n')])
+
+        self.conf(['--foo', 'bar0',
+                   '--config-file', paths[0],
+                   '--config-file', paths[1]])
+
+        self.assertTrue(hasattr(self.conf, 'foo'))
+
+        self.assertEquals(self.conf.foo, ['bar0', 'bar1', 'bar2', 'bar3'])
+
     def test_conf_file_multistr_values_append(self):
         self.conf.register_cli_opt(MultiStrOpt('foo'))
 
@@ -497,6 +613,18 @@ class ConfigFileOptsTestCase(BaseTestCase):
         self.assertTrue(hasattr(self.conf, 'foo'))
 
         self.assertEquals(self.conf.foo, ['bar0', 'bar1', 'bar2', 'bar3'])
+
+    def test_conf_file_multistr_deprecated(self):
+        self.conf.register_opt(MultiStrOpt('newfoo', deprecated_name='oldfoo'))
+
+        paths = self.create_tempfiles([('test',
+                                        '[DEFAULT]\n'
+                                        'oldfoo= bar1\n'
+                                        'oldfoo = bar2\n')])
+
+        self.conf(['--config-file', paths[0]])
+        self.assertTrue(hasattr(self.conf, 'newfoo'))
+        self.assertEquals(self.conf.newfoo, ['bar1', 'bar2'])
 
     def test_conf_file_multiple_opts(self):
         self.conf.register_opts([StrOpt('foo'), StrOpt('bar')])
@@ -575,6 +703,21 @@ class OptGroupsTestCase(BaseTestCase):
         paths = self.create_tempfiles([('test',
                                         '[blaa]\n'
                                         'foo = bar\n')])
+
+        self.conf(['--config-file', paths[0]])
+
+        self.assertTrue(hasattr(self.conf, 'blaa'))
+        self.assertTrue(hasattr(self.conf.blaa, 'foo'))
+        self.assertEquals(self.conf.blaa.foo, 'bar')
+
+    def test_arg_group_in_config_file_with_deprecated(self):
+        self.conf.register_group(OptGroup('blaa'))
+        self.conf.register_opt(StrOpt('foo', deprecated_name='oldfoo'),
+                                      group='blaa')
+
+        paths = self.create_tempfiles([('test',
+                                        '[blaa]\n'
+                                        'oldfoo = bar\n')])
 
         self.conf(['--config-file', paths[0]])
 
