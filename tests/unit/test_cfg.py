@@ -75,11 +75,18 @@ class ExceptionsTestCase(unittest.TestCase):
 
 class BaseTestCase(unittest.TestCase):
 
+    class TestConfigOpts(ConfigOpts):
+        def __call__(self, args=None):
+            return ConfigOpts.__call__(self,
+                                       args=args,
+                                       prog='test',
+                                       version='1.0',
+                                       usage='%prog FOO BAR',
+                                       default_config_files=[])
+
     def setUp(self):
-        self.conf = ConfigOpts(prog='test',
-                               version='1.0',
-                               usage='%prog FOO BAR',
-                               default_config_files=[])
+        self.conf = self.TestConfigOpts()
+
         self.tempfiles = []
         self.tempdirs = []
         self.stubs = stubout.StubOutForTesting()
@@ -113,6 +120,7 @@ class UsageTestCase(BaseTestCase):
 
     def test_print_usage(self):
         f = StringIO.StringIO()
+        self.conf([])
         self.conf.print_usage(file=f)
         self.assertTrue('Usage: test FOO BAR' in f.getvalue())
 
@@ -121,6 +129,7 @@ class HelpTestCase(BaseTestCase):
 
     def test_print_help(self):
         f = StringIO.StringIO()
+        self.conf([])
         self.conf.print_help(file=f)
         self.assertTrue('Usage: test FOO BAR' in f.getvalue())
         self.assertTrue('Options:' in f.getvalue())
@@ -923,6 +932,45 @@ class ResetAndClearTestCase(BaseTestCase):
         self.assertEquals(self.conf.blaa.bar, None)
 
 
+class UnregisterOptTestCase(BaseTestCase):
+
+    def test_unregister_opt(self):
+        opts = [StrOpt('foo'), StrOpt('bar')]
+
+        self.conf.register_opts(opts)
+
+        self.assertTrue(hasattr(self.conf, 'foo'))
+        self.assertTrue(hasattr(self.conf, 'bar'))
+
+        self.conf.unregister_opt(opts[0])
+
+        self.assertFalse(hasattr(self.conf, 'foo'))
+        self.assertTrue(hasattr(self.conf, 'bar'))
+
+        self.conf([])
+
+        self.assertRaises(ArgsAlreadyParsedError,
+                          self.conf.unregister_opt, opts[1])
+
+        self.conf.clear()
+
+        self.assertTrue(hasattr(self.conf, 'bar'))
+
+        self.conf.unregister_opts(opts)
+
+    def test_unregister_opt_from_group(self):
+        opt = StrOpt('foo')
+
+        self.conf.register_opt(opt, group='blaa')
+
+        self.assertTrue(hasattr(self.conf, 'blaa'))
+        self.assertTrue(hasattr(self.conf.blaa, 'foo'))
+
+        self.conf.unregister_opt(opt, group='blaa')
+
+        self.assertFalse(hasattr(self.conf.blaa, 'foo'))
+
+
 class RequiredOptsTestCase(BaseTestCase):
 
     def setUp(self):
@@ -1046,13 +1094,13 @@ class SadPathTestCase(BaseTestCase):
 
     def test_error_duplicate_with_different_dest(self):
         self.conf.register_cli_opt(StrOpt('foo', dest='f'))
-        self.assertRaises(DuplicateOptError,
-                          self.conf.register_cli_opt, StrOpt('foo'))
+        self.conf.register_cli_opt(StrOpt('foo'))
+        self.assertRaises(DuplicateOptError, self.conf, [])
 
     def test_error_duplicate_short(self):
         self.conf.register_cli_opt(StrOpt('foo', short='f'))
-        self.assertRaises(DuplicateOptError,
-                          self.conf.register_cli_opt, StrOpt('bar', short='f'))
+        self.conf.register_cli_opt(StrOpt('bar', short='f'))
+        self.assertRaises(DuplicateOptError, self.conf, [])
 
     def test_no_such_group(self):
         group = OptGroup('blaa')
@@ -1158,6 +1206,8 @@ class FindFileTestCase(BaseTestCase):
         policy_file = '/etc/policy.json'
 
         self.stubs.Set(os.path, 'exists', lambda p: p == policy_file)
+
+        self.conf([])
 
         self.assertEquals(self.conf.find_file('foo.json'), None)
         self.assertEquals(self.conf.find_file('policy.json'), policy_file)
