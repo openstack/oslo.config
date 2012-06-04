@@ -1269,7 +1269,7 @@ class OptDumpingTestCase(BaseTestCase):
         self.assertEquals(logger.logged, [
                 "*" * 80,
                 "Configuration options gathered from:",
-                "command line args: ['--foo', 'this', '--blaa-bar', 'that', "\
+                "command line args: ['--foo', 'this', '--blaa-bar', 'that', "
                 "'--blaa-key', 'admin', '--passwd', 'hush']",
                 "config files: []",
                 "=" * 80,
