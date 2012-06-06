@@ -104,6 +104,15 @@ class ParserTestCase(unittest.TestCase):
         self.parser.parse(lines)
         self.assertTrue(self.parser.comment_called)
 
+    def test_assignment_space_single_quote(self):
+        lines = ["foo = ' bar '"]
+        self.parser.parse(lines)
+        self.assertEquals(self.parser.values, {'': {'foo': [' bar ']}})
+
+    def test_assignment_space_double_quote(self):
+        lines = ["foo = \" bar \""]
+        self.parser.parse(lines)
+        self.assertEquals(self.parser.values, {'': {'foo': [' bar ']}})
 
 class ExceptionTestCase(unittest.TestCase):
     def test_parseerror(self):
