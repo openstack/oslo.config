@@ -114,6 +114,7 @@ class ParserTestCase(unittest.TestCase):
         self.parser.parse(lines)
         self.assertEquals(self.parser.values, {'': {'foo': [' bar ']}})
 
+
 class ExceptionTestCase(unittest.TestCase):
     def test_parseerror(self):
         exc = iniparser.ParseError('test', 42, 'example')
