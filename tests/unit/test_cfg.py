@@ -296,8 +296,8 @@ class ConfigFileOptsTestCase(BaseTestCase):
         self.conf.register_opt(opt_class('newfoo', deprecated_name='oldfoo'))
 
         paths2 = self.create_tempfiles([('test',
-                                        '[DEFAULT]\n'
-                                        'newfoo = %s\n' % value)])
+                                         '[DEFAULT]\n'
+                                         'newfoo = %s\n' % value)])
 
         self.conf(['--config-file', paths2[0]])
         self.assertTrue(hasattr(self.conf, 'newfoo'))
@@ -306,8 +306,7 @@ class ConfigFileOptsTestCase(BaseTestCase):
     def test_conf_file_str_default(self):
         self.conf.register_opt(StrOpt('foo', default='bar'))
 
-        paths = self.create_tempfiles([('test',
-                                        '[DEFAULT]\n')])
+        paths = self.create_tempfiles([('test', '[DEFAULT]\n')])
 
         self.conf(['--config-file', paths[0]])
 
@@ -317,9 +316,7 @@ class ConfigFileOptsTestCase(BaseTestCase):
     def test_conf_file_str_value(self):
         self.conf.register_opt(StrOpt('foo'))
 
-        paths = self.create_tempfiles([('test',
-                                        '[DEFAULT]\n'
-                                        'foo = bar\n')])
+        paths = self.create_tempfiles([('test', '[DEFAULT]\n''foo = bar\n')])
 
         self.conf(['--config-file', paths[0]])
 
@@ -577,7 +574,7 @@ class ConfigFileOptsTestCase(BaseTestCase):
 
     def test_conf_file_multistr_values_append_deprecated(self):
         self.conf.register_cli_opt(MultiStrOpt('foo',
-                deprecated_name='oldfoo'))
+                                   deprecated_name='oldfoo'))
 
         paths = self.create_tempfiles([('1',
                                         '[DEFAULT]\n'
@@ -713,7 +710,7 @@ class OptGroupsTestCase(BaseTestCase):
     def test_arg_group_in_config_file_with_deprecated(self):
         self.conf.register_group(OptGroup('blaa'))
         self.conf.register_opt(StrOpt('foo', deprecated_name='oldfoo'),
-                                      group='blaa')
+                               group='blaa')
 
         paths = self.create_tempfiles([('test',
                                         '[blaa]\n'
@@ -1410,20 +1407,20 @@ class OptDumpingTestCase(BaseTestCase):
         self.conf.log_opt_values(logger, 666)
 
         self.assertEquals(logger.logged, [
-                "*" * 80,
-                "Configuration options gathered from:",
-                "command line args: ['--foo', 'this', '--blaa-bar', 'that', "
-                "'--blaa-key', 'admin', '--passwd', 'hush']",
-                "config files: []",
-                "=" * 80,
-                "config_dir                     = None",
-                "config_file                    = []",
-                "foo                            = this",
-                "passwd                         = ****",
-                 "blaa.bar                       = that",
-                "blaa.key                       = *****",
-                "*" * 80,
-                ])
+                          "*" * 80,
+                          "Configuration options gathered from:",
+                          "command line args: ['--foo', 'this', '--blaa-bar', "
+                          "'that', '--blaa-key', 'admin', '--passwd', 'hush']",
+                          "config files: []",
+                          "=" * 80,
+                          "config_dir                     = None",
+                          "config_file                    = []",
+                          "foo                            = this",
+                          "passwd                         = ****",
+                          "blaa.bar                       = that",
+                          "blaa.key                       = *****",
+                          "*" * 80,
+                          ])
 
 
 class CommonOptsTestCase(BaseTestCase):
