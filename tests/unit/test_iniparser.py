@@ -104,6 +104,11 @@ class ParserTestCase(unittest.TestCase):
         self.parser.parse(lines)
         self.assertTrue(self.parser.comment_called)
 
+    def test_empty_assignment(self):
+        lines = ["foo = "]
+        self.parser.parse(lines)
+        self.assertEquals(self.parser.values, {'': {'foo': ['']}})
+
     def test_assignment_space_single_quote(self):
         lines = ["foo = ' bar '"]
         self.parser.parse(lines)
