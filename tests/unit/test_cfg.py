@@ -1220,17 +1220,13 @@ class SadPathTestCase(BaseTestCase):
     def test_ok_duplicate(self):
         opt = StrOpt('foo')
         self.conf.register_cli_opt(opt)
-        self.conf.register_cli_opt(opt)
+        opt2 = StrOpt('foo')
+        self.conf.register_cli_opt(opt2)
 
         self.conf([])
 
         self.assertTrue(hasattr(self.conf, 'foo'))
         self.assertEquals(self.conf.foo, None)
-
-    def test_error_duplicate(self):
-        self.conf.register_cli_opt(StrOpt('foo'))
-        self.assertRaises(DuplicateOptError,
-                          self.conf.register_cli_opt, StrOpt('foo'))
 
     def test_error_duplicate_with_different_dest(self):
         self.conf.register_cli_opt(StrOpt('foo', dest='f'))
