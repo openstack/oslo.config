@@ -1111,6 +1111,32 @@ class UnregisterOptTestCase(BaseTestCase):
         self.assertFalse(hasattr(self.conf.blaa, 'foo'))
 
 
+class ImportOptTestCase(BaseTestCase):
+
+    def test_import_opt(self):
+        self.assertFalse(hasattr(CONF, 'blaa'))
+        CONF.import_opt('blaa', 'tests.testmods.blaa_opt')
+        self.assertTrue(hasattr(CONF, 'blaa'))
+
+    def test_import_opt_in_group(self):
+        self.assertFalse(hasattr(CONF, 'bar'))
+        CONF.import_opt('foo', 'tests.testmods.bar_foo_opt', group='bar')
+        self.assertTrue(hasattr(CONF, 'bar'))
+        self.assertTrue(hasattr(CONF.bar, 'foo'))
+
+    def test_import_opt_import_errror(self):
+        self.assertRaises(ImportError, CONF.import_opt,
+                          'blaa', 'tests.testmods.blaablaa_opt')
+
+    def test_import_opt_no_such_opt(self):
+        self.assertRaises(NoSuchOptError, CONF.import_opt,
+                          'blaablaa', 'tests.testmods.blaa_opt')
+
+    def test_import_opt_no_such_group(self):
+        self.assertRaises(NoSuchGroupError, CONF.import_opt,
+                          'blaa', 'tests.testmods.blaa_opt', group='blaa')
+
+
 class RequiredOptsTestCase(BaseTestCase):
 
     def setUp(self):
