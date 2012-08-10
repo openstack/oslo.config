@@ -982,12 +982,32 @@ class ReparseTestCase(BaseTestCase):
 
 class OverridesTestCase(BaseTestCase):
 
+    def test_default_none(self):
+        self.conf.register_opt(StrOpt('foo', default='foo'))
+        self.conf([])
+        self.assertEquals(self.conf.foo, 'foo')
+        self.conf.set_default('foo', None)
+        self.assertEquals(self.conf.foo, None)
+        self.conf.clear_default('foo')
+        self.assertEquals(self.conf.foo, 'foo')
+
+    def test_override_none(self):
+        self.conf.register_opt(StrOpt('foo', default='foo'))
+        self.conf([])
+        self.assertEquals(self.conf.foo, 'foo')
+        self.conf.set_override('foo', None)
+        self.assertEquals(self.conf.foo, None)
+        self.conf.clear_override('foo')
+        self.assertEquals(self.conf.foo, 'foo')
+
     def test_no_default_override(self):
         self.conf.register_opt(StrOpt('foo'))
         self.conf([])
         self.assertEquals(self.conf.foo, None)
         self.conf.set_default('foo', 'bar')
         self.assertEquals(self.conf.foo, 'bar')
+        self.conf.clear_default('foo')
+        self.assertEquals(self.conf.foo, None)
 
     def test_default_override(self):
         self.conf.register_opt(StrOpt('foo', default='foo'))
@@ -995,7 +1015,7 @@ class OverridesTestCase(BaseTestCase):
         self.assertEquals(self.conf.foo, 'foo')
         self.conf.set_default('foo', 'bar')
         self.assertEquals(self.conf.foo, 'bar')
-        self.conf.set_default('foo', None)
+        self.conf.clear_default('foo')
         self.assertEquals(self.conf.foo, 'foo')
 
     def test_override(self):
@@ -1003,6 +1023,8 @@ class OverridesTestCase(BaseTestCase):
         self.conf.set_override('foo', 'bar')
         self.conf([])
         self.assertEquals(self.conf.foo, 'bar')
+        self.conf.clear_override('foo')
+        self.assertEquals(self.conf.foo, None)
 
     def test_group_no_default_override(self):
         self.conf.register_group(OptGroup('blaa'))
@@ -1011,6 +1033,8 @@ class OverridesTestCase(BaseTestCase):
         self.assertEquals(self.conf.blaa.foo, None)
         self.conf.set_default('foo', 'bar', group='blaa')
         self.assertEquals(self.conf.blaa.foo, 'bar')
+        self.conf.clear_default('foo', group='blaa')
+        self.assertEquals(self.conf.blaa.foo, None)
 
     def test_group_default_override(self):
         self.conf.register_group(OptGroup('blaa'))
@@ -1019,15 +1043,18 @@ class OverridesTestCase(BaseTestCase):
         self.assertEquals(self.conf.blaa.foo, 'foo')
         self.conf.set_default('foo', 'bar', group='blaa')
         self.assertEquals(self.conf.blaa.foo, 'bar')
-        self.conf.set_default('foo', None, group='blaa')
+        self.conf.clear_default('foo', group='blaa')
         self.assertEquals(self.conf.blaa.foo, 'foo')
 
     def test_group_override(self):
         self.conf.register_group(OptGroup('blaa'))
         self.conf.register_opt(StrOpt('foo'), group='blaa')
+        self.assertEquals(self.conf.blaa.foo, None)
         self.conf.set_override('foo', 'bar', group='blaa')
         self.conf([])
         self.assertEquals(self.conf.blaa.foo, 'bar')
+        self.conf.clear_override('foo', group='blaa')
+        self.assertEquals(self.conf.blaa.foo, None)
 
 
 class ResetAndClearTestCase(BaseTestCase):
