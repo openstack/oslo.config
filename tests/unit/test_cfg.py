@@ -1480,3 +1480,43 @@ class ConfigParserTestCase(unittest.TestCase):
 
             parser = ConfigParser(tmpfile.name, {})
             self.assertRaises(ParseError, parser.parse)
+
+
+class TildeExpansionTestCase(BaseTestCase):
+
+    def test_config_file_tilde(self):
+        homedir = os.path.expanduser('~')
+        tmpfile = tempfile.mktemp(dir=homedir, prefix='cfg-', suffix='.conf')
+        tmpbase = os.path.basename(tmpfile)
+
+        try:
+            self.conf(['--config-file', os.path.join('~', tmpbase)])
+        except ConfigFilesNotFoundError, cfnfe:
+            print cfnfe
+            self.assertTrue(homedir in str(cfnfe))
+
+        self.stubs.Set(os.path, 'exists', lambda p: p == tmpfile)
+
+        self.assertEquals(self.conf.find_file(tmpbase), tmpfile)
+
+    def test_config_dir_tilde(self):
+        homedir = os.path.expanduser('~')
+        tmpdir = tempfile.mktemp(dir=homedir,
+                                 prefix='cfg-',
+                                 suffix='.d')
+        tmpfile = os.path.join(tmpdir, 'foo.conf')
+        tmpbase = os.path.basename(tmpfile)
+
+        self.stubs.Set(glob, 'glob', lambda p: [tmpfile])
+
+        try:
+            print ['--config-dir', os.path.join('~', os.path.basename(tmpdir))]
+            self.conf(['--config-dir',
+                       os.path.join('~', os.path.basename(tmpdir))])
+        except ConfigFilesNotFoundError, cfnfe:
+            print cfnfe
+            self.assertTrue(os.path.expanduser('~') in str(cfnfe))
+
+        self.stubs.Set(os.path, 'exists', lambda p: p == tmpfile)
+
+        self.assertEquals(self.conf.find_file(tmpbase), tmpfile)
