@@ -1189,6 +1189,14 @@ class RequiredOptsTestCase(BaseTestCase):
         self.assertTrue(hasattr(self.conf, 'foo'))
         self.assertEquals(self.conf.foo, 'bar')
 
+    def test_required_cli_opt_with_dash(self):
+        self.conf.register_cli_opt(StrOpt('foo-bar', required=True))
+
+        self.conf(['--foo-bar', 'baz'])
+
+        self.assertTrue(hasattr(self.conf, 'foo_bar'))
+        self.assertEquals(self.conf.foo_bar, 'baz')
+
     def test_missing_required_opt(self):
         self.conf.register_opt(StrOpt('foo', required=True))
         self.assertRaises(RequiredOptError, self.conf, [])
