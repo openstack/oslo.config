@@ -267,18 +267,6 @@ class CliOptsTestCase(BaseTestCase):
 
         self.assertEquals(self.conf.config_file, paths)
 
-    def test_disable_interspersed_args(self):
-        self.conf.register_cli_opt(BoolOpt('foo'))
-        self.conf.register_cli_opt(BoolOpt('bar'))
-
-        args = ['--foo', 'blaa', '--bar']
-
-        self.assertEquals(self.conf(args), args[1:2])
-        self.conf.disable_interspersed_args()
-        #self.assertEquals(self.conf(args), args[1:])
-        self.conf.enable_interspersed_args()
-        self.assertEquals(self.conf(args), args[1:2])
-
 
 class ConfigFileOptsTestCase(BaseTestCase):
 
