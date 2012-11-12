@@ -255,9 +255,9 @@ class CliOptsTestCase(BaseTestCase):
         self.assertTrue('--config-file' in sys.stdout.getvalue())
 
     def test_version(self):
-        self.stubs.Set(sys, 'stdout', StringIO.StringIO())
+        self.stubs.Set(sys, 'stderr', StringIO.StringIO())
         self.assertRaises(SystemExit, self.conf, ['--version'])
-        self.assertTrue('1.0' in sys.stdout.getvalue())
+        self.assertTrue('1.0' in sys.stderr.getvalue())
 
     def test_config_file(self):
         paths = self.create_tempfiles([('1', '[DEFAULT]'),
