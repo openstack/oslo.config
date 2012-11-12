@@ -81,7 +81,7 @@ class BaseTestCase(unittest.TestCase):
                                        args=args,
                                        prog='test',
                                        version='1.0',
-                                       usage='%prog FOO BAR',
+                                       usage='%(prog)s FOO BAR',
                                        default_config_files=[])
 
     def setUp(self):
@@ -122,7 +122,7 @@ class UsageTestCase(BaseTestCase):
         f = StringIO.StringIO()
         self.conf([])
         self.conf.print_usage(file=f)
-        self.assertTrue('Usage: test FOO BAR' in f.getvalue())
+        self.assertTrue('usage: test FOO BAR' in f.getvalue())
         self.assertTrue('Options:' not in f.getvalue())
 
 
@@ -132,7 +132,7 @@ class HelpTestCase(BaseTestCase):
         f = StringIO.StringIO()
         self.conf([])
         self.conf.print_help(file=f)
-        self.assertTrue('Usage: test FOO BAR' in f.getvalue())
+        self.assertTrue('usage: test FOO BAR' in f.getvalue())
         self.assertTrue('Options:' in f.getvalue())
         self.assertTrue('-h, --help' in f.getvalue())
 
