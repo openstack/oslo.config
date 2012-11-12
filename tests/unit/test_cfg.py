@@ -137,17 +137,6 @@ class HelpTestCase(BaseTestCase):
         self.assertTrue('-h, --help' in f.getvalue())
 
 
-class LeftoversTestCase(BaseTestCase):
-
-    def test_leftovers(self):
-        self.conf.register_cli_opts([StrOpt('foo'), StrOpt('bar')])
-
-        leftovers = self.conf(['those', '--foo', 'this',
-                               'thems', '--bar', 'that', 'these'])
-
-        self.assertEquals(leftovers, ['those', 'thems', 'these'])
-
-
 class FindConfigFilesTestCase(BaseTestCase):
 
     def test_find_config_files(self):
@@ -266,6 +255,70 @@ class CliOptsTestCase(BaseTestCase):
         self.conf(['--config-file', paths[0], '--config-file', paths[1]])
 
         self.assertEquals(self.conf.config_file, paths)
+
+
+class PositionalTestCase(BaseTestCase):
+
+    def _do_pos_test(self, opt_class, default, cli_args, value):
+        self.conf.register_cli_opt(opt_class('foo',
+                                             default=default,
+                                             positional=True))
+
+        self.conf(cli_args)
+
+        self.assertTrue(hasattr(self.conf, 'foo'))
+        self.assertEquals(self.conf.foo, value)
+
+    def test_positional_str_default(self):
+        self._do_pos_test(StrOpt, None, [], None)
+
+    def test_positional_str_arg(self):
+        self._do_pos_test(StrOpt, None, ['bar'], 'bar')
+
+    def test_positional_int_default(self):
+        self._do_pos_test(IntOpt, 10, [], 10)
+
+    def test_positional_int_arg(self):
+        self._do_pos_test(IntOpt, None, ['20'], 20)
+
+    def test_positional_float_default(self):
+        self._do_pos_test(FloatOpt, 1.0, [], 1.0)
+
+    def test_positional_float_arg(self):
+        self._do_pos_test(FloatOpt, None, ['2.0'], 2.0)
+
+    def test_positional_list_default(self):
+        self._do_pos_test(ListOpt, ['bar'], [], ['bar'])
+
+    def test_positional_list_arg(self):
+        self._do_pos_test(ListOpt, None,
+                          ['blaa,bar'], ['blaa', 'bar'])
+
+    def test_positional_multistr_default(self):
+        self._do_pos_test(MultiStrOpt, ['bar'], [], ['bar'])
+
+    def test_positional_multistr_arg(self):
+        self._do_pos_test(MultiStrOpt, None,
+                          ['blaa', 'bar'], ['blaa', 'bar'])
+
+    def test_positional_bool(self):
+        self.assertRaises(ValueError, BoolOpt, 'foo', positional=True)
+
+    def test_required_positional_opt(self):
+        self.conf.register_cli_opt(StrOpt('foo',
+                                          required=True,
+                                          positional=True))
+
+        self.conf(['bar'])
+
+        self.assertTrue(hasattr(self.conf, 'foo'))
+        self.assertEquals(self.conf.foo, 'bar')
+
+    def test_missing_required_cli_opt(self):
+        self.conf.register_cli_opt(StrOpt('foo',
+                                          required=True,
+                                          positional=True))
+        self.assertRaises(RequiredOptError, self.conf, [])
 
 
 class ConfigFileOptsTestCase(BaseTestCase):
@@ -387,7 +440,7 @@ class ConfigFileOptsTestCase(BaseTestCase):
                                         '[DEFAULT]\n'
                                         'foo = yes\n')])
 
-        self.conf(['--foo', 'bar',
+        self.conf(['--foo',
                    '--config-file', paths[0],
                    '--config-file', paths[1]])
 
