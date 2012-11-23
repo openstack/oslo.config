@@ -735,6 +735,18 @@ class OptGroupsTestCase(BaseTestCase):
         self.assertTrue(hasattr(self.conf.blaa, 'foo'))
         self.assertEquals(self.conf.blaa.foo, 'bar')
 
+    def test_arg_group_with_conf_and_group_opts(self):
+        self.conf.register_cli_opt(StrOpt('conf'), group='blaa')
+        self.conf.register_cli_opt(StrOpt('group'), group='blaa')
+
+        self.conf(['--blaa-conf', 'foo', '--blaa-group', 'bar'])
+
+        self.assertTrue(hasattr(self.conf, 'blaa'))
+        self.assertTrue(hasattr(self.conf.blaa, 'conf'))
+        self.assertEquals(self.conf.blaa.conf, 'foo')
+        self.assertTrue(hasattr(self.conf.blaa, 'group'))
+        self.assertEquals(self.conf.blaa.group, 'bar')
+
     def test_arg_group_in_config_file(self):
         self.conf.register_group(OptGroup('blaa'))
         self.conf.register_opt(StrOpt('foo'), group='blaa')
