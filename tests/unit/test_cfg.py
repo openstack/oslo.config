@@ -1374,6 +1374,8 @@ class SadPathTestCase(BaseTestCase):
                           self.conf.register_cli_opt, StrOpt('foo'))
 
     def test_bad_cli_arg(self):
+        self.conf.register_opt(BoolOpt('foo'))
+
         self.stubs.Set(sys, 'stderr', StringIO.StringIO())
 
         self.assertRaises(SystemExit, self.conf, ['--foo'])
