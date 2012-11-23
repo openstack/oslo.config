@@ -1631,45 +1631,110 @@ class TildeExpansionTestCase(BaseTestCase):
         self.assertEquals(self.conf.find_file(tmpbase), tmpfile)
 
 
-class SubcommandTestCase(BaseTestCase):
+class SubCommandTestCase(BaseTestCase):
 
-    class FooAction(argparse.Action):
-        def __call__(self, parser, namespace, values, option_string=None):
-            setattr(namespace, self.dest, values)
-            setattr(namespace.parse_result.opts, self.dest, values)
-            namespace.parse_result.args = option_string
-            del namespace.parse_result
+    def test_sub_command(self):
+        def add_parsers(subparsers):
+            sub = subparsers.add_parser('a')
+            sub.add_argument('bar', type=int)
 
-    class parse_result(object):
-        opts = argparse.Namespace()
-        args = None
+        self.conf.register_cli_opt(SubCommandOpt('cmd', handler=add_parsers))
+        self.assertTrue(hasattr(self.conf, 'cmd'))
+        self.conf(['a', '10'])
+        self.assertTrue(hasattr(self.conf.cmd, 'name'))
+        self.assertTrue(hasattr(self.conf.cmd, 'bar'))
+        self.assertEquals(self.conf.cmd.name, 'a')
+        self.assertEquals(self.conf.cmd.bar, 10)
 
-    def test_subcommand_basic(self):
+    def test_sub_command_with_dest(self):
+        def add_parsers(subparsers):
+            sub = subparsers.add_parser('a')
 
-        cfg = CommonConfigOpts()
-        cfg.register_cli_opt(BoolOpt('foo'))
+        self.conf.register_cli_opt(SubCommandOpt('cmd', dest='command',
+                                                 handler=add_parsers))
+        self.assertTrue(hasattr(self.conf, 'command'))
+        self.conf(['a'])
+        self.assertEquals(self.conf.command.name, 'a')
 
-        pr = SubcommandTestCase.parse_result()
-        sub_parsers = cfg.add_cli_subparsers(help='subcmd help')
-        sub1 = sub_parsers.add_parser('a', help='a help')
-        sub1.add_argument('bar', type=int, help='bar help',
-                          action=SubcommandTestCase.FooAction)
-        sub1.set_defaults(cmd='a', parse_result=pr)
+    def test_sub_command_with_group(self):
+        def add_parsers(subparsers):
+            sub = subparsers.add_parser('a')
+            sub.add_argument('--bar', choices='XYZ')
 
-        cfg(['a', '12'])
-        self.assertEquals(cfg.foo, False)
-        self.assertEquals(pr.opts.bar, 12)
+        self.conf.register_cli_opt(SubCommandOpt('cmd', handler=add_parsers),
+                                   group='blaa')
+        self.assertTrue(hasattr(self.conf, 'blaa'))
+        self.assertTrue(hasattr(self.conf.blaa, 'cmd'))
+        self.conf(['a', '--bar', 'Z'])
+        self.assertTrue(hasattr(self.conf.blaa.cmd, 'name'))
+        self.assertTrue(hasattr(self.conf.blaa.cmd, 'bar'))
+        self.assertEquals(self.conf.blaa.cmd.name, 'a')
+        self.assertEquals(self.conf.blaa.cmd.bar, 'Z')
 
-        cfg = CommonConfigOpts()
-        cfg.register_cli_opt(BoolOpt('foo'))
+    def test_sub_command_not_cli(self):
+        self.conf.register_opt(SubCommandOpt('cmd'))
+        self.conf([])
 
-        pr = SubcommandTestCase.parse_result()
-        sub_parsers = cfg.add_cli_subparsers(help='subcmd help')
-        sub2 = sub_parsers.add_parser('b', help='b help')
-        sub2.add_argument('--baz', choices='XYZ', help='baz help',
-                          action=SubcommandTestCase.FooAction)
-        sub2.set_defaults(cmd='b', parse_result=pr)
+    def test_sub_command_resparse(self):
+        def add_parsers(subparsers):
+            sub = subparsers.add_parser('a')
 
-        cfg(['--foo', 'b', '--baz', 'Z'])
-        self.assertEquals(cfg.foo, True)
-        self.assertEquals(pr.opts.baz, 'Z')
+        self.conf.register_cli_opt(SubCommandOpt('cmd',
+                                                 handler=add_parsers))
+
+        foo_opt = StrOpt('foo')
+        self.conf.register_cli_opt(foo_opt)
+
+        self.conf(['--foo=bar', 'a'])
+
+        self.assertTrue(hasattr(self.conf.cmd, 'name'))
+        self.assertEquals(self.conf.cmd.name, 'a')
+        self.assertTrue(hasattr(self.conf, 'foo'))
+        self.assertEquals(self.conf.foo, 'bar')
+
+        self.conf.clear()
+        self.conf.unregister_opt(foo_opt)
+        self.conf(['a'])
+
+        self.assertTrue(hasattr(self.conf.cmd, 'name'))
+        self.assertEquals(self.conf.cmd.name, 'a')
+        self.assertFalse(hasattr(self.conf, 'foo'))
+
+    def test_sub_command_no_handler(self):
+        self.conf.register_cli_opt(SubCommandOpt('cmd'))
+        self.stubs.Set(sys, 'stderr', StringIO.StringIO())
+        self.assertRaises(SystemExit, self.conf, [])
+        self.assertTrue('error' in sys.stderr.getvalue())
+
+    def test_sub_command_with_help(self):
+        def add_parsers(subparsers):
+            sub = subparsers.add_parser('a')
+
+        self.conf.register_cli_opt(SubCommandOpt('cmd',
+                                                 title='foo foo',
+                                                 description='bar bar',
+                                                 help='blaa blaa',
+                                                 handler=add_parsers))
+        self.stubs.Set(sys, 'stdout', StringIO.StringIO())
+        self.assertRaises(SystemExit, self.conf, ['--help'])
+        self.assertTrue('foo foo' in sys.stdout.getvalue())
+        self.assertTrue('bar bar' in sys.stdout.getvalue())
+        self.assertTrue('blaa blaa' in sys.stdout.getvalue())
+
+    def test_sub_command_errors(self):
+        def add_parsers(subparsers):
+            sub = subparsers.add_parser('a')
+            sub.add_argument('--bar')
+
+        self.conf.register_cli_opt(BoolOpt('bar'))
+        self.conf.register_cli_opt(SubCommandOpt('cmd', handler=add_parsers))
+        self.conf(['a'])
+        self.assertRaises(DuplicateOptError, getattr, self.conf.cmd, 'bar')
+        self.assertRaises(NoSuchOptError, getattr, self.conf.cmd, 'foo')
+
+    def test_sub_command_multiple(self):
+        self.conf.register_cli_opt(SubCommandOpt('cmd1'))
+        self.conf.register_cli_opt(SubCommandOpt('cmd2'))
+        self.stubs.Set(sys, 'stderr', StringIO.StringIO())
+        self.assertRaises(SystemExit, self.conf, [])
+        self.assertTrue('multiple' in sys.stderr.getvalue())
