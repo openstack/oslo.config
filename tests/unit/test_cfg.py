@@ -219,6 +219,10 @@ class CliOptsTestCase(BaseTestCase):
         self._do_cli_test(ListOpt, None,
                           ['--foo', 'blaa,bar'], ['blaa', 'bar'])
 
+    def test_list_arg_with_spaces(self):
+        self._do_cli_test(ListOpt, None,
+                          ['--foo', 'blaa ,bar'], ['blaa', 'bar'])
+
     def test_list_arg_deprecated(self):
         self._do_cli_test(ListOpt, None,
                           ['--oldfoo', 'blaa,bar'], ['blaa', 'bar'])
