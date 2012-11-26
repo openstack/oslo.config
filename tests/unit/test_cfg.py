@@ -1114,6 +1114,28 @@ class OverridesTestCase(BaseTestCase):
         self.conf.clear_override('foo', group='blaa')
         self.assertEquals(self.conf.blaa.foo, None)
 
+    def test_cli_bool_default(self):
+        self.conf.register_cli_opt(BoolOpt('foo'))
+        self.conf.set_default('foo', True)
+        self.assertTrue(self.conf.foo)
+        self.conf([])
+        self.assertTrue(self.conf.foo)
+        self.conf.set_default('foo', False)
+        self.assertFalse(self.conf.foo)
+        self.conf.clear_default('foo')
+        self.assertTrue(self.conf.foo is None)
+
+    def test_cli_bool_override(self):
+        self.conf.register_cli_opt(BoolOpt('foo'))
+        self.conf.set_override('foo', True)
+        self.assertTrue(self.conf.foo)
+        self.conf([])
+        self.assertTrue(self.conf.foo)
+        self.conf.set_override('foo', False)
+        self.assertFalse(self.conf.foo)
+        self.conf.clear_override('foo')
+        self.assertTrue(self.conf.foo is None)
+
 
 class ResetAndClearTestCase(BaseTestCase):
 
