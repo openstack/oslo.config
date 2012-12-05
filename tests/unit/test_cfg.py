@@ -595,6 +595,12 @@ class ConfigFileOptsTestCase(BaseTestCase):
     def test_conf_file_list_ignore_deprecated(self):
         self._do_deprecated_test_ignore(ListOpt, 'd,e,f', ['d', 'e', 'f'])
 
+    def test_conf_file_list_spaces_use_deprecated(self):
+        self._do_deprecated_test_use(ListOpt, 'a, b, c', ['a', 'b', 'c'])
+
+    def test_conf_file_list_spaces_ignore_deprecated(self):
+        self._do_deprecated_test_ignore(ListOpt, 'd, e, f', ['d', 'e', 'f'])
+
     def test_conf_file_multistr_default(self):
         self.conf.register_opt(MultiStrOpt('foo', default=['bar']))
 
