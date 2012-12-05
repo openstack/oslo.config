@@ -1766,3 +1766,48 @@ class SubCommandTestCase(BaseTestCase):
         self.stubs.Set(sys, 'stderr', StringIO.StringIO())
         self.assertRaises(SystemExit, self.conf, [])
         self.assertTrue('multiple' in sys.stderr.getvalue())
+
+
+class SetDefaultsTestCase(BaseTestCase):
+
+    def test_default_to_none(self):
+        opts = [StrOpt('foo', default='foo')]
+        self.conf.register_opts(opts)
+        set_defaults(opts, foo=None)
+        self.conf([])
+        self.assertEquals(self.conf.foo, None)
+
+    def test_default_from_none(self):
+        opts = [StrOpt('foo')]
+        self.conf.register_opts(opts)
+        set_defaults(opts, foo='bar')
+        self.conf([])
+        self.assertEquals(self.conf.foo, 'bar')
+
+    def test_change_default(self):
+        opts = [StrOpt('foo', default='foo')]
+        self.conf.register_opts(opts)
+        set_defaults(opts, foo='bar')
+        self.conf([])
+        self.assertEquals(self.conf.foo, 'bar')
+
+    def test_group_default_to_none(self):
+        opts = [StrOpt('foo', default='foo')]
+        self.conf.register_opts(opts, group='blaa')
+        set_defaults(opts, foo=None)
+        self.conf([])
+        self.assertEquals(self.conf.blaa.foo, None)
+
+    def test_group_default_from_none(self):
+        opts = [StrOpt('foo')]
+        self.conf.register_opts(opts, group='blaa')
+        set_defaults(opts, foo='bar')
+        self.conf([])
+        self.assertEquals(self.conf.blaa.foo, 'bar')
+
+    def test_group_change_default(self):
+        opts = [StrOpt('foo', default='foo')]
+        self.conf.register_opts(opts, group='blaa')
+        set_defaults(opts, foo='bar')
+        self.conf([])
+        self.assertEquals(self.conf.blaa.foo, 'bar')
