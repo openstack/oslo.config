@@ -1608,6 +1608,17 @@ class CommonOptsTestCase(BaseTestCase):
 
         self.assertEquals(self.conf.use_syslog, False)
 
+    def test_log_file(self):
+        log_file = '/some/path/foo-bar.log'
+        self.conf(['--log-file', log_file])
+        self.assertEquals(self.conf.log_file, log_file)
+
+    def test_logfile(self):
+        logfile = '/some/other/path/foo-bar.log'
+        #NOTE(dprince): this is now a deprecated option for --log-file
+        self.conf(['--logfile', logfile])
+        self.assertEquals(self.conf.log_file, logfile)
+
 
 class ConfigParserTestCase(unittest.TestCase):
     def test_no_section(self):
