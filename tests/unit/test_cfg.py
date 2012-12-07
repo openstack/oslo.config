@@ -1613,11 +1613,20 @@ class CommonOptsTestCase(BaseTestCase):
         self.conf(['--log-file', log_file])
         self.assertEquals(self.conf.log_file, log_file)
 
-    def test_logfile(self):
+    def test_logfile_deprecated(self):
         logfile = '/some/other/path/foo-bar.log'
-        #NOTE(dprince): this is now a deprecated option for --log-file
         self.conf(['--logfile', logfile])
         self.assertEquals(self.conf.log_file, logfile)
+
+    def test_log_dir(self):
+        log_dir = '/some/path/'
+        self.conf(['--log-dir', log_dir])
+        self.assertEquals(self.conf.log_dir, log_dir)
+
+    def test_logdir_deprecated(self):
+        logdir = '/some/other/path/'
+        self.conf(['--logdir', logdir])
+        self.assertEquals(self.conf.log_dir, logdir)
 
 
 class ConfigParserTestCase(unittest.TestCase):
