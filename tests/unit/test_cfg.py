@@ -1120,12 +1120,6 @@ class OverridesTestCase(BaseTestCase):
         self.conf.clear_override('foo', group='blaa')
         self.assertEquals(self.conf.blaa.foo, None)
 
-    def test_group_get_group_option(self):
-        self.conf.register_group(OptGroup('blaa'))
-        self.conf.register_opt(StrOpt('foo', default='foo2'), group='blaa')
-        self.conf([])
-        self.assertEquals(self.conf['blaa.foo'], 'foo2')
-
     def test_cli_bool_default(self):
         self.conf.register_cli_opt(BoolOpt('foo'))
         self.conf.set_default('foo', True)
