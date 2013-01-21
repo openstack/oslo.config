@@ -1573,62 +1573,6 @@ class OptDumpingTestCase(BaseTestCase):
                           ])
 
 
-class CommonOptsTestCase(BaseTestCase):
-
-    def setUp(self):
-        super(CommonOptsTestCase, self).setUp()
-        self.conf = CommonConfigOpts()
-
-    def test_print_help(self):
-        f = StringIO.StringIO()
-        self.conf([])
-        self.conf.print_help(file=f)
-        self.assertTrue('debug' in f.getvalue())
-        self.assertTrue('verbose' in f.getvalue())
-        self.assertTrue('log-config' in f.getvalue())
-        self.assertTrue('log-format' in f.getvalue())
-
-    def test_debug_verbose(self):
-        self.conf(['--debug', '--verbose'])
-
-        self.assertEquals(self.conf.debug, True)
-        self.assertEquals(self.conf.verbose, True)
-
-    def test_logging_opts(self):
-        self.conf([])
-
-        self.assertTrue(self.conf.log_config is None)
-        self.assertTrue(self.conf.log_file is None)
-        self.assertTrue(self.conf.log_dir is None)
-
-        self.assertEquals(self.conf.log_format,
-                          CommonConfigOpts.DEFAULT_LOG_FORMAT)
-        self.assertEquals(self.conf.log_date_format,
-                          CommonConfigOpts.DEFAULT_LOG_DATE_FORMAT)
-
-        self.assertEquals(self.conf.use_syslog, False)
-
-    def test_log_file(self):
-        log_file = '/some/path/foo-bar.log'
-        self.conf(['--log-file', log_file])
-        self.assertEquals(self.conf.log_file, log_file)
-
-    def test_logfile_deprecated(self):
-        logfile = '/some/other/path/foo-bar.log'
-        self.conf(['--logfile', logfile])
-        self.assertEquals(self.conf.log_file, logfile)
-
-    def test_log_dir(self):
-        log_dir = '/some/path/'
-        self.conf(['--log-dir', log_dir])
-        self.assertEquals(self.conf.log_dir, log_dir)
-
-    def test_logdir_deprecated(self):
-        logdir = '/some/other/path/'
-        self.conf(['--logdir', logdir])
-        self.assertEquals(self.conf.log_dir, logdir)
-
-
 class ConfigParserTestCase(unittest.TestCase):
     def test_no_section(self):
         with tempfile.NamedTemporaryFile() as tmpfile:
