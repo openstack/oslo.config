@@ -1,0 +1,9 @@
+*~
+*.swp
+*.pyc
+*.log
+.tox
+.coverage
+oslo_config.egg-info/
+build/
+dist/

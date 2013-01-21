@@ -1,0 +1,8 @@
+mox
+nose
+nose-exclude
+
+# when we can require tox>= 1.4, this can go into tox.ini:
+#  [testenv:cover]
+#  deps = {[testenv]deps} coverage
+coverage
