@@ -16,7 +16,7 @@
 
 import unittest
 
-from openstack.common import iniparser
+from oslo.config import iniparser
 
 
 class TestParser(iniparser.BaseParser):

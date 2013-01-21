@@ -23,7 +23,7 @@ import unittest
 
 import stubout
 
-from openstack.common.cfg import *
+from oslo.config.cfg import *
 
 
 class ExceptionsTestCase(unittest.TestCase):
