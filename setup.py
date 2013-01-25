@@ -20,6 +20,7 @@ import setuptools
 from magic.openstack.common import setup
 
 package = 'oslo-config'
+version = '2012.3'
 
 requires = setup.parse_requirements()
 depend_links = setup.parse_dependency_links()
@@ -28,7 +29,7 @@ tests_require = setup.parse_requirements(['tools/test-requires'])
 
 setuptools.setup(
     name=package,
-    version=setup.get_version(package),
+    version=setup.get_version(package, version),
     description='Oslo configuration API',
     long_description='The Oslo configuration API supports parsing command '
                      'line arguments and .ini style configuration files.',
