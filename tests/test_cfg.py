@@ -19,14 +19,14 @@ import shutil
 import StringIO
 import sys
 import tempfile
-import unittest
 
-import stubout
+import fixtures
 
 from oslo.config.cfg import *
+from tests import utils
 
 
-class ExceptionsTestCase(unittest.TestCase):
+class ExceptionsTestCase(utils.BaseTestCase):
 
     def test_error(self):
         msg = str(Error('foobar'))
@@ -73,7 +73,7 @@ class ExceptionsTestCase(unittest.TestCase):
         self.assertEquals(msg, 'Failed to parse foo: foobar')
 
 
-class BaseTestCase(unittest.TestCase):
+class BaseTestCase(utils.BaseTestCase):
 
     class TestConfigOpts(ConfigOpts):
         def __call__(self, args=None):
@@ -85,35 +85,26 @@ class BaseTestCase(unittest.TestCase):
                                        default_config_files=[])
 
     def setUp(self):
+        super(BaseTestCase, self).setUp()
+        self.useFixture(fixtures.NestedTempfile())
         self.conf = self.TestConfigOpts()
 
-        self.tempfiles = []
         self.tempdirs = []
-        self.stubs = stubout.StubOutForTesting()
-
-    def tearDown(self):
-        self.remove_tempfiles()
-        self.stubs.UnsetAll()
 
     def create_tempfiles(self, files, ext='.conf'):
+        tempfiles = []
         for (basename, contents) in files:
             if not os.path.isabs(basename):
                 (fd, path) = tempfile.mkstemp(prefix=basename, suffix=ext)
             else:
                 path = basename + ext
                 fd = os.open(path, os.O_CREAT | os.O_WRONLY)
-            self.tempfiles.append(path)
+            tempfiles.append(path)
             try:
                 os.write(fd, contents)
             finally:
                 os.close(fd)
-        return self.tempfiles[-len(files):]
-
-    def remove_tempfiles(self):
-        for p in self.tempfiles:
-            os.remove(p)
-        for d in self.tempdirs:
-            shutil.rmtree(d, ignore_errors=True)
+        return tempfiles
 
 
 class UsageTestCase(BaseTestCase):
@@ -1428,12 +1419,12 @@ class SadPathTestCase(BaseTestCase):
         self._do_test_bad_cli_value(FloatOpt)
 
     def test_conf_file_not_found(self):
-        paths = self.create_tempfiles([('test', '')])
-        os.remove(paths[0])
-        self.tempfiles.remove(paths[0])
+        (fd, path) = tempfile.mkstemp()
+
+        os.remove(path)
 
         self.assertRaises(ConfigFilesNotFoundError,
-                          self.conf, ['--config-file', paths[0]])
+                          self.conf, ['--config-file', path])
 
     def test_conf_file_broken(self):
         paths = self.create_tempfiles([('test', 'foo')])
@@ -1573,7 +1564,7 @@ class OptDumpingTestCase(BaseTestCase):
                           ])
 
 
-class ConfigParserTestCase(unittest.TestCase):
+class ConfigParserTestCase(utils.BaseTestCase):
     def test_no_section(self):
         with tempfile.NamedTemporaryFile() as tmpfile:
             tmpfile.write('foo = bar')
