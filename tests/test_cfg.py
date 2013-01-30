@@ -1241,6 +1241,23 @@ class ImportOptTestCase(BaseTestCase):
                           'blaa', 'tests.testmods.blaa_opt', group='blaa')
 
 
+class ImportGroupTestCase(BaseTestCase):
+
+    def test_import_group(self):
+        self.assertFalse(hasattr(CONF, 'qux'))
+        CONF.import_group('qux', 'tests.testmods.baz_qux_opt')
+        self.assertTrue(hasattr(CONF, 'qux'))
+        self.assertTrue(hasattr(CONF.qux, 'baz'))
+
+    def test_import_group_import_error(self):
+        self.assertRaises(ImportError, CONF.import_group,
+                          'qux', 'tests.testmods.bazzz_quxxx_opt')
+
+    def test_import_group_no_such_group(self):
+        self.assertRaises(NoSuchGroupError, CONF.import_group,
+                          'quxxx', 'tests.testmods.baz_qux_opt')
+
+
 class RequiredOptsTestCase(BaseTestCase):
 
     def setUp(self):
