@@ -6,4 +6,6 @@
 .coverage
 oslo_config.egg-info/
 build/
+doc/build/
+doc/source/api/
 dist/

@@ -8,3 +8,6 @@ testtools>=0.9.22
 #  [testenv:cover]
 #  deps = {[testenv]deps} coverage
 coverage
+
+# this is required for the docs build jobs
+sphinx
