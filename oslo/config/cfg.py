@@ -564,11 +564,13 @@ class Opt(object):
         """
         return self._cparser_get_with_deprecated(cparser, section)
 
-    def _cparser_get_with_deprecated(self, cparser, section):
+    def _cparser_get_with_deprecated(self, cparser, section, multi=False):
         """If cannot find option as dest try deprecated_name alias."""
         if self.deprecated_name is not None:
-            return cparser.get(section, [self.dest, self.deprecated_name])
-        return cparser.get(section, [self.dest])
+            return cparser.get(section,
+                               [self.dest, self.deprecated_name],
+                               multi)
+        return cparser.get(section, [self.dest], multi)
 
     def _add_to_cli(self, parser, group=None):
         """Makes the option available in the command line interface.
@@ -810,10 +812,8 @@ class MultiStrOpt(Opt):
 
     def _cparser_get_with_deprecated(self, cparser, section):
         """If cannot find option as dest try deprecated_name alias."""
-        if self.deprecated_name is not None:
-            return cparser.get(section, [self.dest, self.deprecated_name],
-                               multi=True)
-        return cparser.get(section, [self.dest], multi=True)
+        supr = super(MultiStrOpt, self)
+        return supr._cparser_get_with_deprecated(cparser, section, multi=True)
 
 
 class SubCommandOpt(Opt):
