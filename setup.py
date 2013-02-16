@@ -42,7 +42,7 @@ setuptools.setup(
     author_email='openstack-dev@lists.openstack.org',
     url='http://www.openstack.org/',
     license='Apache Software License',
-    packages=['oslo'],
+    packages=['oslo.config'],
     namespace_packages=['oslo'],
     cmdclass=setup.get_cmdclass(),
     install_requires=requires,
