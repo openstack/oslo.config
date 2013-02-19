@@ -566,11 +566,10 @@ class Opt(object):
 
     def _cparser_get_with_deprecated(self, cparser, section, multi=False):
         """If cannot find option as dest try deprecated_name alias."""
+        names = [(section, self.dest)]
         if self.deprecated_name is not None:
-            return cparser.get(section,
-                               [self.dest, self.deprecated_name],
-                               multi)
-        return cparser.get(section, [self.dest], multi)
+            names.append((section, self.deprecated_name))
+        return cparser.get(names, multi)
 
     def _add_to_cli(self, parser, group=None):
         """Makes the option available in the command line interface.
@@ -999,12 +998,12 @@ class MultiConfigParser(object):
 
         return read_ok
 
-    def get(self, section, names, multi=False):
+    def get(self, names, multi=False):
         rvalue = []
         for sections in self.parsed:
-            if section not in sections:
-                continue
-            for name in names:
+            for section, name in names:
+                if section not in sections:
+                    continue
                 if name in sections[section]:
                     if multi:
                         rvalue = sections[section][name] + rvalue
