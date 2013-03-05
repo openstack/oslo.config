@@ -20,7 +20,7 @@ import setuptools
 from magic.openstack.common import setup
 
 package = 'oslo-config'
-version = '2013.1'
+version = '1.1.0'
 
 requires = setup.parse_requirements()
 depend_links = setup.parse_dependency_links()
