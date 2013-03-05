@@ -1849,15 +1849,19 @@ class OptDumpingTestCase(BaseTestCase):
             self.test_case.assertEquals(lvl, self.expected_lvl)
             self.logged.append(fmt % args)
 
-    def test_log_opt_values(self):
+    def setUp(self):
+        super(OptDumpingTestCase, self).setUp()
+        self._args = ['--foo', 'this', '--blaa-bar', 'that',
+                      '--blaa-key', 'admin', '--passwd', 'hush']
+
+    def _do_test_log_opt_values(self, args):
         self.conf.register_cli_opt(StrOpt('foo'))
         self.conf.register_cli_opt(StrOpt('passwd', secret=True))
         self.conf.register_group(OptGroup('blaa'))
         self.conf.register_cli_opt(StrOpt('bar'), 'blaa')
         self.conf.register_cli_opt(StrOpt('key', secret=True), 'blaa')
 
-        self.conf(['--foo', 'this', '--blaa-bar', 'that',
-                   '--blaa-key', 'admin', '--passwd', 'hush'])
+        self.conf(args)
 
         logger = self.FakeLogger(self, 666)
 
@@ -1878,6 +1882,13 @@ class OptDumpingTestCase(BaseTestCase):
                           "blaa.key                       = *****",
                           "*" * 80,
                           ])
+
+    def test_log_opt_values(self):
+        self._do_test_log_opt_values(self._args)
+
+    def test_log_opt_values_from_sys_argv(self):
+        self.stubs.Set(sys, 'argv', ['foo'] + self._args)
+        self._do_test_log_opt_values(None)
 
 
 class ConfigParserTestCase(utils.BaseTestCase):

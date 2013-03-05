@@ -1174,7 +1174,8 @@ class ConfigOpts(collections.Mapping):
 
         self._setup(project, prog, version, usage, default_config_files)
 
-        self._cli_values = self._parse_cli_opts(args)
+        self._cli_values = self._parse_cli_opts(args if args is not None
+                                                else sys.argv[1:])
 
         self._parse_config_files()
 
