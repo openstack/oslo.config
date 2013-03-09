@@ -1238,7 +1238,7 @@ class ConfigOpts(collections.Mapping):
         :param opt: an instance of an Opt sub-class
         :param cli: whether this is a CLI option
         :param group: an optional OptGroup object or group name
-        :return: False if the opt was already register, True otherwise
+        :return: False if the opt was already registered, True otherwise
         :raises: DuplicateOptError
         """
         if group is not None:
@@ -1264,11 +1264,11 @@ class ConfigOpts(collections.Mapping):
 
         CLI option schemas must be registered before the command line and
         config files are parsed. This is to ensure that all CLI options are
-        show in --help and option validation works as expected.
+        shown in --help and option validation works as expected.
 
         :param opt: an instance of an Opt sub-class
         :param group: an optional OptGroup object or group name
-        :return: False if the opt was already register, True otherwise
+        :return: False if the opt was already registered, True otherwise
         :raises: DuplicateOptError, ArgsAlreadyParsedError
         """
         if self._args is not None:
