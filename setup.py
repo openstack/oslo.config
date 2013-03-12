@@ -35,6 +35,7 @@ setuptools.setup(
                      'line arguments and .ini style configuration files.',
     classifiers=[
         'Development Status :: 4 - Beta',
+        'Environment :: OpenStack',
         'License :: OSI Approved :: Apache Software License',
         'Operating System :: POSIX :: Linux',
         'Programming Language :: Python :: 2.6', ],
