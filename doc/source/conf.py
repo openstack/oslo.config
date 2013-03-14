@@ -24,7 +24,7 @@ source_suffix = '.rst'
 master_doc = 'index'
 
 # General information about the project.
-project = u'oslo-config'
+project = u'oslo.config'
 copyright = u'2012, OpenStack, LLC'
 
 # If true, '()' will be appended to :func: etc. cross-reference text.
