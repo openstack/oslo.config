@@ -1,4 +1,4 @@
-oslo-config
+oslo.config
 ===========
 
 An OpenStack library for parsing configuration options from the command
