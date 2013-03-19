@@ -563,7 +563,33 @@ class ConfigFileOptsTestCase(BaseTestCase):
         self.assertTrue(hasattr(self.conf, 'foo'))
         self.assertEquals(self.conf.foo, True)
 
-    def test_conf_file_bool_value_override(self):
+    def test_conf_file_bool_cli_value_override(self):
+        self.conf.register_cli_opt(BoolOpt('foo'))
+
+        paths = self.create_tempfiles([('1',
+                                        '[DEFAULT]\n'
+                                        'foo = 0\n')])
+
+        self.conf(['--foo',
+                   '--config-file', paths[0]])
+
+        self.assertTrue(hasattr(self.conf, 'foo'))
+        self.assertEquals(self.conf.foo, False)
+
+    def test_conf_file_bool_cli_inverse_override(self):
+        self.conf.register_cli_opt(BoolOpt('foo'))
+
+        paths = self.create_tempfiles([('1',
+                                        '[DEFAULT]\n'
+                                        'foo = true\n')])
+
+        self.conf(['--nofoo',
+                   '--config-file', paths[0]])
+
+        self.assertTrue(hasattr(self.conf, 'foo'))
+        self.assertEquals(self.conf.foo, True)
+
+    def test_conf_file_bool_file_value_override(self):
         self.conf.register_cli_opt(BoolOpt('foo'))
 
         paths = self.create_tempfiles([('1',
@@ -573,8 +599,7 @@ class ConfigFileOptsTestCase(BaseTestCase):
                                         '[DEFAULT]\n'
                                         'foo = yes\n')])
 
-        self.conf(['--foo',
-                   '--config-file', paths[0],
+        self.conf(['--config-file', paths[0],
                    '--config-file', paths[1]])
 
         self.assertTrue(hasattr(self.conf, 'foo'))
