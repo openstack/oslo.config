@@ -30,7 +30,8 @@ The schema for each option is defined using the Opt sub-classes, e.g.:
                    help='Port number to listen on')
     ]
 
-Options can be strings, integers, floats, booleans, lists or 'multi strings'::
+Options can be strings, integers, floats, booleans, lists, or 'multi strings'
+or 'key/value pairs' (dictionary) ::
 
     enabled_apis_opt = cfg.ListOpt('enabled_apis',
                                    default=['ec2', 'osapi_compute'],
@@ -827,6 +828,46 @@ class ListOpt(Opt):
         return Opt._get_argparse_kwargs(self,
                                         group,
                                         action=ListOpt._StoreListAction,
+                                        **kwargs)
+
+
+class DictOpt(Opt):
+
+    """
+    Dictionary opt values are key:value pairs separated by commas. The opt
+    value is a dictionary of these key/value pairs
+    """
+
+    @staticmethod
+    def _split(line):
+        """
+        Split a line into key/value pairs separated by commas, then split
+        the each into key and value using colons as separator and then
+        stuff the key/value (s) into a dictionary
+        """
+        return dict([[a.strip() for a in v.split(':')]
+                    for v in line.split(',')])
+
+    class _StoreDictAction(argparse.Action):
+        """
+        An argparse action for parsing an option value into a dictionary.
+        """
+        def __call__(self, parser, namespace, values, option_string=None):
+            if values is not None:
+                values = DictOpt._split(values)
+
+            setattr(namespace, self.dest, values)
+
+    def _get_from_config_parser(self, cparser, section):
+        """Retrieve the opt value as a dictionary from ConfigParser."""
+        return [DictOpt._split(x)
+                for x in self._cparser_get_with_deprecated(cparser, section)]
+
+    def _get_argparse_kwargs(self, group, **kwargs):
+        """Extends the base argparse keyword dict for dictionary options."""
+        return Opt._get_argparse_kwargs(self,
+                                        group,
+                                        action=DictOpt._StoreDictAction,
                                         **kwargs)
 
 

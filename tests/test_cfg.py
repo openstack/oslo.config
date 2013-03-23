@@ -300,6 +300,65 @@ class CliOptsTestCase(BaseTestCase):
                           ['--old-oof', 'blaa,bar'], ['blaa', 'bar'],
                           deps=('oof', 'old'))
 
+    def test_dict_default(self):
+        self._do_cli_test(DictOpt, {'foo': 'bar'}, [], {'foo': 'bar'})
+
+    def test_dict_arg(self):
+        self._do_cli_test(DictOpt, None,
+                          ['--foo', 'key1:blaa,key2:bar'],
+                          {'key1': 'blaa', 'key2': 'bar'})
+
+    def test_dict_arg_multiple_keys_last_wins(self):
+        self._do_cli_test(DictOpt, None,
+                          ['--foo', 'key1:blaa',
+                           '--foo', 'key2:bar'],
+                          {'key2': 'bar'})
+
+    def test_dict_arg_with_spaces(self):
+        self._do_cli_test(DictOpt, None,
+                          ['--foo', 'key1:blaa   ,key2:bar'],
+                          {'key1': 'blaa', 'key2': 'bar'})
+
+    def test_dict_arg_deprecated_name(self):
+        self._do_cli_test(DictOpt, None,
+                          ['--oldfoo', 'key1:blaa',
+                           '--oldfoo', 'key2:bar'],
+                          {'key2': 'bar'},
+                          deps=('oldfoo', None))
+
+    def test_dict_arg_deprecated_group(self):
+        self._do_cli_test(DictOpt, None,
+                          ['--old-foo', 'key1:blaa,key2:bar'],
+                          {'key1': 'blaa', 'key2': 'bar'},
+                          deps=(None, 'old'))
+
+    def test_dict_arg_deprecated_group2(self):
+        self._do_cli_test(DictOpt, None,
+                          ['--old-foo', 'key1:blaa',
+                           '--old-foo', 'key2:bar'],
+                          {'key2': 'bar'},
+                          deps=(None, 'old'))
+
+    def test_dict_arg_deprecated_group_default(self):
+        self._do_cli_test(DictOpt, None,
+                          ['--foo', 'key1:blaa',
+                           '--foo', 'key2:bar'],
+                          {'key2': 'bar'},
+                          deps=(None, 'DEFAULT'))
+
+    def test_dict_arg_deprecated_group_and_name(self):
+        self._do_cli_test(DictOpt, None,
+                          ['--old-oof', 'key1:blaa,key2:bar'],
+                          {'key1': 'blaa', 'key2': 'bar'},
+                          deps=('oof', 'old'))
+
+    def test_dict_arg_deprecated_group_and_name2(self):
+        self._do_cli_test(DictOpt, None,
+                          ['--old-oof', 'key1:blaa',
+                           '--old-oof', 'key2:bar'],
+                          {'key2': 'bar'},
+                          deps=('oof', 'old'))
+
     def test_multistr_default(self):
         self._do_cli_test(MultiStrOpt, ['bar'], [], ['bar'])
 
@@ -389,6 +448,14 @@ class PositionalTestCase(BaseTestCase):
     def test_positional_list_arg(self):
         self._do_pos_test(ListOpt, None,
                           ['blaa,bar'], ['blaa', 'bar'])
+
+    def test_positional_dict_default(self):
+        self._do_pos_test(DictOpt, {'key1': 'bar'}, [], {'key1': 'bar'})
+
+    def test_positional_dict_arg(self):
+        self._do_pos_test(DictOpt, None,
+                          ['key1:blaa,key2:bar'],
+                          {'key1': 'blaa', 'key2': 'bar'})
 
     def test_positional_multistr_default(self):
         self._do_pos_test(MultiStrOpt, ['bar'], [], ['bar'])
@@ -830,6 +897,152 @@ class ConfigFileOptsTestCase(BaseTestCase):
     def test_conf_file_list_spaces_ignore_dgroup_and_dname(self):
         self._do_dgroup_and_dname_test_ignore(ListOpt, 'd, e, f',
                                               ['d', 'e', 'f'])
+
+    def test_conf_file_dict_default(self):
+        self.conf.register_opt(DictOpt('foo', default={'key': 'bar'}))
+
+        paths = self.create_tempfiles([('test',
+                                        '[DEFAULT]\n')])
+
+        self.conf(['--config-file', paths[0]])
+
+        self.assertTrue(hasattr(self.conf, 'foo'))
+        self.assertEquals(self.conf.foo, {'key': 'bar'})
+
+    def test_conf_file_dict_value(self):
+        self.conf.register_opt(DictOpt('foo'))
+
+        paths = self.create_tempfiles([('test',
+                                        '[DEFAULT]\n'
+                                        'foo = key:bar\n')])
+
+        self.conf(['--config-file', paths[0]])
+
+        self.assertTrue(hasattr(self.conf, 'foo'))
+        self.assertEquals(self.conf.foo, {'key': 'bar'})
+
+    def test_conf_file_dict_values_override_deprecated(self):
+        self.conf.register_cli_opt(DictOpt('foo',
+                                   deprecated_name='oldfoo'))
+
+        paths = self.create_tempfiles([('1',
+                                        '[DEFAULT]\n'
+                                        'foo = key1:bar1\n'),
+                                       ('2',
+                                        '[DEFAULT]\n'
+                                        'oldfoo = key2:bar2\n'
+                                        'oldfoo = key3:bar3\n')])
+
+        self.conf(['--foo', 'key0:bar0',
+                   '--config-file', paths[0],
+                   '--config-file', paths[1]])
+
+        self.assertTrue(hasattr(self.conf, 'foo'))
+
+        self.assertEquals(self.conf.foo, {'key3': 'bar3'})
+
+    def test_conf_file_dict_deprecated(self):
+        self.conf.register_opt(DictOpt('newfoo', deprecated_name='oldfoo'))
+
+        paths = self.create_tempfiles([('test',
+                                        '[DEFAULT]\n'
+                                        'oldfoo= key1:bar1\n'
+                                        'oldfoo = key2:bar2\n')])
+
+        self.conf(['--config-file', paths[0]])
+        self.assertTrue(hasattr(self.conf, 'newfoo'))
+        self.assertEquals(self.conf.newfoo, {'key2': 'bar2'})
+
+    def test_conf_file_dict_value_override(self):
+        self.conf.register_cli_opt(DictOpt('foo'))
+
+        paths = self.create_tempfiles([('1',
+                                        '[DEFAULT]\n'
+                                        'foo = key:bar,key2:bar\n'),
+                                       ('2',
+                                        '[DEFAULT]\n'
+                                        'foo = k1:v1,k2:v2\n')])
+
+        self.conf(['--foo', 'x:y,x2:y2',
+                   '--config-file', paths[0],
+                   '--config-file', paths[1]])
+
+        self.assertTrue(hasattr(self.conf, 'foo'))
+        self.assertEquals(self.conf.foo, {'k1': 'v1', 'k2': 'v2'})
+
+    def test_conf_file_dict_use_dname(self):
+        self._do_dname_test_use(DictOpt,
+                                'k1:a,k2:b,k3:c',
+                                {'k1': 'a', 'k2': 'b', 'k3': 'c'})
+
+    def test_conf_file_dict_use_dgroup(self):
+        self._do_dgroup_test_use(DictOpt,
+                                 'k1:a,k2:b,k3:c',
+                                 {'k1': 'a', 'k2': 'b', 'k3': 'c'})
+
+    def test_conf_file_dict_use_default_dgroup(self):
+        self._do_default_dgroup_test_use(DictOpt,
+                                         'k1:a,k2:b,k3:c',
+                                         {'k1': 'a', 'k2': 'b', 'k3': 'c'})
+
+    def test_conf_file_dict_use_dgroup_and_dname(self):
+        self._do_dgroup_and_dname_test_use(DictOpt,
+                                           'k1:a,k2:b,k3:c',
+                                           {'k1': 'a', 'k2': 'b', 'k3': 'c'})
+
+    def test_conf_file_dict_ignore_dname(self):
+        self._do_dname_test_ignore(DictOpt,
+                                   'k1:d,k2:e,k3:f',
+                                   {'k1': 'd', 'k2': 'e', 'k3': 'f'})
+
+    def test_conf_file_dict_ignore_dgroup(self):
+        self._do_dgroup_test_ignore(DictOpt,
+                                    'k1:d,k2:e,k3:f',
+                                    {'k1': 'd', 'k2': 'e', 'k3': 'f'})
+
+    def test_conf_file_dict_ignore_dgroup_and_dname(self):
+        self._do_dgroup_and_dname_test_ignore(DictOpt,
+                                              'k1:d,k2:e,k3:f',
+                                              {'k1': 'd',
+                                               'k2': 'e',
+                                               'k3': 'f'})
+
+    def test_conf_file_dict_spaces_use_dname(self):
+        self._do_dname_test_use(DictOpt,
+                                'k1:a,k2:b,k3:c',
+                                {'k1': 'a', 'k2': 'b', 'k3': 'c'})
+
+    def test_conf_file_dict_spaces_use_dgroup(self):
+        self._do_dgroup_test_use(DictOpt,
+                                 'k1:a,k2:b,k3:c',
+                                 {'k1': 'a', 'k2': 'b', 'k3': 'c'})
+
+    def test_conf_file_dict_spaces_use_default_dgroup(self):
+        self._do_default_dgroup_test_use(DictOpt,
+                                         'k1:a,k2:b,k3:c',
+                                         {'k1': 'a', 'k2': 'b', 'k3': 'c'})
+
+    def test_conf_file_dict_spaces_use_dgroup_and_dname(self):
+        self._do_dgroup_and_dname_test_use(DictOpt,
+                                           'k1:a,k2:b,k3:c',
+                                           {'k1': 'a', 'k2': 'b', 'k3': 'c'})
+
+    def test_conf_file_dict_spaces_ignore_dname(self):
+        self._do_dname_test_ignore(DictOpt,
+                                   'k1:d,k2:e,k3:f',
+                                   {'k1': 'd', 'k2': 'e', 'k3': 'f'})
+
+    def test_conf_file_dict_spaces_ignore_dgroup(self):
+        self._do_dgroup_test_ignore(DictOpt,
+                                    'k1:d,k2:e,k3:f',
+                                    {'k1': 'd', 'k2': 'e', 'k3': 'f'})
+
+    def test_conf_file_dict_spaces_ignore_dgroup_and_dname(self):
+        self._do_dgroup_and_dname_test_ignore(DictOpt,
+                                              'k1:d,k2:e,k3:f',
+                                              {'k1': 'd',
+                                               'k2': 'e',
+                                               'k3': 'f'})
 
     def test_conf_file_multistr_default(self):
         self.conf.register_opt(MultiStrOpt('foo', default=['bar']))
