@@ -2097,6 +2097,15 @@ class SetDefaultsTestCase(BaseTestCase):
         self.conf([])
         self.assertEquals(self.conf.foo, 'bar')
 
+    def test_change_default_many(self):
+        opts = [StrOpt('foo', default='foo'),
+                StrOpt('foo2', default='foo2')]
+        self.conf.register_opts(opts)
+        set_defaults(opts, foo='bar', foo2='bar2')
+        self.conf([])
+        self.assertEquals(self.conf.foo, 'bar')
+        self.assertEquals(self.conf.foo2, 'bar2')
+
     def test_group_default_to_none(self):
         opts = [StrOpt('foo', default='foo')]
         self.conf.register_opts(opts, group='blaa')

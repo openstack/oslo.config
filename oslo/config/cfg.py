@@ -486,7 +486,6 @@ def set_defaults(opts, **kwargs):
     for opt in opts:
         if opt.dest in kwargs:
             opt.default = kwargs[opt.dest]
-            break
 
 
 class Opt(object):
