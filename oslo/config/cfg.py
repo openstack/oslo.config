@@ -271,7 +271,7 @@ import string
 import sys
 
 from oslo.config import iniparser
-from six.moves import filter
+from six import moves
 
 
 class Error(Exception):
@@ -407,7 +407,7 @@ def _get_config_dirs(project=None):
         '/etc'
     ]
 
-    return list(filter(bool, cfg_dirs))
+    return list(moves.filter(bool, cfg_dirs))
 
 
 def _search_dirs(dirs, basename, extension=""):
@@ -462,7 +462,7 @@ def find_config_files(project=None, prog=None, extension='.conf'):
         config_files.append(_search_dirs(cfg_dirs, project, extension))
     config_files.append(_search_dirs(cfg_dirs, prog, extension))
 
-    return list(filter(bool, config_files))
+    return list(moves.filter(bool, config_files))
 
 
 def _is_opt_registered(opts, opt):
@@ -703,7 +703,8 @@ class Opt(object):
 
 
 class StrOpt(Opt):
-    """
+    """String options.
+
     String opts do not have their values transformed and are returned as
     str objects.
     """
@@ -712,7 +713,8 @@ class StrOpt(Opt):
 
 class BoolOpt(Opt):
 
-    """
+    """Boolean options.
+
     Bool opts are set to True or False on the command line using --optname or
     --noopttname respectively.
 
@@ -806,15 +808,14 @@ class FloatOpt(Opt):
 
 class ListOpt(Opt):
 
-    """
+    """List Options.
+
     List opt values are simple string values separated by commas. The opt value
     is a list containing these strings.
     """
 
     class _StoreListAction(argparse.Action):
-        """
-        An argparse action for parsing an option value into a list.
-        """
+        """An argparse action for parsing an option value into a list."""
         def __call__(self, parser, namespace, values, option_string=None):
             if values is not None:
                 values = [a.strip() for a in values.split(',')]
@@ -835,14 +836,16 @@ class ListOpt(Opt):
 
 class DictOpt(Opt):
 
-    """
+    """Dictionary options.
+
     Dictionary opt values are key:value pairs separated by commas. The opt
     value is a dictionary of these key/value pairs
     """
 
     @staticmethod
     def _split(line):
-        """
+        """Split a line.
+
         Split a line into key/value pairs separated by commas, then split
         the each into key and value using colons as separator and then
         stuff the key/value (s) into a dictionary
@@ -851,9 +854,7 @@ class DictOpt(Opt):
                     for v in line.split(',')])
 
     class _StoreDictAction(argparse.Action):
-        """
-        An argparse action for parsing an option value into a dictionary.
-        """
+        """An argparse action for parsing an option value into a dictionary."""
         def __call__(self, parser, namespace, values, option_string=None):
             if values is not None:
                 values = DictOpt._split(values)
@@ -875,7 +876,8 @@ class DictOpt(Opt):
 
 class MultiStrOpt(Opt):
 
-    """
+    """Multi-string option.
+
     Multistr opt values are string opts which may be specified multiple times.
     The opt value is a list containing all the string values specified.
     """
@@ -898,7 +900,8 @@ class MultiStrOpt(Opt):
 
 class SubCommandOpt(Opt):
 
-    """
+    """Sub-command options.
+
     Sub-command options allow argparse sub-parsers to be used to parse
     additional command line arguments.
 
@@ -949,8 +952,7 @@ class SubCommandOpt(Opt):
 
 class OptGroup(object):
 
-    """
-    Represents a group of opts.
+    """Represents a group of opts.
 
     CLI opts in the group are automatically prefixed with the group name.
 
@@ -1094,8 +1096,7 @@ class MultiConfigParser(object):
 
 class ConfigOpts(collections.Mapping):
 
-    """
-    Config options which may be set on the command line or in config files.
+    """Config options which may be set on the command line or in config files.
 
     ConfigOpts is a configuration option manager with APIs for registering
     option schemas, grouping options, parsing option values and retrieving
@@ -1515,7 +1516,7 @@ class ConfigOpts(collections.Mapping):
         logger.log(lvl, "=" * 80)
 
         def _sanitize(opt, value):
-            """Obfuscate values of options declared secret"""
+            """Obfuscate values of options declared secret."""
             return value if not opt.secret else '*' * len(str(value))
 
         for opt_name in sorted(self._opts):
@@ -1728,9 +1729,9 @@ class ConfigOpts(collections.Mapping):
 
     class GroupAttr(collections.Mapping):
 
-        """
-        A helper class representing the option values of a group as a mapping
-        and attributes.
+        """Helper class.
+
+        Represents the option values of a group as a mapping and attributes.
         """
 
         def __init__(self, conf, group):
@@ -1765,9 +1766,9 @@ class ConfigOpts(collections.Mapping):
 
     class SubCommandAttr(object):
 
-        """
-        A helper class representing the name and arguments of an argparse
-        sub-parser.
+        """Helper class.
+
+        Represents the name and arguments of an argparse sub-parser.
         """
 
         def __init__(self, conf, group, dest):
@@ -1799,8 +1800,9 @@ class ConfigOpts(collections.Mapping):
 
     class StrSubWrapper(object):
 
-        """
-        A helper class exposing opt values as a dict for string substitution.
+        """Helper class.
+
+        Exposes opt values as a dict for string substitution.
         """
 
         def __init__(self, conf):
