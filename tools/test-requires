@@ -1,8 +1,9 @@
+discover
 fixtures>=0.3.12
 mox
-nose
-nose-exclude
-testtools>=0.9.22
+python-subunit
+testrepository>=0.0.13
+testtools>=0.9.29
 
 # when we can require tox>= 1.4, this can go into tox.ini:
 #  [testenv:cover]
