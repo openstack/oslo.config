@@ -2147,8 +2147,8 @@ class TildeExpansionTestCase(BaseTestCase):
 
         try:
             self.conf(['--config-file', os.path.join('~', tmpbase)])
-        except ConfigFilesNotFoundError, cfnfe:
-            print cfnfe
+        except ConfigFilesNotFoundError as cfnfe:
+            print(cfnfe)
             self.assertTrue(homedir in str(cfnfe))
 
         self.stubs.Set(os.path, 'exists', lambda p: p == tmpfile)
@@ -2169,8 +2169,8 @@ class TildeExpansionTestCase(BaseTestCase):
             print ['--config-dir', os.path.join('~', os.path.basename(tmpdir))]
             self.conf(['--config-dir',
                        os.path.join('~', os.path.basename(tmpdir))])
-        except ConfigFilesNotFoundError, cfnfe:
-            print cfnfe
+        except ConfigFilesNotFoundError as cfnfe:
+            print(cfnfe)
             self.assertTrue(os.path.expanduser('~') in str(cfnfe))
 
         self.stubs.Set(os.path, 'exists', lambda p: p == tmpfile)
