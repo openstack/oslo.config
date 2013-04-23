@@ -57,8 +57,8 @@ html_last_updated_fmt = os.popen(git_cmd).read()
 latex_documents = [
         ('index',
          '%s.tex' % project,
-         u'%s Documentation' % project,
-         u'OpenStack Foundation', 'manual'),
+         '%s Documentation' % project,
+         'OpenStack Foundation', 'manual'),
 ]
 
 # Example configuration for intersphinx: refer to the Python standard library.

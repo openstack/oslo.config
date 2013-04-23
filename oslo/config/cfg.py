@@ -265,11 +265,13 @@ import collections
 import copy
 import functools
 import glob
+import itertools
 import os
 import string
 import sys
 
 from oslo.config import iniparser
+from six.moves import filter
 
 
 class Error(Exception):
@@ -405,7 +407,7 @@ def _get_config_dirs(project=None):
         '/etc'
     ]
 
-    return filter(bool, cfg_dirs)
+    return list(filter(bool, cfg_dirs))
 
 
 def _search_dirs(dirs, basename, extension=""):
@@ -460,7 +462,7 @@ def find_config_files(project=None, prog=None, extension='.conf'):
         config_files.append(_search_dirs(cfg_dirs, project, extension))
     config_files.append(_search_dirs(cfg_dirs, prog, extension))
 
-    return filter(bool, config_files)
+    return list(filter(bool, config_files))
 
 
 def _is_opt_registered(opts, opt):
@@ -1240,7 +1242,7 @@ class ConfigOpts(collections.Mapping):
 
     def __iter__(self):
         """Iterate over all registered opt and group names."""
-        for key in self._opts.keys() + self._groups.keys():
+        for key in itertools.chain(self._opts.keys(), self._groups.keys()):
             yield key
 
     def __len__(self):
@@ -1691,7 +1693,7 @@ class ConfigOpts(collections.Mapping):
             raise ConfigFileParseError(pe.filename, str(pe))
 
         if read_ok != config_files:
-            not_read_ok = filter(lambda f: f not in read_ok, config_files)
+            not_read_ok = [f for f in config_files if f not in read_ok]
             raise ConfigFilesNotFoundError(not_read_ok)
 
     def _check_required_opts(self):

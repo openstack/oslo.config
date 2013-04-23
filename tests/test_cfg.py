@@ -15,13 +15,13 @@
 #    under the License.
 
 import os
-import StringIO
 import sys
 import tempfile
 
 import fixtures
 
 from oslo.config.cfg import *
+from six.moves import StringIO
 from tests import utils
 
 
@@ -109,7 +109,7 @@ class BaseTestCase(utils.BaseTestCase):
 class UsageTestCase(BaseTestCase):
 
     def test_print_usage(self):
-        f = StringIO.StringIO()
+        f = StringIO()
         self.conf([])
         self.conf.print_usage(file=f)
         self.assertTrue('usage: test FOO BAR' in f.getvalue())
@@ -119,7 +119,7 @@ class UsageTestCase(BaseTestCase):
 class HelpTestCase(BaseTestCase):
 
     def test_print_help(self):
-        f = StringIO.StringIO()
+        f = StringIO()
         self.conf([])
         self.conf.print_help(file=f)
         self.assertTrue('usage: test FOO BAR' in f.getvalue())
@@ -391,7 +391,7 @@ class CliOptsTestCase(BaseTestCase):
                           deps=('oof', 'old'))
 
     def test_help(self):
-        self.stubs.Set(sys, 'stdout', StringIO.StringIO())
+        self.stubs.Set(sys, 'stdout', StringIO())
         self.assertRaises(SystemExit, self.conf, ['--help'])
         self.assertTrue('FOO BAR' in sys.stdout.getvalue())
         self.assertTrue('--version' in sys.stdout.getvalue())
@@ -399,7 +399,7 @@ class CliOptsTestCase(BaseTestCase):
         self.assertTrue('--config-file' in sys.stdout.getvalue())
 
     def test_version(self):
-        self.stubs.Set(sys, 'stderr', StringIO.StringIO())
+        self.stubs.Set(sys, 'stderr', StringIO())
         self.assertRaises(SystemExit, self.conf, ['--version'])
         self.assertTrue('1.0' in sys.stderr.getvalue())
 
@@ -1326,7 +1326,7 @@ class MappingInterfaceTestCase(BaseTestCase):
         self.assertEquals(len(self.conf), 3)
         self.assertEquals(self.conf['foo'], 'bar')
         self.assertEquals(self.conf.get('foo'), 'bar')
-        self.assertTrue('bar' in self.conf.values())
+        self.assertTrue('bar' in list(self.conf.values()))
 
     def test_mapping_interface_with_group(self):
         self.conf.register_group(OptGroup('blaa'))
@@ -1335,7 +1335,7 @@ class MappingInterfaceTestCase(BaseTestCase):
         self.conf(['--blaa-foo', 'bar'])
 
         self.assertTrue('blaa' in self.conf)
-        self.assertTrue('foo' in self.conf['blaa'])
+        self.assertTrue('foo' in list(self.conf['blaa']))
         self.assertEquals(len(self.conf['blaa']), 1)
         self.assertEquals(self.conf['blaa']['foo'], 'bar')
         self.assertEquals(self.conf['blaa'].get('foo'), 'bar')
@@ -1948,7 +1948,7 @@ class SadPathTestCase(BaseTestCase):
     def test_bad_cli_arg(self):
         self.conf.register_opt(BoolOpt('foo'))
 
-        self.stubs.Set(sys, 'stderr', StringIO.StringIO())
+        self.stubs.Set(sys, 'stderr', StringIO())
 
         self.assertRaises(SystemExit, self.conf, ['--foo'])
 
@@ -1958,7 +1958,7 @@ class SadPathTestCase(BaseTestCase):
     def _do_test_bad_cli_value(self, opt_class):
         self.conf.register_cli_opt(opt_class('foo'))
 
-        self.stubs.Set(sys, 'stderr', StringIO.StringIO())
+        self.stubs.Set(sys, 'stderr', StringIO())
 
         self.assertRaises(SystemExit, self.conf, ['--foo', 'bar'])
 
@@ -2246,7 +2246,7 @@ class SubCommandTestCase(BaseTestCase):
 
     def test_sub_command_no_handler(self):
         self.conf.register_cli_opt(SubCommandOpt('cmd'))
-        self.stubs.Set(sys, 'stderr', StringIO.StringIO())
+        self.stubs.Set(sys, 'stderr', StringIO())
         self.assertRaises(SystemExit, self.conf, [])
         self.assertTrue('error' in sys.stderr.getvalue())
 
@@ -2259,7 +2259,7 @@ class SubCommandTestCase(BaseTestCase):
                                                  description='bar bar',
                                                  help='blaa blaa',
                                                  handler=add_parsers))
-        self.stubs.Set(sys, 'stdout', StringIO.StringIO())
+        self.stubs.Set(sys, 'stdout', StringIO())
         self.assertRaises(SystemExit, self.conf, ['--help'])
         self.assertTrue('foo foo' in sys.stdout.getvalue())
         self.assertTrue('bar bar' in sys.stdout.getvalue())
@@ -2279,7 +2279,7 @@ class SubCommandTestCase(BaseTestCase):
     def test_sub_command_multiple(self):
         self.conf.register_cli_opt(SubCommandOpt('cmd1'))
         self.conf.register_cli_opt(SubCommandOpt('cmd2'))
-        self.stubs.Set(sys, 'stderr', StringIO.StringIO())
+        self.stubs.Set(sys, 'stderr', StringIO())
         self.assertRaises(SystemExit, self.conf, [])
         self.assertTrue('multiple' in sys.stderr.getvalue())
 
