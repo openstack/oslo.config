@@ -25,7 +25,7 @@ master_doc = 'index'
 
 # General information about the project.
 project = u'oslo.config'
-copyright = u'2012, OpenStack, LLC'
+copyright = u'2013, OpenStack Foundation'
 
 # If true, '()' will be appended to :func: etc. cross-reference text.
 add_function_parentheses = True
@@ -55,10 +55,10 @@ html_last_updated_fmt = os.popen(git_cmd).read()
 # (source start file, target name, title, author, documentclass
 # [howto/manual]).
 latex_documents = [
-        ('index',
-         '%s.tex' % project,
-         '%s Documentation' % project,
-         'OpenStack Foundation', 'manual'),
+    ('index',
+     '%s.tex' % project,
+     '%s Documentation' % project,
+     'OpenStack Foundation', 'manual'),
 ]
 
 # Example configuration for intersphinx: refer to the Python standard library.
