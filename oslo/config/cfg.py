@@ -932,10 +932,7 @@ class OptGroup(object):
         :param help: the group description for --help
         """
         self.name = name
-        if title is None:
-            self.title = "%s options" % title
-        else:
-            self.title = title
+        self.title = "%s options" % name if title is None else title
         self.help = help
 
         self._opts = {}  # dict of dicts of (opt:, override:, default:)
