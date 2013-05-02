@@ -34,7 +34,7 @@ class BaseParser(object):
         return None, []
 
     def _get_section(self, line):
-        if line[-1] != ']':
+        if not line.endswith(']'):
             return self.error_no_section_end_bracket(line)
         if len(line) <= 2:
             return self.error_no_section_name(line)
@@ -53,8 +53,7 @@ class BaseParser(object):
             key, value = line[:colon], line[colon + 1:]
 
         value = value.strip()
-        if ((value and value[0] == value[-1]) and
-                (value[0] == "\"" or value[0] == "'")):
+        if value and value[0] == value[-1] and value.startswith(("\"", "'")):
             value = value[1:-1]
         return key.strip(), [value]
 
@@ -71,7 +70,7 @@ class BaseParser(object):
                 if key:
                     key, value = self._assignment(key, value)
                 continue
-            elif line[0] in (' ', '\t'):
+            elif line.startswith((' ', '\t')):
                 # Continuation of previous assignment
                 if key is None:
                     self.error_unexpected_continuation(line)
@@ -83,12 +82,12 @@ class BaseParser(object):
                 # Flush previous assignment, if any
                 key, value = self._assignment(key, value)
 
-            if line[0] == '[':
+            if line.startswith('['):
                 # Section start
                 section = self._get_section(line)
                 if section:
                     self.new_section(section)
-            elif line[0] in '#;':
+            elif line.startswith(('#', ';')):
                 self.comment(line[1:].lstrip())
             else:
                 key, value = self._split_key_value(line)
