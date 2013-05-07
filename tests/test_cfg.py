@@ -19,10 +19,13 @@ import sys
 import tempfile
 
 import fixtures
+import testscenarios
 
 from oslo.config.cfg import *
 from six.moves import StringIO
 from tests import utils
+
+load_tests = testscenarios.load_tests_apply_scenarios
 
 
 class ExceptionsTestCase(utils.BaseTestCase):
@@ -150,245 +153,220 @@ class FindConfigFilesTestCase(BaseTestCase):
 
 
 class CliOptsTestCase(BaseTestCase):
+    """Test CLI Options.
 
-    def _do_cli_test(self, opt_class, default, cli_args, value,
-                     deps=(None, None)):
-        self.conf.register_cli_opt(opt_class('foo', default=default,
-                                             deprecated_name=deps[0],
-                                             deprecated_group=deps[1]))
+    Each test scenario takes a name for the scenarios, as well as a dict:
+    opt_class - class of the type of option that should be tested
+    default - a default value for the option
+    cli_args - a list containing a representation of an input command line
+    value - the result value that is expected to be found
+    deps - a tuple of deprecated name/group
+    """
 
-        self.conf(cli_args)
+    scenarios = [
+        ('str_default',
+         dict(opt_class=StrOpt, default=None, cli_args=[], value=None,
+              deps=(None, None))),
+        ('str_arg',
+         dict(opt_class=StrOpt, default=None, cli_args=['--foo', 'bar'],
+              value='bar', deps=(None, None))),
+        ('str_arg_deprecated_name',
+         dict(opt_class=StrOpt, default=None,
+              cli_args=['--oldfoo', 'bar'], value='bar',
+              deps=('oldfoo', None))),
+        ('str_arg_deprecated_group',
+         dict(opt_class=StrOpt, default=None,
+              cli_args=['--old-foo', 'bar'], value='bar',
+              deps=(None, 'old'))),
+        ('str_arg_deprecated_group_default',
+         dict(opt_class=StrOpt, default=None, cli_args=['--foo', 'bar'],
+              value='bar', deps=(None, 'DEFAULT'))),
+        ('str_arg_deprecated_group_and_name',
+         dict(opt_class=StrOpt, default=None,
+              cli_args=['--old-oof', 'bar'], value='bar',
+              deps=('oof', 'old'))),
+        ('bool_default',
+         dict(opt_class=BoolOpt, default=False,
+              cli_args=[], value=False, deps=(None, None))),
+        ('bool_arg',
+         dict(opt_class=BoolOpt, default=None,
+              cli_args=['--foo'], value=True, deps=(None, None))),
+        ('bool_arg_deprecated_name',
+         dict(opt_class=BoolOpt, default=None,
+              cli_args=['--oldfoo'], value=True,
+              deps=('oldfoo', None))),
+        ('bool_arg_deprecated_group',
+         dict(opt_class=BoolOpt, default=None,
+              cli_args=['--old-foo'], value=True,
+              deps=(None, 'old'))),
+        ('bool_arg_deprecated_group_default',
+         dict(opt_class=BoolOpt, default=None,
+              cli_args=['--foo'], value=True,
+              deps=(None, 'DEFAULT'))),
+        ('bool_arg_deprecated_group_and_name',
+         dict(opt_class=BoolOpt, default=None,
+              cli_args=['--old-oof'], value=True,
+              deps=('oof', 'old'))),
+        ('bool_arg_inverse',
+         dict(opt_class=BoolOpt, default=None,
+              cli_args=['--foo', '--nofoo'], value=False, deps=(None, None))),
+        ('bool_arg_inverse_deprecated_name',
+         dict(opt_class=BoolOpt, default=None,
+              cli_args=['--oldfoo', '--nooldfoo'], value=False,
+              deps=('oldfoo', None))),
+        ('bool_arg_inverse_deprecated_group',
+         dict(opt_class=BoolOpt, default=None,
+              cli_args=['--old-foo', '--old-nofoo'], value=False,
+              deps=(None, 'old'))),
+        ('bool_arg_inverse_deprecated_group_default',
+         dict(opt_class=BoolOpt, default=None,
+              cli_args=['--foo', '--nofoo'], value=False,
+              deps=(None, 'DEFAULT'))),
+        ('bool_arg_inverse_deprecated_group_and_name',
+         dict(opt_class=BoolOpt, default=None,
+              cli_args=['--old-oof', '--old-nooof'], value=False,
+              deps=('oof', 'old'))),
+        ('int_default',
+         dict(opt_class=IntOpt, default=10,
+              cli_args=[], value=10, deps=(None, None))),
+        ('int_arg',
+         dict(opt_class=IntOpt, default=None,
+              cli_args=['--foo=20'], value=20, deps=(None, None))),
+        ('int_arg_deprecated_name',
+         dict(opt_class=IntOpt, default=None,
+              cli_args=['--oldfoo=20'], value=20, deps=('oldfoo', None))),
+        ('int_arg_deprecated_group',
+         dict(opt_class=IntOpt, default=None,
+              cli_args=['--old-foo=20'], value=20, deps=(None, 'old'))),
+        ('int_arg_deprecated_group_default',
+         dict(opt_class=IntOpt, default=None,
+              cli_args=['--foo=20'], value=20, deps=(None, 'DEFAULT'))),
+        ('int_arg_deprecated_group_and_name',
+         dict(opt_class=IntOpt, default=None,
+              cli_args=['--old-oof=20'], value=20, deps=('oof', 'old'))),
+        ('float_default',
+         dict(opt_class=FloatOpt, default=1.0,
+              cli_args=[], value=1.0, deps=(None, None))),
+        ('float_arg',
+         dict(opt_class=FloatOpt, default=None,
+              cli_args=['--foo', '2.0'], value=2.0, deps=(None, None))),
+        ('float_arg_deprecated_name',
+         dict(opt_class=FloatOpt, default=None,
+              cli_args=['--oldfoo', '2.0'], value=2.0, deps=('oldfoo', None))),
+        ('float_arg_deprecated_group',
+         dict(opt_class=FloatOpt, default=None,
+              cli_args=['--old-foo', '2.0'], value=2.0, deps=(None, 'old'))),
+        ('float_arg_deprecated_group_default',
+         dict(opt_class=FloatOpt, default=None,
+              cli_args=['--foo', '2.0'], value=2.0, deps=(None, 'DEFAULT'))),
+        ('float_arg_deprecated_group_and_name',
+         dict(opt_class=FloatOpt, default=None,
+              cli_args=['--old-oof', '2.0'], value=2.0, deps=('oof', 'old'))),
+        ('list_default',
+         dict(opt_class=ListOpt, default=['bar'],
+              cli_args=[], value=['bar'], deps=(None, None))),
+        ('list_arg',
+         dict(opt_class=ListOpt, default=None,
+              cli_args=['--foo', 'blaa,bar'], value=['blaa', 'bar'],
+              deps=(None, None))),
+        ('list_arg_with_spaces',
+         dict(opt_class=ListOpt, default=None,
+              cli_args=['--foo', 'blaa ,bar'], value=['blaa', 'bar'],
+              deps=(None, None))),
+        ('list_arg_deprecated_name',
+         dict(opt_class=ListOpt, default=None,
+              cli_args=['--oldfoo', 'blaa,bar'], value=['blaa', 'bar'],
+              deps=('oldfoo', None))),
+        ('list_arg_deprecated_group',
+         dict(opt_class=ListOpt, default=None,
+              cli_args=['--old-foo', 'blaa,bar'], value=['blaa', 'bar'],
+              deps=(None, 'old'))),
+        ('list_arg_deprecated_group_default',
+         dict(opt_class=ListOpt, default=None,
+              cli_args=['--foo', 'blaa,bar'], value=['blaa', 'bar'],
+              deps=(None, 'DEFAULT'))),
+        ('list_arg_deprecated_group_and_name',
+         dict(opt_class=ListOpt, default=None,
+              cli_args=['--old-oof', 'blaa,bar'], value=['blaa', 'bar'],
+              deps=('oof', 'old'))),
+        ('dict_default',
+         dict(opt_class=DictOpt, default={'foo': 'bar'},
+              cli_args=[], value={'foo': 'bar'}, deps=(None, None))),
+        ('dict_arg',
+         dict(opt_class=DictOpt, default=None,
+              cli_args=['--foo', 'key1:blaa,key2:bar'],
+              value={'key1': 'blaa', 'key2': 'bar'}, deps=(None, None))),
+        ('dict_arg_multiple_keys_last_wins',
+         dict(opt_class=DictOpt, default=None,
+              cli_args=['--foo', 'key1:blaa', '--foo', 'key2:bar'],
+              value={'key2': 'bar'}, deps=(None, None))),
+        ('dict_arg_with_spaces',
+         dict(opt_class=DictOpt, default=None,
+              cli_args=['--foo', 'key1:blaa   ,key2:bar'],
+              value={'key1': 'blaa', 'key2': 'bar'}, deps=(None, None))),
+        ('dict_arg_deprecated_name',
+         dict(opt_class=DictOpt, default=None,
+              cli_args=['--oldfoo', 'key1:blaa', '--oldfoo', 'key2:bar'],
+              value={'key2': 'bar'}, deps=('oldfoo', None))),
+        ('dict_arg_deprecated_group',
+         dict(opt_class=DictOpt, default=None,
+              cli_args=['--old-foo', 'key1:blaa,key2:bar'],
+              value={'key1': 'blaa', 'key2': 'bar'}, deps=(None, 'old'))),
+        ('dict_arg_deprecated_group2',
+         dict(opt_class=DictOpt, default=None,
+              cli_args=['--old-foo', 'key1:blaa', '--old-foo', 'key2:bar'],
+              value={'key2': 'bar'}, deps=(None, 'old'))),
+        ('dict_arg_deprecated_group_default',
+         dict(opt_class=DictOpt, default=None,
+              cli_args=['--foo', 'key1:blaa', '--foo', 'key2:bar'],
+              value={'key2': 'bar'}, deps=(None, 'DEFAULT'))),
+        ('dict_arg_deprecated_group_and_name',
+         dict(opt_class=DictOpt, default=None,
+              cli_args=['--old-oof', 'key1:blaa,key2:bar'],
+              value={'key1': 'blaa', 'key2': 'bar'}, deps=('oof', 'old'))),
+        ('dict_arg_deprecated_group_and_name2',
+         dict(opt_class=DictOpt, default=None,
+              cli_args=['--old-oof', 'key1:blaa', '--old-oof', 'key2:bar'],
+              value={'key2': 'bar'}, deps=('oof', 'old'))),
+        ('multistr_default',
+         dict(opt_class=MultiStrOpt, default=['bar'], cli_args=[],
+              value=['bar'], deps=(None, None))),
+        ('multistr_arg',
+         dict(opt_class=MultiStrOpt, default=None,
+              cli_args=['--foo', 'blaa', '--foo', 'bar'],
+              value=['blaa', 'bar'], deps=(None, None))),
+        ('multistr_arg_deprecated_name',
+         dict(opt_class=MultiStrOpt, default=None,
+              cli_args=['--oldfoo', 'blaa', '--oldfoo', 'bar'],
+              value=['blaa', 'bar'], deps=('oldfoo', None))),
+        ('multistr_arg_deprecated_group',
+         dict(opt_class=MultiStrOpt, default=None,
+              cli_args=['--old-foo', 'blaa', '--old-foo', 'bar'],
+              value=['blaa', 'bar'], deps=(None, 'old'))),
+        ('multistr_arg_deprecated_group_default',
+         dict(opt_class=MultiStrOpt, default=None,
+              cli_args=['--foo', 'blaa', '--foo', 'bar'],
+              value=['blaa', 'bar'], deps=(None, 'DEFAULT'))),
+        ('multistr_arg_deprecated_group_and_name',
+         dict(opt_class=MultiStrOpt, default=None,
+              cli_args=['--old-oof', 'blaa', '--old-oof', 'bar'],
+              value=['blaa', 'bar'], deps=('oof', 'old'))),
+    ]
+
+    def test_cli(self):
+
+        self.conf.register_cli_opt(
+            self.opt_class('foo', default=self.default,
+                           deprecated_name=self.deps[0],
+                           deprecated_group=self.deps[1]))
+
+        self.conf(self.cli_args)
 
         self.assertTrue(hasattr(self.conf, 'foo'))
-        self.assertEquals(self.conf.foo, value)
+        self.assertEquals(self.conf.foo, self.value)
 
-    def test_str_default(self):
-        self._do_cli_test(StrOpt, None, [], None)
 
-    def test_str_arg(self):
-        self._do_cli_test(StrOpt, None, ['--foo', 'bar'], 'bar')
-
-    def test_str_arg_deprecated_name(self):
-        self._do_cli_test(StrOpt, None, ['--oldfoo', 'bar'], 'bar',
-                          deps=('oldfoo', None))
-
-    def test_str_arg_deprecated_group(self):
-        self._do_cli_test(StrOpt, None, ['--old-foo', 'bar'], 'bar',
-                          deps=(None, 'old'))
-
-    def test_str_arg_deprecated_group_default(self):
-        self._do_cli_test(StrOpt, None, ['--foo', 'bar'], 'bar',
-                          deps=(None, 'DEFAULT'))
-
-    def test_str_arg_deprecated_group_and_name(self):
-        self._do_cli_test(StrOpt, None, ['--old-oof', 'bar'], 'bar',
-                          deps=('oof', 'old'))
-
-    def test_bool_default(self):
-        self._do_cli_test(BoolOpt, False, [], False)
-
-    def test_bool_arg(self):
-        self._do_cli_test(BoolOpt, None, ['--foo'], True)
-
-    def test_bool_arg_deprecated_name(self):
-        self._do_cli_test(BoolOpt, None, ['--oldfoo'], True,
-                          deps=('oldfoo', None))
-
-    def test_bool_arg_deprecated_group(self):
-        self._do_cli_test(BoolOpt, None, ['--old-foo'], True,
-                          deps=(None, 'old'))
-
-    def test_bool_arg_deprecated_group_default(self):
-        self._do_cli_test(BoolOpt, None, ['--foo'], True,
-                          deps=(None, 'DEFAULT'))
-
-    def test_bool_arg_deprecated_group_and_name(self):
-        self._do_cli_test(BoolOpt, None, ['--old-oof'], True,
-                          deps=('oof', 'old'))
-
-    def test_bool_arg_inverse(self):
-        self._do_cli_test(BoolOpt, None, ['--foo', '--nofoo'], False)
-
-    def test_bool_arg_inverse_deprecated_name(self):
-        self._do_cli_test(BoolOpt, None, ['--oldfoo', '--nooldfoo'], False,
-                          deps=('oldfoo', None))
-
-    def test_bool_arg_inverse_deprecated_group(self):
-        self._do_cli_test(BoolOpt, None, ['--old-foo', '--old-nofoo'], False,
-                          deps=(None, 'old'))
-
-    def test_bool_arg_inverse_deprecated_group_default(self):
-        self._do_cli_test(BoolOpt, None, ['--foo', '--nofoo'], False,
-                          deps=(None, 'DEFAULT'))
-
-    def test_bool_arg_inverse_deprecated_group_and_name(self):
-        self._do_cli_test(BoolOpt, None, ['--old-oof', '--old-nooof'], False,
-                          deps=('oof', 'old'))
-
-    def test_int_default(self):
-        self._do_cli_test(IntOpt, 10, [], 10)
-
-    def test_int_arg(self):
-        self._do_cli_test(IntOpt, None, ['--foo=20'], 20)
-
-    def test_int_arg_deprecated_name(self):
-        self._do_cli_test(IntOpt, None, ['--oldfoo=20'], 20,
-                          deps=('oldfoo', None))
-
-    def test_int_arg_deprecated_group(self):
-        self._do_cli_test(IntOpt, None, ['--old-foo=20'], 20,
-                          deps=(None, 'old'))
-
-    def test_int_arg_deprecated_group_default(self):
-        self._do_cli_test(IntOpt, None, ['--foo=20'], 20,
-                          deps=(None, 'DEFAULT'))
-
-    def test_int_arg_deprecated_group_and_name(self):
-        self._do_cli_test(IntOpt, None, ['--old-oof=20'], 20,
-                          deps=('oof', 'old'))
-
-    def test_float_default(self):
-        self._do_cli_test(FloatOpt, 1.0, [], 1.0)
-
-    def test_float_arg(self):
-        self._do_cli_test(FloatOpt, None, ['--foo', '2.0'], 2.0)
-
-    def test_float_arg_deprecated_name(self):
-        self._do_cli_test(FloatOpt, None, ['--oldfoo', '2.0'], 2.0,
-                          deps=('oldfoo', None))
-
-    def test_float_arg_deprecated_group(self):
-        self._do_cli_test(FloatOpt, None, ['--old-foo', '2.0'], 2.0,
-                          deps=(None, 'old'))
-
-    def test_float_arg_deprecated_group_default(self):
-        self._do_cli_test(FloatOpt, None, ['--foo', '2.0'], 2.0,
-                          deps=(None, 'DEFAULT'))
-
-    def test_float_arg_deprecated_group_and_name(self):
-        self._do_cli_test(FloatOpt, None, ['--old-oof', '2.0'], 2.0,
-                          deps=('oof', 'old'))
-
-    def test_list_default(self):
-        self._do_cli_test(ListOpt, ['bar'], [], ['bar'])
-
-    def test_list_arg(self):
-        self._do_cli_test(ListOpt, None,
-                          ['--foo', 'blaa,bar'], ['blaa', 'bar'])
-
-    def test_list_arg_with_spaces(self):
-        self._do_cli_test(ListOpt, None,
-                          ['--foo', 'blaa ,bar'], ['blaa', 'bar'])
-
-    def test_list_arg_deprecated_name(self):
-        self._do_cli_test(ListOpt, None,
-                          ['--oldfoo', 'blaa,bar'], ['blaa', 'bar'],
-                          deps=('oldfoo', None))
-
-    def test_list_arg_deprecated_group(self):
-        self._do_cli_test(ListOpt, None,
-                          ['--old-foo', 'blaa,bar'], ['blaa', 'bar'],
-                          deps=(None, 'old'))
-
-    def test_list_arg_deprecated_group_default(self):
-        self._do_cli_test(ListOpt, None,
-                          ['--foo', 'blaa,bar'], ['blaa', 'bar'],
-                          deps=(None, 'DEFAULT'))
-
-    def test_list_arg_deprecated_group_and_name(self):
-        self._do_cli_test(ListOpt, None,
-                          ['--old-oof', 'blaa,bar'], ['blaa', 'bar'],
-                          deps=('oof', 'old'))
-
-    def test_dict_default(self):
-        self._do_cli_test(DictOpt, {'foo': 'bar'}, [], {'foo': 'bar'})
-
-    def test_dict_arg(self):
-        self._do_cli_test(DictOpt, None,
-                          ['--foo', 'key1:blaa,key2:bar'],
-                          {'key1': 'blaa', 'key2': 'bar'})
-
-    def test_dict_arg_multiple_keys_last_wins(self):
-        self._do_cli_test(DictOpt, None,
-                          ['--foo', 'key1:blaa',
-                           '--foo', 'key2:bar'],
-                          {'key2': 'bar'})
-
-    def test_dict_arg_with_spaces(self):
-        self._do_cli_test(DictOpt, None,
-                          ['--foo', 'key1:blaa   ,key2:bar'],
-                          {'key1': 'blaa', 'key2': 'bar'})
-
-    def test_dict_arg_deprecated_name(self):
-        self._do_cli_test(DictOpt, None,
-                          ['--oldfoo', 'key1:blaa',
-                           '--oldfoo', 'key2:bar'],
-                          {'key2': 'bar'},
-                          deps=('oldfoo', None))
-
-    def test_dict_arg_deprecated_group(self):
-        self._do_cli_test(DictOpt, None,
-                          ['--old-foo', 'key1:blaa,key2:bar'],
-                          {'key1': 'blaa', 'key2': 'bar'},
-                          deps=(None, 'old'))
-
-    def test_dict_arg_deprecated_group2(self):
-        self._do_cli_test(DictOpt, None,
-                          ['--old-foo', 'key1:blaa',
-                           '--old-foo', 'key2:bar'],
-                          {'key2': 'bar'},
-                          deps=(None, 'old'))
-
-    def test_dict_arg_deprecated_group_default(self):
-        self._do_cli_test(DictOpt, None,
-                          ['--foo', 'key1:blaa',
-                           '--foo', 'key2:bar'],
-                          {'key2': 'bar'},
-                          deps=(None, 'DEFAULT'))
-
-    def test_dict_arg_deprecated_group_and_name(self):
-        self._do_cli_test(DictOpt, None,
-                          ['--old-oof', 'key1:blaa,key2:bar'],
-                          {'key1': 'blaa', 'key2': 'bar'},
-                          deps=('oof', 'old'))
-
-    def test_dict_arg_deprecated_group_and_name2(self):
-        self._do_cli_test(DictOpt, None,
-                          ['--old-oof', 'key1:blaa',
-                           '--old-oof', 'key2:bar'],
-                          {'key2': 'bar'},
-                          deps=('oof', 'old'))
-
-    def test_multistr_default(self):
-        self._do_cli_test(MultiStrOpt, ['bar'], [], ['bar'])
-
-    def test_multistr_arg(self):
-        self._do_cli_test(MultiStrOpt, None,
-                          ['--foo', 'blaa', '--foo', 'bar'], ['blaa', 'bar'])
-
-    def test_multistr_arg_deprecated_name(self):
-        self._do_cli_test(MultiStrOpt, None,
-                          ['--oldfoo', 'blaa', '--oldfoo', 'bar'],
-                          ['blaa', 'bar'],
-                          deps=('oldfoo', None))
-
-    def test_multistr_arg_deprecated_group(self):
-        self._do_cli_test(MultiStrOpt, None,
-                          ['--old-foo', 'blaa', '--old-foo', 'bar'],
-                          ['blaa', 'bar'],
-                          deps=(None, 'old'))
-
-    def test_multistr_arg_deprecated_group_default(self):
-        self._do_cli_test(MultiStrOpt, None,
-                          ['--foo', 'blaa', '--foo', 'bar'],
-                          ['blaa', 'bar'],
-                          deps=(None, 'DEFAULT'))
-
-    def test_multistr_arg_deprecated_group_and_name(self):
-        self._do_cli_test(MultiStrOpt, None,
-                          ['--old-oof', 'blaa', '--old-oof', 'bar'],
-                          ['blaa', 'bar'],
-                          deps=('oof', 'old'))
+class CliSpecialOptsTestCase(BaseTestCase):
 
     def test_help(self):
         self.stubs.Set(sys, 'stdout', StringIO())
