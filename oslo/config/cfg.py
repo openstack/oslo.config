@@ -74,8 +74,8 @@ class which uses the option::
         return conf.bind_port
 
 An option may optionally be made available via the command line. Such options
-must registered with the config manager before the command line is parsed (for
-the purposes of --help and CLI arg validation)::
+must be registered with the config manager before the command line is parsed
+(for the purposes of --help and CLI arg validation)::
 
     cli_opts = [
         cfg.BoolOpt('verbose',
@@ -150,7 +150,7 @@ Options can be registered as belonging to a group::
         conf.register_opt(rabbit_host_opt, group=rabbit_group)
         conf.register_opt(rabbit_port_opt, group='rabbit')
 
-If it no group attributes are required other than the group name, the group
+If no group attributes are required other than the group name, the group
 need not be explicitly registered e.g.
 
     def register_rabbit_opts(conf):
