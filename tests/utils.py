@@ -20,10 +20,14 @@
 
 """Common utilities used in testing"""
 
+import os
+
 import fixtures
 import mox
 import stubout
 import testtools
+
+TRUE_VALUES = ('true', '1', 'yes')
 
 
 class MoxStubout(fixtures.Fixture):
@@ -47,4 +51,20 @@ class BaseTestCase(testtools.TestCase):
         super(BaseTestCase, self).setUp()
         self.stubs = self.useFixture(MoxStubout()).stubs
         self.useFixture(fixtures.FakeLogger('oslo.config'))
-        self.useFixture(fixtures.Timeout(30, True))
+        test_timeout = os.environ.get('OS_TEST_TIMEOUT', 30)
+        try:
+            test_timeout = int(test_timeout)
+        except ValueError:
+            # If timeout value is invalid, fail hard.
+            print("OS_TEST_TIMEOUT set to invalid value"
+                  " defaulting to no timeout")
+            test_timeout = 0
+        if test_timeout > 0:
+            self.useFixture(fixtures.Timeout(test_timeout, gentle=True))
+
+        if os.environ.get('OS_STDOUT_CAPTURE') in TRUE_VALUES:
+            stdout = self.useFixture(fixtures.StringStream('stdout')).stream
+            self.useFixture(fixtures.MonkeyPatch('sys.stdout', stdout))
+        if os.environ.get('OS_STDERR_CAPTURE') in TRUE_VALUES:
+            stderr = self.useFixture(fixtures.StringStream('stderr')).stream
+            self.useFixture(fixtures.MonkeyPatch('sys.stderr', stderr))
