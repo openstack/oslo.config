@@ -1168,6 +1168,10 @@ class OptGroupsTestCase(BaseTestCase):
         self.assertTrue(hasattr(self.conf.blaa, 'foo'))
         self.assertEquals(self.conf.blaa.foo, 'bar')
 
+    def test_autocreate_title(self):
+        blaa_group = OptGroup('blaa')
+        self.assertEquals(blaa_group.title, 'blaa options')
+
     def test_arg_group_by_name(self):
         self.conf.register_group(OptGroup('blaa'))
         self.conf.register_cli_opt(StrOpt('foo'), group='blaa')
