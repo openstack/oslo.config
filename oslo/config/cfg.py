@@ -491,6 +491,12 @@ def set_defaults(opts, **kwargs):
             opt.default = kwargs[opt.dest]
 
 
+def _normalize_group_name(group_name):
+    if group_name == 'DEFAULT':
+        return group_name
+    return group_name.lower()
+
+
 class Opt(object):
 
     """Base class for all configuration options.
@@ -1040,7 +1046,7 @@ class ConfigParser(iniparser.BaseParser):
             return super(ConfigParser, self).parse(f)
 
     def new_section(self, section):
-        self.section = section
+        self.section = _normalize_group_name(section)
         self.sections.setdefault(self.section, {})
 
     def assignment(self, key, value):
@@ -1080,6 +1086,8 @@ class MultiConfigParser(object):
 
     def get(self, names, multi=False):
         rvalue = []
+        names = [(_normalize_group_name(section), name)
+                 for section, name in names]
         for sections in self.parsed:
             for section, name in names:
                 if section not in sections:
