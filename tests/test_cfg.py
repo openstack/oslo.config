@@ -2514,3 +2514,63 @@ class MultipleDeprecatedOptionsTestCase(BaseTestCase):
 
         self.conf(['--config-file', paths[0]])
         self.assertEquals(self.conf.blaa.foo, 'bar')
+
+
+class ChoicesTestCase(BaseTestCase):
+
+    def test_choice_default(self):
+        self.conf.register_cli_opt(cfg.StrOpt('protocol',
+                                   default='http',
+                                   choices=['http', 'https', 'ftp']))
+        self.conf([])
+        self.assertEquals(self.conf.protocol, 'http')
+
+    def test_choice_good(self):
+        self.conf.register_cli_opt(cfg.StrOpt('foo',
+                                   choices=['bar1', 'bar2']))
+        self.conf(['--foo', 'bar1'])
+        self.assertEquals(self.conf.foo, 'bar1')
+
+    def test_choice_bad(self):
+        self.conf.register_cli_opt(cfg.StrOpt('foo',
+                                   choices=['bar1', 'bar2']))
+        self.assertRaises(SystemExit, self.conf, ['--foo', 'bar3'])
+
+    def test_conf_file_choice_value(self):
+        self.conf.register_opt(cfg.StrOpt('foo',
+                               choices=['bar1', 'bar2']))
+
+        paths = self.create_tempfiles([('test', '[DEFAULT]\n''foo = bar1\n')])
+
+        self.conf(['--config-file', paths[0]])
+
+        self.assertTrue(hasattr(self.conf, 'foo'))
+        self.assertEquals(self.conf.foo, 'bar1')
+
+    def test_conf_file_bad_choice_value(self):
+        self.conf.register_opt(cfg.StrOpt('foo',
+                               choices=['bar1', 'bar2']))
+
+        paths = self.create_tempfiles([('test', '[DEFAULT]\n''foo = bar3\n')])
+
+        self.conf(['--config-file', paths[0]])
+
+        self.assertRaises(cfg.ConfigFileValueError, getattr, self.conf, 'foo')
+
+    def test_conf_file_choice_value_override(self):
+        self.conf.register_cli_opt(cfg.StrOpt('foo',
+                                   choices=['baar', 'baaar']))
+
+        paths = self.create_tempfiles([('1',
+                                        '[DEFAULT]\n'
+                                        'foo = baar\n'),
+                                       ('2',
+                                        '[DEFAULT]\n'
+                                        'foo = baaar\n')])
+
+        self.conf(['--foo', 'baar',
+                   '--config-file', paths[0],
+                   '--config-file', paths[1]])
+
+        self.assertTrue(hasattr(self.conf, 'foo'))
+        self.assertEquals(self.conf.foo, 'baaar')
