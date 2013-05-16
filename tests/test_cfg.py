@@ -1641,7 +1641,7 @@ class ConfigDirTestCase(BaseTestCase):
                    '--config-file', paths[2], ])
 
         self.assertTrue(hasattr(self.conf, 'foo'))
-        self.assertEquals(self.conf.foo, 'bar-02')
+        self.assertEquals(self.conf.foo, 'bar-03')
         self.assertTrue(hasattr(self.conf, 'snafu'))
         self.assertTrue(hasattr(self.conf.snafu, 'bell'))
         self.assertEquals(self.conf.snafu.bell, 'whistle-03')

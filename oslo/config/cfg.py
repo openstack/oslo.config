@@ -567,10 +567,10 @@ class Opt(object):
     def __ne__(self, another):
         return vars(self) != vars(another)
 
-    def _get_from_config_parser(self, cparser, section):
-        """Retrieves the option value from a MultiConfigParser object.
+    def _get_from_namespace(self, namespace, section):
+        """Retrieves the option value from a _Namespace object.
 
-        :param cparser: a ConfigParser object
+        :param namespace: a _Namespace object
         :param section: a section name
         """
         names = [(section, self.dest)]
@@ -581,9 +581,7 @@ class Opt(object):
                 names.append((dgroup if dgroup else section,
                               dname if dname else self.dest))
 
-        return cparser._get(names,
-                            self.multi, normalized=True,
-                            convert_value=self._convert_value)
+        return namespace._get_value(names, self.multi, self._convert_value)
 
     def _add_to_cli(self, parser, group=None):
         """Makes the option available in the command line interface.
@@ -986,6 +984,92 @@ class SubCommandOpt(Opt):
             self.handler(subparsers)
 
 
+class _ConfigFileOpt(Opt):
+
+    """The --config-file option.
+
+    This is an private option type which handles the special processing
+    required for --config-file options.
+
+    As each --config-file option is encountered on the command line, we
+    parse the file and store the parsed values in the _Namespace object.
+    This allows us to properly handle the precedence of --config-file
+    options over previous command line arguments, but not over subsequent
+    arguments.
+    """
+
+    class ConfigFileAction(argparse.Action):
+
+        """An argparse action for --config-file.
+
+        As each --config-file option is encountered, this action adds the
+        value to the config_file attribute on the _Namespace object but also
+        parses the configuration file and stores the values found also in
+        the _Namespace object.
+        """
+
+        def __call__(self, parser, namespace, values, option_string=None):
+            """Handle a --config-file command line argument.
+
+            :raises: ConfigFileParseError, ConfigFileValueError
+            """
+            if getattr(namespace, self.dest, None) is None:
+                setattr(namespace, self.dest, [])
+            items = getattr(namespace, self.dest)
+            items.append(values)
+
+            ConfigParser._parse_file(values, namespace)
+
+    def _get_argparse_kwargs(self, group, **kwargs):
+        """Extends the base argparse keyword dict for the config file opt."""
+        kwargs = super(_ConfigFileOpt, self)._get_argparse_kwargs(group)
+        kwargs['action'] = self.ConfigFileAction
+        return kwargs
+
+
+class _ConfigDirOpt(Opt):
+
+    """The --config-dir option.
+
+    This is an private option type which handles the special processing
+    required for --config-dir options.
+
+    As each --config-dir option is encountered on the command line, we
+    parse the files in that directory and store the parsed values in the
+    _Namespace object. This allows us to properly handle the precedence of
+    --config-dir options over previous command line arguments, but not
+    over subsequent arguments.
+    """
+
+    class ConfigDirAction(argparse.Action):
+
+        """An argparse action for --config-dir.
+
+        As each --config-dir option is encountered, this action sets the
+        config_dir attribute on the _Namespace object but also parses the
+        configuration files and stores the values found also in the
+        _Namespace object.
+        """
+
+        def __call__(self, parser, namespace, values, option_string=None):
+            """Handle a --config-dir command line argument.
+
+            :raises: ConfigFileParseError, ConfigFileValueError
+            """
+            setattr(namespace, self.dest, values)
+
+            config_dir_glob = os.path.join(values, '*.conf')
+
+            for config_file in sorted(glob.glob(config_dir_glob)):
+                ConfigParser._parse_file(config_file, namespace)
+
+    def _get_argparse_kwargs(self, group, **kwargs):
+        """Extends the base argparse keyword dict for the config dir option."""
+        kwargs = super(_ConfigDirOpt, self)._get_argparse_kwargs(group)
+        kwargs['action'] = self.ConfigDirAction
+        return kwargs
+
+
 class OptGroup(object):
 
     """Represents a group of opts.
@@ -1108,6 +1192,29 @@ class ConfigParser(iniparser.BaseParser):
         return self.parse_exc('Section must be started before assignment',
                               self.lineno)
 
+    @classmethod
+    def _parse_file(cls, config_file, namespace):
+        """Parse a config file and store any values in the namespace.
+
+        :raises: ConfigFileParseError, ConfigFileValueError
+        """
+        config_file = _fixpath(config_file)
+
+        sections = {}
+        normalized = {}
+        parser = cls(config_file, sections)
+        parser._add_normalized(normalized)
+
+        try:
+            parser.parse()
+        except iniparser.ParseError as pe:
+            raise ConfigFileParseError(pe.filename, str(pe))
+        except IOError:
+            namespace._file_not_found(config_file)
+            return
+
+        namespace.parser._add_parsed_config_file(sections, normalized)
+
 
 class MultiConfigParser(object):
     def __init__(self):
@@ -1127,16 +1234,32 @@ class MultiConfigParser(object):
                 parser.parse()
             except IOError:
                 continue
-            self.parsed.insert(0, sections)
-            self._normalized.insert(0, normalized)
+            self._add_parsed_config_file(sections, normalized)
             read_ok.append(filename)
 
         return read_ok
 
-    def get(self, names, multi=False, normalized=False, convert_value=None):
+    def _add_parsed_config_file(self, sections, normalized):
+        """Add a parsed config file to the list of parsed files.
+
+        :param sections: a mapping of section name to dicts of config values
+        :param normalized: sections mapping with section names normalized
+        :raises: ConfigFileValueError
+        """
+        self.parsed.insert(0, sections)
+        self._normalized.insert(0, normalized)
+
+    def get(self, names, multi=False):
         return self._get(names, multi=multi)
 
     def _get(self, names, multi=False, normalized=False, convert_value=None):
+        """Fetch a config file value from the parsed files.
+
+        :param names: a list of (section, name) tuples
+        :param multi: a boolean indicating whether to return multiple values
+        :param normalized: whether to normalize group names to lowercase
+        :param convert_value: callable to convert a string into the proper type
+        """
         rvalue = []
 
         def normalize(name):
@@ -1162,6 +1285,47 @@ class MultiConfigParser(object):
         raise KeyError
 
 
+class _Namespace(argparse.Namespace):
+
+    """An argparse namespace which also stores config file values.
+
+    As we parse command line arguments, the values get set as attributes
+    on a namespace object. However, we also want to parse config files as
+    they are specified on the command line and collect the values alongside
+    the option values parsed from the command line.
+
+    Note, we don't actually assign values from config files as attributes
+    on the namespace because config file options be registered after the
+    command line has been parsed, so we may not know how to properly parse
+    or convert a config file value at this point.
+    """
+
+    def __init__(self):
+        self.parser = MultiConfigParser()
+        self.files_not_found = []
+
+    def _file_not_found(self, config_file):
+        """Record that we were unable to open a config file.
+
+        :param config_file: the path to the failed file
+        """
+        self.files_not_found.append(config_file)
+
+    def _get_value(self, names, multi, convert_value):
+        """Fetch a value from config files.
+
+        Multiple names for a given configuration option may be supplied so
+        that we can transparently handle files containing deprecated option
+        names or groups.
+
+        :param names: a list of (section, name) tuples
+        :param multi: a boolean indicating whether to return multiple values
+        :param convert_value: callable to convert a string into the proper type
+        """
+        return self.parser._get(names, multi=multi, normalized=True,
+                                convert_value=convert_value)
+
+
 class ConfigOpts(collections.Mapping):
 
     """Config options which may be set on the command line or in config files.
@@ -1179,7 +1343,7 @@ class ConfigOpts(collections.Mapping):
         self._args = None
 
         self._oparser = None
-        self._cparser = None
+        self._namespace = None
         self._cli_values = {}
         self.__cache = {}
         self._config_opts = []
@@ -1204,22 +1368,23 @@ class ConfigOpts(collections.Mapping):
         """Initialize a ConfigOpts object for option parsing."""
 
         self._config_opts = [
-            MultiStrOpt('config-file',
-                        default=default_config_files,
-                        metavar='PATH',
-                        help='Path to a config file to use. Multiple config '
-                             'files can be specified, with values in later '
-                             'files taking precedence. The default files '
-                             ' used are: %(default)s'),
-            StrOpt('config-dir',
-                   metavar='DIR',
-                   help='Path to a config directory to pull *.conf '
-                        'files from. This file set is sorted, so as to '
-                        'provide a predictable parse order if individual '
-                        'options are over-ridden. The set is parsed after '
-                        'the file(s), if any, specified via --config-file, '
-                        'hence over-ridden options in the directory take '
-                        'precedence.'),
+            _ConfigFileOpt('config-file',
+                           default=default_config_files,
+                           metavar='PATH',
+                           help=('Path to a config file to use. Multiple '
+                                 'config files can be specified, with values '
+                                 'in later files taking precedence. The '
+                                 'default files used are: %(default)s')),
+            _ConfigDirOpt('config-dir',
+                          metavar='DIR',
+                          help='Path to a config directory to pull *.conf '
+                               'files from. This file set is sorted, so as to '
+                               'provide a predictable parse order if '
+                               'individual options are over-ridden. The set '
+                               'is parsed after the file(s) specified via '
+                               'previous --config-file, arguments hence '
+                               'over-ridden options in the directory take '
+                               'precedence.'),
         ]
         self.register_cli_opts(self._config_opts)
 
@@ -1282,10 +1447,12 @@ class ConfigOpts(collections.Mapping):
 
         self._setup(project, prog, version, usage, default_config_files)
 
-        self._cli_values = self._parse_cli_opts(args if args is not None
-                                                else sys.argv[1:])
+        self._namespace = self._parse_cli_opts(args if args is not None
+                                               else sys.argv[1:])
+        self._cli_values = vars(self._namespace)
 
-        self._parse_config_files()
+        if self._namespace.files_not_found:
+            raise ConfigFilesNotFoundError(self._namespace.files_not_found)
 
         self._check_required_opts()
 
@@ -1330,7 +1497,7 @@ class ConfigOpts(collections.Mapping):
         self._args = None
         self._cli_values.clear()
         self._oparser = argparse.ArgumentParser()
-        self._cparser = None
+        self._namespace = None
         self.unregister_opts(self._config_opts)
         for group in self._groups.values():
             group._clear()
@@ -1644,10 +1811,10 @@ class ConfigOpts(collections.Mapping):
             return info['override']
 
         values = []
-        if self._cparser is not None:
+        if self._namespace is not None:
             section = group.name if group is not None else 'DEFAULT'
             try:
-                value = opt._get_from_config_parser(self._cparser, section)
+                value = opt._get_from_namespace(self._namespace, section)
             except KeyError:
                 pass
             except ValueError as ve:
@@ -1738,30 +1905,6 @@ class ConfigOpts(collections.Mapping):
 
         return opts[opt_name]
 
-    def _parse_config_files(self):
-        """Parse the config files from --config-file and --config-dir.
-
-        :raises: ConfigFilesNotFoundError, ConfigFileParseError
-        """
-        config_files = list(self.config_file)
-
-        if self.config_dir:
-            config_dir_glob = os.path.join(self.config_dir, '*.conf')
-            config_files += sorted(glob.glob(config_dir_glob))
-
-        config_files = [_fixpath(p) for p in config_files]
-
-        self._cparser = MultiConfigParser()
-
-        try:
-            read_ok = self._cparser.read(config_files)
-        except iniparser.ParseError as pe:
-            raise ConfigFileParseError(pe.filename, str(pe))
-
-        if read_ok != config_files:
-            not_read_ok = [f for f in config_files if f not in read_ok]
-            raise ConfigFilesNotFoundError(not_read_ok)
-
     def _check_required_opts(self):
         """Check that all opts marked as required have values specified.
 
@@ -1784,7 +1927,7 @@ class ConfigOpts(collections.Mapping):
         command line arguments.
 
         :param args: the command line arguments
-        :returns: a dict of parsed option values
+        :returns: a _Namespace object containing the parsed option values
         :raises: SystemExit, DuplicateOptError
 
         """
@@ -1793,7 +1936,16 @@ class ConfigOpts(collections.Mapping):
         for opt, group in sorted(self._all_cli_opts()):
             opt._add_to_cli(self._oparser, group)
 
-        return vars(self._oparser.parse_args(args))
+        namespace = _Namespace()
+
+        for arg in args:
+            if arg == '--config-file' or arg.startswith('--config-file='):
+                break
+        else:
+            for config_file in self.default_config_files:
+                ConfigParser._parse_file(config_file, namespace)
+
+        return self._oparser.parse_args(args, namespace)
 
     class GroupAttr(collections.Mapping):
 
