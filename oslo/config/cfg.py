@@ -567,21 +567,23 @@ class Opt(object):
     def __ne__(self, another):
         return vars(self) != vars(another)
 
-    def _get_from_namespace(self, namespace, section):
+    def _get_from_namespace(self, namespace, group_name):
         """Retrieves the option value from a _Namespace object.
 
         :param namespace: a _Namespace object
-        :param section: a section name
+        :param group_name: a group name
         """
-        names = [(section, self.dest)]
+        names = [(group_name, self.dest)]
 
         for opt in self.deprecated_opts:
             dname, dgroup = opt.name, opt.group
             if dname or dgroup:
-                names.append((dgroup if dgroup else section,
+                names.append((dgroup if dgroup else group_name,
                               dname if dname else self.dest))
 
-        return namespace._get_value(names, self.multi, self._convert_value)
+        return namespace._get_value(names,
+                                    self.multi, self.positional,
+                                    self._convert_value)
 
     def _add_to_cli(self, parser, group=None):
         """Makes the option available in the command line interface.
@@ -1213,7 +1215,7 @@ class ConfigParser(iniparser.BaseParser):
             namespace._file_not_found(config_file)
             return
 
-        namespace.parser._add_parsed_config_file(sections, normalized)
+        namespace.add_parsed_config_file(sections, normalized)
 
 
 class MultiConfigParser(object):
@@ -1300,9 +1302,67 @@ class _Namespace(argparse.Namespace):
     or convert a config file value at this point.
     """
 
-    def __init__(self):
+    def __init__(self, conf):
+        self.conf = conf
         self.parser = MultiConfigParser()
         self.files_not_found = []
+
+    def _parse_cli_opts_from_config_file(self, sections, normalized):
+        """Parse CLI options from a config file.
+
+        CLI options are special - we require they be registered before the
+        command line is parsed. This means that as we parse config files, we
+        can go ahead and apply the appropriate option-type specific conversion
+        to the values in config files for CLI options. We can't do this for
+        non-CLI options, because the schema describing those options may not be
+        registered until after the config files are parsed.
+
+        This method relies on that invariant in order to enforce proper
+        priority of option values - i.e. that the order in which an option
+        value is parsed, whether the value comes from the CLI or a config file,
+        determines which value specified for a given option wins.
+
+        The way we implement this ordering is that as we parse each config
+        file, we look for values in that config file for CLI options only. Any
+        values for CLI options found in the config file are treated like they
+        had appeared on the command line and set as attributes on the namespace
+        objects. Values in later config files or on the command line will
+        override values found in this file.
+        """
+        namespace = _Namespace(self.conf)
+        namespace.parser._add_parsed_config_file(sections, normalized)
+
+        for opt, group in sorted(self.conf._all_cli_opts()):
+            group_name = group.name if group is not None else None
+            try:
+                value = opt._get_from_namespace(namespace, group_name)
+            except KeyError:
+                continue
+            except ValueError as ve:
+                raise ConfigFileValueError(str(ve))
+
+            if group_name is None:
+                dest = opt.dest
+            else:
+                dest = group_name + '_' + opt.dest
+
+            if opt.multi:
+                if getattr(self, dest, None) is None:
+                    setattr(self, dest, [])
+                values = getattr(self, dest)
+                values.extend(value)
+            else:
+                setattr(self, dest, value)
+
+    def add_parsed_config_file(self, sections, normalized):
+        """Add a parsed config file to the list of parsed files.
+
+        :param sections: a mapping of section name to dicts of config values
+        :param normalized: sections mapping with section names normalized
+        :raises: ConfigFileValueError
+        """
+        self._parse_cli_opts_from_config_file(sections, normalized)
+        self.parser._add_parsed_config_file(sections, normalized)
 
     def _file_not_found(self, config_file):
         """Record that we were unable to open a config file.
@@ -1311,7 +1371,32 @@ class _Namespace(argparse.Namespace):
         """
         self.files_not_found.append(config_file)
 
-    def _get_value(self, names, multi, convert_value):
+    def _get_cli_value(self, names, positional):
+        """Fetch a CLI option value.
+
+        Look up the value of a CLI option. The value itself may have come from
+        parsing the command line or parsing config files specified on the
+        command line. Type conversion have already been performed for CLI
+        options at this point.
+
+        :param names: a list of (section, name) tuples
+        :param multi: a boolean indicating whether to return multiple values
+        :param convert_value: callable to convert a string into the proper type
+        """
+        for group_name, name in names:
+            name = name if group_name is None else group_name + '_' + name
+            try:
+                value = getattr(self, name)
+                if value is not None:
+                    # argparse ignores default=None for nargs='*'
+                    if positional and not value:
+                        value = self.default
+                    return value
+            except AttributeError:
+                pass
+        raise KeyError
+
+    def _get_value(self, names, multi, positional, convert_value):
         """Fetch a value from config files.
 
         Multiple names for a given configuration option may be supplied so
@@ -1320,10 +1405,18 @@ class _Namespace(argparse.Namespace):
 
         :param names: a list of (section, name) tuples
         :param multi: a boolean indicating whether to return multiple values
+        :param positional: whether this is a positional option
         :param convert_value: callable to convert a string into the proper type
         """
-        return self.parser._get(names, multi=multi, normalized=True,
-                                convert_value=convert_value)
+        try:
+            return self._get_cli_value(names, positional)
+        except KeyError:
+            pass
+
+        names = [(g if g is not None else 'DEFAULT', n) for g, n in names]
+        values = self.parser._get(names, multi=multi, normalized=True,
+                                  convert_value=convert_value)
+        return values if multi else values[-1]
 
 
 class ConfigOpts(collections.Mapping):
@@ -1344,7 +1437,6 @@ class ConfigOpts(collections.Mapping):
 
         self._oparser = None
         self._namespace = None
-        self._cli_values = {}
         self.__cache = {}
         self._config_opts = []
 
@@ -1449,8 +1541,6 @@ class ConfigOpts(collections.Mapping):
 
         self._namespace = self._parse_cli_opts(args if args is not None
                                                else sys.argv[1:])
-        self._cli_values = vars(self._namespace)
-
         if self._namespace.files_not_found:
             raise ConfigFilesNotFoundError(self._namespace.files_not_found)
 
@@ -1495,7 +1585,6 @@ class ConfigOpts(collections.Mapping):
         removed as a side-effect of this method.
         """
         self._args = None
-        self._cli_values.clear()
         self._oparser = argparse.ArgumentParser()
         self._namespace = None
         self.unregister_opts(self._config_opts)
@@ -1810,35 +1899,14 @@ class ConfigOpts(collections.Mapping):
         if 'override' in info:
             return info['override']
 
-        values = []
         if self._namespace is not None:
-            section = group.name if group is not None else 'DEFAULT'
+            group_name = group.name if group is not None else None
             try:
-                value = opt._get_from_namespace(self._namespace, section)
+                return opt._get_from_namespace(self._namespace, group_name)
             except KeyError:
                 pass
             except ValueError as ve:
                 raise ConfigFileValueError(str(ve))
-            else:
-                if not opt.multi:
-                    # No need to continue since the last value wins
-                    return value[-1]
-                values.extend(value)
-
-        name = name if group is None else group.name + '_' + name
-        value = self._cli_values.get(name)
-        if value is not None:
-            if not opt.multi:
-                return value
-
-            # argparse ignores default=None for nargs='*'
-            if opt.positional and not value:
-                value = opt.default
-
-            return value + values
-
-        if values:
-            return values
 
         if 'default' in info:
             return info['default']
@@ -1929,6 +1997,7 @@ class ConfigOpts(collections.Mapping):
         :param args: the command line arguments
         :returns: a _Namespace object containing the parsed option values
         :raises: SystemExit, DuplicateOptError
+                 ConfigFileParseError, ConfigFileValueError
 
         """
         self._args = args
@@ -1936,7 +2005,7 @@ class ConfigOpts(collections.Mapping):
         for opt, group in sorted(self._all_cli_opts()):
             opt._add_to_cli(self._oparser, group)
 
-        namespace = _Namespace()
+        namespace = _Namespace(self)
 
         for arg in args:
             if arg == '--config-file' or arg.startswith('--config-file='):
@@ -2008,14 +2077,14 @@ class ConfigOpts(collections.Mapping):
                 name = self._dest
                 if self._group is not None:
                     name = self._group.name + '_' + name
-                return self._conf._cli_values[name]
+                return getattr(self._conf._namespace, name)
 
             if name in self._conf:
                 raise DuplicateOptError(name)
 
             try:
-                return self._conf._cli_values[name]
-            except KeyError:
+                return getattr(self._conf._namespace, name)
+            except AttributeError:
                 raise NoSuchOptError(name)
 
     class StrSubWrapper(object):

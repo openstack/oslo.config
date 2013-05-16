@@ -224,7 +224,7 @@ class DefaultConfigFilesTestCase(BaseTestCase):
         self.conf(args=['--foo=blaa'], default_config_files=paths)
 
         self.assertEquals(self.conf.config_file, paths)
-        self.assertEquals(self.conf.foo, 'bar')
+        self.assertEquals(self.conf.foo, 'blaa')
 
 
 class CliOptsTestCase(BaseTestCase):
@@ -718,7 +718,7 @@ class ConfigFileOptsTestCase(BaseTestCase):
                    '--foo'])
 
         self.assertTrue(hasattr(self.conf, 'foo'))
-        self.assertEquals(self.conf.foo, False)
+        self.assertEquals(self.conf.foo, True)
 
     def test_conf_file_bool_file_value_override(self):
         self.conf.register_cli_opt(cfg.BoolOpt('foo'))
