@@ -774,9 +774,6 @@ class BoolOpt(Opt):
         if 'metavar' in kwargs:
             del kwargs['metavar']
 
-        if action != 'store_true':
-            action = 'store_false'
-
         kwargs['action'] = action
 
         return kwargs
