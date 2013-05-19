@@ -2344,3 +2344,47 @@ class SetDefaultsTestCase(BaseTestCase):
         cfg.set_defaults(opts, foo='bar')
         self.conf([])
         self.assertEquals(self.conf.blaa.foo, 'bar')
+
+
+class MultipleDeprecatedOptionsTestCase(BaseTestCase):
+
+    def test_conf_file_override_use_deprecated_name_and_group(self):
+        self.conf.register_group(cfg.OptGroup('blaa'))
+        self.conf.register_opt(cfg.StrOpt('foo',
+                                          deprecated_name='oldfoo',
+                                          deprecated_group='oldgroup'),
+                               group='blaa')
+
+        paths = self.create_tempfiles([('test',
+                                        '[oldgroup]\n'
+                                        'oldfoo = bar\n')])
+
+        self.conf(['--config-file', paths[0]])
+        self.assertEquals(self.conf.blaa.foo, 'bar')
+
+    def test_conf_file_override_use_deprecated_opts(self):
+        self.conf.register_group(cfg.OptGroup('blaa'))
+        oldopts = [cfg.DeprecatedOpt('oldfoo', group='oldgroup')]
+        self.conf.register_opt(cfg.StrOpt('foo', deprecated_opts=oldopts),
+                               group='blaa')
+
+        paths = self.create_tempfiles([('test',
+                                        '[oldgroup]\n'
+                                        'oldfoo = bar\n')])
+
+        self.conf(['--config-file', paths[0]])
+        self.assertEquals(self.conf.blaa.foo, 'bar')
+
+    def test_conf_file_override_use_deprecated_multi_opts(self):
+        self.conf.register_group(cfg.OptGroup('blaa'))
+        oldopts = [cfg.DeprecatedOpt('oldfoo', group='oldgroup'),
+                   cfg.DeprecatedOpt('oldfoo2', group='oldgroup2')]
+        self.conf.register_opt(cfg.StrOpt('foo', deprecated_opts=oldopts),
+                               group='blaa')
+
+        paths = self.create_tempfiles([('test',
+                                        '[oldgroup2]\n'
+                                        'oldfoo2 = bar\n')])
+
+        self.conf(['--config-file', paths[0]])
+        self.assertEquals(self.conf.blaa.foo, 'bar')
