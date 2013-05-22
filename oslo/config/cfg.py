@@ -524,7 +524,8 @@ class Opt(object):
     def __init__(self, name, dest=None, short=None, default=None,
                  positional=False, metavar=None, help=None,
                  secret=False, required=False,
-                 deprecated_name=None, deprecated_group=None):
+                 deprecated_name=None, deprecated_group=None,
+                 deprecated_opts=None):
         """Construct an Opt object.
 
         The only required parameter is the option's name. However, it is
@@ -541,6 +542,7 @@ class Opt(object):
         :param required: true iff a value must be supplied for this option
         :param deprecated_name: deprecated name option.  Acts like an alias
         :param deprecated_group: the group containing a deprecated alias
+        :param deprecated_opts: array of DeprecatedOpt(s)
         """
         self.name = name
         if dest is None:
@@ -555,10 +557,11 @@ class Opt(object):
         self.secret = secret
         self.required = required
         if deprecated_name is not None:
-            self.deprecated_name = deprecated_name.replace('-', '_')
-        else:
-            self.deprecated_name = None
-        self.deprecated_group = deprecated_group
+            deprecated_name = deprecated_name.replace('-', '_')
+
+        self.deprecated_opts = copy.deepcopy(deprecated_opts) or []
+        self.deprecated_opts.append(DeprecatedOpt(deprecated_name,
+                                                  group=deprecated_group))
 
     def __ne__(self, another):
         return vars(self) != vars(another)
@@ -579,10 +582,11 @@ class Opt(object):
         """If cannot find option as dest try deprecated_name alias."""
         names = [(section, self.dest)]
 
-        dname, dgroup = self.deprecated_name, self.deprecated_group
-        if dname or dgroup:
-            names.append((dgroup if dgroup else section,
-                          dname if dname else self.dest))
+        for opt in self.deprecated_opts:
+            dname, dgroup = opt.name, opt.group
+            if dname or dgroup:
+                names.append((dgroup if dgroup else section,
+                              dname if dname else self.dest))
 
         return cparser.get(names, multi)
 
@@ -599,10 +603,12 @@ class Opt(object):
         container = self._get_argparse_container(parser, group)
         kwargs = self._get_argparse_kwargs(group)
         prefix = self._get_argparse_prefix('', group.name if group else None)
-        deprecated_name = self._get_deprecated_cli_name(self.deprecated_name,
-                                                        self.deprecated_group)
-        self._add_to_argparse(container, self.name, self.short, kwargs, prefix,
-                              self.positional, deprecated_name)
+        for opt in self.deprecated_opts:
+            deprecated_name = self._get_deprecated_cli_name(opt.name,
+                                                            opt.group)
+            self._add_to_argparse(container, self.name, self.short,
+                                  kwargs, prefix,
+                                  self.positional, deprecated_name)
 
     def _add_to_argparse(self, container, name, short, kwargs, prefix='',
                          positional=False, deprecated_name=None):
@@ -708,6 +714,36 @@ class Opt(object):
         return self._get_argparse_prefix(prefix, dgroup) + dname
 
 
+class DeprecatedOpt(object):
+
+    """Represents a Deprecated option. Here's how you can use it
+
+        oldopts = [cfg.DeprecatedOpt('oldfoo', group='oldgroup'),
+                   cfg.DeprecatedOpt('oldfoo2', group='oldgroup2')]
+        cfg.CONF.register_group(cfg.OptGroup('blaa'))
+        cfg.CONF.register_opt(cfg.StrOpt('foo', deprecated_opts=oldopts),
+                               group='blaa')
+    """
+
+    def __init__(self, name, group=None):
+        """Constructs an DeprecatedOpt object.
+
+        :param name: the name of the option
+        :param group: the group of the option
+        """
+        self.name = name
+        self.group = group
+
+    def __key(self):
+        return (self.name, self.group)
+
+    def __eq__(x, y):
+        return x.__key() == y.__key()
+
+    def __hash__(self):
+        return hash(self.__key())
+
+
 class StrOpt(Opt):
     """String options.
 
@@ -758,12 +794,13 @@ class BoolOpt(Opt):
         container = self._get_argparse_container(parser, group)
         kwargs = self._get_argparse_kwargs(group, action='store_false')
         prefix = self._get_argparse_prefix('no', group.name if group else None)
-        deprecated_name = self._get_deprecated_cli_name(self.deprecated_name,
-                                                        self.deprecated_group,
-                                                        prefix='no')
-        kwargs["help"] = "The inverse of --" + self.name
-        self._add_to_argparse(container, self.name, None, kwargs, prefix,
-                              self.positional, deprecated_name)
+        for opt in self.deprecated_opts:
+            deprecated_name = self._get_deprecated_cli_name(opt.name,
+                                                            opt.group,
+                                                            prefix='no')
+            kwargs["help"] = "The inverse of --" + self.name
+            self._add_to_argparse(container, self.name, None, kwargs, prefix,
+                                  self.positional, deprecated_name)
 
     def _get_argparse_kwargs(self, group, action='store_true', **kwargs):
         """Extends the base argparse keyword dict for boolean options."""
