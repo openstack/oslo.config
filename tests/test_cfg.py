@@ -78,14 +78,14 @@ class ExceptionsTestCase(utils.BaseTestCase):
 class BaseTestCase(utils.BaseTestCase):
 
     class TestConfigOpts(cfg.ConfigOpts):
-        def __call__(self, args=None):
+        def __call__(self, args=None, default_config_files=[]):
             return cfg.ConfigOpts.__call__(
                 self,
                 args=args,
                 prog='test',
                 version='1.0',
                 usage='%(prog)s FOO BAR',
-                default_config_files=[])
+                default_config_files=default_config_files)
 
     def setUp(self):
         super(BaseTestCase, self).setUp()
@@ -152,6 +152,79 @@ class FindConfigFilesTestCase(BaseTestCase):
         self.assertEquals(cfg.find_config_files(project='blaa',
                                                 extension='.json'),
                           config_files)
+
+
+class DefaultConfigFilesTestCase(BaseTestCase):
+
+    def test_use_default(self):
+        self.conf.register_opt(cfg.StrOpt('foo'))
+        paths = self.create_tempfiles([('foo-', '[DEFAULT]\n''foo = bar\n')])
+
+        self.conf.register_cli_opt(cfg.StrOpt('config-file-foo'))
+        self.conf(args=['--config-file-foo', 'foo.conf'],
+                  default_config_files=[paths[0]])
+
+        self.assertEquals(self.conf.config_file, [paths[0]])
+        self.assertEquals(self.conf.foo, 'bar')
+
+    def test_do_not_use_default_multi_arg(self):
+        self.conf.register_opt(cfg.StrOpt('foo'))
+        paths = self.create_tempfiles([('foo-', '[DEFAULT]\n''foo = bar\n')])
+
+        self.conf(args=['--config-file', paths[0]],
+                  default_config_files=['bar.conf'])
+
+        self.assertEquals(self.conf.config_file, [paths[0]])
+        self.assertEquals(self.conf.foo, 'bar')
+
+    def test_do_not_use_default_single_arg(self):
+        self.conf.register_opt(cfg.StrOpt('foo'))
+        paths = self.create_tempfiles([('foo-', '[DEFAULT]\n''foo = bar\n')])
+
+        self.conf(args=['--config-file=' + paths[0]],
+                  default_config_files=['bar.conf'])
+
+        self.assertEquals(self.conf.config_file, [paths[0]])
+        self.assertEquals(self.conf.foo, 'bar')
+
+    def test_no_default_config_file(self):
+        self.conf(args=[])
+        self.assertEquals(self.conf.config_file, [])
+
+    def test_find_default_config_file(self):
+        paths = self.create_tempfiles([('def', '[DEFAULT]')])
+
+        self.stubs.Set(cfg, 'find_config_files', lambda project, prog: paths)
+
+        self.conf(args=[], default_config_files=None)
+        self.assertEquals(self.conf.config_file, paths)
+
+    def test_default_config_file(self):
+        paths = self.create_tempfiles([('def', '[DEFAULT]')])
+
+        self.conf(args=[], default_config_files=paths)
+
+        self.assertEquals(self.conf.config_file, paths)
+
+    def test_default_config_file_with_value(self):
+        self.conf.register_cli_opt(cfg.StrOpt('foo'))
+
+        paths = self.create_tempfiles([('def', '[DEFAULT]\n''foo = bar\n')])
+
+        self.conf(args=[], default_config_files=paths)
+
+        self.assertEquals(self.conf.config_file, paths)
+        self.assertEquals(self.conf.foo, 'bar')
+
+    def test_default_config_file_priority(self):
+        self.conf.register_cli_opt(cfg.StrOpt('foo'))
+
+        paths = self.create_tempfiles([('def', '[DEFAULT]\n''foo = bar\n')])
+
+        self.conf(args=['--foo=blaa'], default_config_files=paths)
+
+        self.assertEquals(self.conf.config_file, paths)
+        self.assertEquals(self.conf.foo, 'bar')
 
 
 class CliOptsTestCase(BaseTestCase):
@@ -1543,6 +1616,43 @@ class ConfigDirTestCase(BaseTestCase):
         self.assertTrue(hasattr(self.conf, 'snafu'))
         self.assertTrue(hasattr(self.conf.snafu, 'bell'))
         self.assertEquals(self.conf.snafu.bell, 'whistle-03')
+
+    def test_config_dir_default_file_precedence(self):
+        snafu_group = cfg.OptGroup('snafu')
+        self.conf.register_group(snafu_group)
+        self.conf.register_cli_opt(cfg.StrOpt('foo'))
+        self.conf.register_cli_opt(cfg.StrOpt('bell'), group=snafu_group)
+
+        dir = tempfile.mkdtemp()
+        self.tempdirs.append(dir)
+
+        paths = self.create_tempfiles([(os.path.join(dir, '00-test'),
+                                        '[DEFAULT]\n'
+                                        'foo = bar-00\n'
+                                        '[snafu]\n'
+                                        'bell = whistle-11\n'),
+                                       ('01-test',
+                                        '[snafu]\n'
+                                        'bell = whistle-01\n'
+                                        '[DEFAULT]\n'
+                                        'foo = bar-01\n'),
+                                       ('03-test',
+                                        '[snafu]\n'
+                                        'bell = whistle-03\n'
+                                        '[DEFAULT]\n'
+                                        'foo = bar-03\n'),
+                                       (os.path.join(dir, '02-test'),
+                                        '[DEFAULT]\n'
+                                        'foo = bar-02\n')])
+
+        self.conf(['--foo', 'bar', '--config-dir', os.path.dirname(paths[0])],
+                  default_config_files=[paths[1], paths[2]])
+
+        self.assertTrue(hasattr(self.conf, 'foo'))
+        self.assertEquals(self.conf.foo, 'bar-02')
+        self.assertTrue(hasattr(self.conf, 'snafu'))
+        self.assertTrue(hasattr(self.conf.snafu, 'bell'))
+        self.assertEquals(self.conf.snafu.bell, 'whistle-11')
 
 
 class ReparseTestCase(BaseTestCase):
