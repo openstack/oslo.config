@@ -707,6 +707,19 @@ class ConfigFileOptsTestCase(BaseTestCase):
         self.assertTrue(hasattr(self.conf, 'foo'))
         self.assertEquals(self.conf.foo, True)
 
+    def test_conf_file_bool_cli_order_override(self):
+        self.conf.register_cli_opt(cfg.BoolOpt('foo'))
+
+        paths = self.create_tempfiles([('1',
+                                        '[DEFAULT]\n'
+                                        'foo = false\n')])
+
+        self.conf(['--config-file', paths[0],
+                   '--foo'])
+
+        self.assertTrue(hasattr(self.conf, 'foo'))
+        self.assertEquals(self.conf.foo, False)
+
     def test_conf_file_bool_file_value_override(self):
         self.conf.register_cli_opt(cfg.BoolOpt('foo'))
 
