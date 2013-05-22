@@ -1472,6 +1472,9 @@ class TemplateSubstitutionTestCase(BaseTestCase):
         self.assertTrue(hasattr(self.conf.ba, 'r'))
         self.assertEquals(self.conf.ba.r, 'blaa')
 
+
+class ConfigDirTestCase(BaseTestCase):
+
     def test_config_dir(self):
         snafu_group = cfg.OptGroup('snafu')
         self.conf.register_group(snafu_group)
