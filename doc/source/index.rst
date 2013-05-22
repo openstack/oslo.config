@@ -31,6 +31,15 @@ Release Notes
 .. _testr: https://wiki.openstack.org/wiki/Testr
 .. _hacking: https://pypi.python.org/pypi/hacking
 
+1.1.1
+-----
+
+* 1160922_: Fix set_defaults() to handle multiple arguments
+* 1175096_: Fix the title argument to ``OptGroup``
+
+.. _1160922: https://bugs.launchpad.net/oslo/+bug/1160922
+.. _1175096: https://bugs.launchpad.net/oslo/+bug/1175096
+
 Indices and tables
 ==================
 
