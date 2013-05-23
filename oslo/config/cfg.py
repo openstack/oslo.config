@@ -588,7 +588,7 @@ class Opt(object):
                 names.append((dgroup if dgroup else section,
                               dname if dname else self.dest))
 
-        return cparser.get(names, multi)
+        return cparser.get(names, multi, normalized=True)
 
     def _add_to_cli(self, parser, group=None):
         """Makes the option available in the command line interface.
@@ -1069,10 +1069,11 @@ class ParseError(iniparser.ParseError):
 
 
 class ConfigParser(iniparser.BaseParser):
-    def __init__(self, filename, sections):
+    def __init__(self, filename, sections, normalized=None):
         super(ConfigParser, self).__init__()
         self.filename = filename
         self.sections = sections
+        self.normalized = normalized
         self.section = None
 
     def parse(self):
@@ -1080,15 +1081,25 @@ class ConfigParser(iniparser.BaseParser):
             return super(ConfigParser, self).parse(f)
 
     def new_section(self, section):
-        self.section = _normalize_group_name(section)
+        self.section = section
         self.sections.setdefault(self.section, {})
+
+        if self.normalized is not None:
+            self.normalized.setdefault(_normalize_group_name(self.section), {})
 
     def assignment(self, key, value):
         if not self.section:
             raise self.error_no_section()
 
-        self.sections[self.section].setdefault(key, [])
-        self.sections[self.section][key].append('\n'.join(value))
+        value = '\n'.join(value)
+
+        def append(sections, section):
+            sections[section].setdefault(key, [])
+            sections[section][key].append(value)
+
+        append(self.sections, self.section)
+        if self.normalized is not None:
+            append(self.normalized, _normalize_group_name(self.section))
 
     def parse_exc(self, msg, lineno, line=None):
         return ParseError(msg, lineno, line, self.filename)
@@ -1101,28 +1112,35 @@ class ConfigParser(iniparser.BaseParser):
 class MultiConfigParser(object):
     def __init__(self):
         self.parsed = []
+        self._normalized = []
 
     def read(self, config_files):
         read_ok = []
 
         for filename in config_files:
             sections = {}
-            parser = ConfigParser(filename, sections)
+            normalized = {}
+            parser = ConfigParser(filename, sections, normalized)
 
             try:
                 parser.parse()
             except IOError:
                 continue
             self.parsed.insert(0, sections)
+            self._normalized.insert(0, normalized)
             read_ok.append(filename)
 
         return read_ok
 
-    def get(self, names, multi=False):
+    def get(self, names, multi=False, normalized=False):
         rvalue = []
-        names = [(_normalize_group_name(section), name)
-                 for section, name in names]
-        for sections in self.parsed:
+
+        def normalize(name):
+            return _normalize_group_name(section) if normalized else name
+
+        names = [(normalize(section), name) for section, name in names]
+
+        for sections in (self._normalized if normalized else self.parsed):
             for section, name in names:
                 if section not in sections:
                     continue
