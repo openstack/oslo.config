@@ -2260,7 +2260,29 @@ class OptDumpingTestCase(BaseTestCase):
         self._do_test_log_opt_values(None)
 
 
-class ConfigParserTestCase(utils.BaseTestCase):
+class ConfigParserTestCase(BaseTestCase):
+
+    def test_parse_file(self):
+        paths = self.create_tempfiles([('test',
+                                        '[DEFAULT]\n'
+                                        'foo = bar\n'
+                                        '[BLAA]\n'
+                                        'bar = foo\n')])
+
+        sections = {}
+        normalized = {}
+        parser = cfg.ConfigParser(paths[0], sections, normalized)
+        parser.parse()
+
+        self.assertTrue('DEFAULT' in sections)
+        self.assertTrue('DEFAULT' in normalized)
+        self.assertTrue('BLAA' in sections)
+        self.assertTrue('blaa' in normalized)
+        self.assertEquals(sections['DEFAULT']['foo'], ['bar'])
+        self.assertEquals(normalized['DEFAULT']['foo'], ['bar'])
+        self.assertEquals(sections['BLAA']['bar'], ['foo'])
+        self.assertEquals(normalized['blaa']['bar'], ['foo'])
+
     def test_no_section(self):
         with tempfile.NamedTemporaryFile() as tmpfile:
             tmpfile.write('foo = bar')
@@ -2268,6 +2290,80 @@ class ConfigParserTestCase(utils.BaseTestCase):
 
             parser = cfg.ConfigParser(tmpfile.name, {})
             self.assertRaises(cfg.ParseError, parser.parse)
+
+
+class MultiConfigParserTestCase(BaseTestCase):
+
+    def test_parse_single_file(self):
+        paths = self.create_tempfiles([('test',
+                                        '[DEFAULT]\n'
+                                        'foo = bar\n'
+                                        '[BLAA]\n'
+                                        'bar = foo\n')])
+
+        parser = cfg.MultiConfigParser()
+        read_ok = parser.read(paths)
+
+        self.assertEquals(read_ok, paths)
+
+        self.assertTrue('DEFAULT' in parser.parsed[0])
+        self.assertEquals(parser.parsed[0]['DEFAULT']['foo'], ['bar'])
+        self.assertEquals(parser.get([('DEFAULT', 'foo')]), ['bar'])
+        self.assertEquals(parser.get([('DEFAULT', 'foo')], multi=True),
+                          ['bar'])
+        self.assertEquals(parser.get([('DEFAULT', 'foo')],
+                                     multi=True, normalized=True),
+                          ['bar'])
+
+        self.assertTrue('BLAA' in parser.parsed[0])
+        self.assertEquals(parser.parsed[0]['BLAA']['bar'], ['foo'])
+        self.assertEquals(parser.get([('BLAA', 'bar')]), ['foo'])
+        self.assertEquals(parser.get([('BLAA', 'bar')], multi=True),
+                          ['foo'])
+        self.assertEquals(parser.get([('blaa', 'bar')],
+                                     multi=True, normalized=True),
+                          ['foo'])
+
+    def test_parse_multiple_files(self):
+        paths = self.create_tempfiles([('test1',
+                                        '[DEFAULT]\n'
+                                        'foo = bar\n'
+                                        '[BLAA]\n'
+                                        'bar = foo'),
+                                       ('test2',
+                                        '[DEFAULT]\n'
+                                        'foo = barbar\n'
+                                        '[BLAA]\n'
+                                        'bar = foofoo\n'
+                                        '[bLAa]\n'
+                                        'bar = foofoofoo\n')])
+
+        parser = cfg.MultiConfigParser()
+        read_ok = parser.read(paths)
+
+        self.assertEquals(read_ok, paths)
+
+        self.assertTrue('DEFAULT' in parser.parsed[0])
+        self.assertEquals(parser.parsed[0]['DEFAULT']['foo'], ['barbar'])
+        self.assertTrue('DEFAULT' in parser.parsed[1])
+        self.assertEquals(parser.parsed[1]['DEFAULT']['foo'], ['bar'])
+        self.assertEquals(parser.get([('DEFAULT', 'foo')]), ['barbar'])
+        self.assertEquals(parser.get([('DEFAULT', 'foo')], multi=True),
+                          ['bar', 'barbar'])
+
+        self.assertTrue('BLAA' in parser.parsed[0])
+        self.assertTrue('bLAa' in parser.parsed[0])
+        self.assertEquals(parser.parsed[0]['BLAA']['bar'], ['foofoo'])
+        self.assertEquals(parser.parsed[0]['bLAa']['bar'], ['foofoofoo'])
+        self.assertTrue('BLAA' in parser.parsed[1])
+        self.assertEquals(parser.parsed[1]['BLAA']['bar'], ['foo'])
+        self.assertEquals(parser.get([('BLAA', 'bar')]), ['foofoo'])
+        self.assertEquals(parser.get([('bLAa', 'bar')]), ['foofoofoo'])
+        self.assertEquals(parser.get([('BLAA', 'bar')], multi=True),
+                          ['foo', 'foofoo'])
+        self.assertEquals(parser.get([('BLAA', 'bar')],
+                                     multi=True, normalized=True),
+                          ['foo', 'foofoo', 'foofoofoo'])
 
 
 class TildeExpansionTestCase(BaseTestCase):
