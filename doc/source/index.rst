@@ -15,6 +15,11 @@ Contents
 Release Notes
 =============
 
+1.2.0a2
+-------
+
+* Fix MultiConfigParser API breakage in 1.2.0a1
+
 1.2.0a1
 -------
 
