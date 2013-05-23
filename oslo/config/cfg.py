@@ -1202,7 +1202,7 @@ class ConfigOpts(collections.Mapping):
                         help='Path to a config file to use. Multiple config '
                              'files can be specified, with values in later '
                              'files taking precedence. The default files '
-                             ' used are: %s' % (default_config_files, )),
+                             ' used are: %(default)s'),
             StrOpt('config-dir',
                    metavar='DIR',
                    help='Path to a config directory to pull *.conf '
