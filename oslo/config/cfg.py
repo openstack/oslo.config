@@ -520,6 +520,7 @@ class Opt(object):
         an string explaining how the options value is used
     """
     multi = False
+    _convert_value = None
 
     def __init__(self, name, dest=None, short=None, default=None,
                  positional=False, metavar=None, help=None,
@@ -569,17 +570,9 @@ class Opt(object):
     def _get_from_config_parser(self, cparser, section):
         """Retrieves the option value from a MultiConfigParser object.
 
-        This is the method ConfigOpts uses to look up the option value from
-        config files. Most opt types override this method in order to perform
-        type appropriate conversion of the returned value.
-
         :param cparser: a ConfigParser object
         :param section: a section name
         """
-        return self._cparser_get_with_deprecated(cparser, section)
-
-    def _cparser_get_with_deprecated(self, cparser, section, multi=False):
-        """If cannot find option as dest try deprecated_name alias."""
         names = [(section, self.dest)]
 
         for opt in self.deprecated_opts:
@@ -588,7 +581,9 @@ class Opt(object):
                 names.append((dgroup if dgroup else section,
                               dname if dname else self.dest))
 
-        return cparser.get(names, multi, normalized=True)
+        return cparser.get(names,
+                           self.multi, normalized=True,
+                           convert_value=self._convert_value)
 
     def _add_to_cli(self, parser, group=None):
         """Makes the option available in the command line interface.
@@ -766,17 +761,13 @@ class StrOpt(Opt):
                                                         choices=self.choices,
                                                         **kwargs)
 
-    def _get_from_config_parser(self, cparser, section):
-        """Retrieve the value from ConfigParser and validate it."""
-        def _check_valid_values(value):
-            if (self.choices and value not in self.choices):
-                message = ('Invalid value: %r (choose from %s)' %
-                           (value, ', '.join(map(repr, self.choices))))
-                raise ValueError(message)
-            return value
-
-        return [_check_valid_values(v) for v in
-                self._cparser_get_with_deprecated(cparser, section)]
+    def _convert_value(self, value):
+        """Validate a value, no actual conversion required."""
+        if self.choices and value not in self.choices:
+            message = ('Invalid value: %r (choose from %s)' %
+                       (value, ', '.join(map(repr, self.choices))))
+            raise ValueError(message)
+        return value
 
 
 class BoolOpt(Opt):
@@ -798,17 +789,13 @@ class BoolOpt(Opt):
             raise ValueError('positional boolean args not supported')
         super(BoolOpt, self).__init__(*args, **kwargs)
 
-    def _get_from_config_parser(self, cparser, section):
-        """Retrieve the opt value as a boolean from ConfigParser."""
-        def convert_bool(v):
-            value = self._boolean_states.get(v.lower())
-            if value is None:
-                raise ValueError('Unexpected boolean value %r' % v)
-
-            return value
-
-        return [convert_bool(v) for v in
-                self._cparser_get_with_deprecated(cparser, section)]
+    @staticmethod
+    def _convert_value(value):
+        """Convert a string value to a bool."""
+        ret = BoolOpt._boolean_states.get(value.lower())
+        if ret is None:
+            raise ValueError('Unexpected boolean value %r' % value)
+        return ret
 
     def _add_to_cli(self, parser, group=None):
         """Extends the base class method to add the --nooptname option."""
@@ -846,10 +833,7 @@ class IntOpt(Opt):
 
     """Int opt values are converted to integers using the int() builtin."""
 
-    def _get_from_config_parser(self, cparser, section):
-        """Retrieve the opt value as a integer from ConfigParser."""
-        return [int(v) for v in self._cparser_get_with_deprecated(cparser,
-                section)]
+    _convert_value = int
 
     def _get_argparse_kwargs(self, group, **kwargs):
         """Extends the base argparse keyword dict for integer options."""
@@ -861,10 +845,7 @@ class FloatOpt(Opt):
 
     """Float opt values are converted to floats using the float() builtin."""
 
-    def _get_from_config_parser(self, cparser, section):
-        """Retrieve the opt value as a float from ConfigParser."""
-        return [float(v) for v in
-                self._cparser_get_with_deprecated(cparser, section)]
+    _convert_value = float
 
     def _get_argparse_kwargs(self, group, **kwargs):
         """Extends the base argparse keyword dict for float options."""
@@ -880,17 +861,17 @@ class ListOpt(Opt):
     is a list containing these strings.
     """
 
+    @staticmethod
+    def _convert_value(value):
+        """Convert a string value to a list."""
+        return [a.strip() for a in value.split(',')]
+
     class _StoreListAction(argparse.Action):
         """An argparse action for parsing an option value into a list."""
         def __call__(self, parser, namespace, values, option_string=None):
             if values is not None:
-                values = [a.strip() for a in values.split(',')]
+                values = ListOpt._convert_value(values)
             setattr(namespace, self.dest, values)
-
-    def _get_from_config_parser(self, cparser, section):
-        """Retrieve the opt value as a list from ConfigParser."""
-        return [[a.strip() for a in v.split(',')] for v in
-                self._cparser_get_with_deprecated(cparser, section)]
 
     def _get_argparse_kwargs(self, group, **kwargs):
         """Extends the base argparse keyword dict for list options."""
@@ -909,28 +890,22 @@ class DictOpt(Opt):
     """
 
     @staticmethod
-    def _split(line):
+    def _convert_value(value):
         """Split a line.
 
-        Split a line into key/value pairs separated by commas, then split
+        Split a value into key/value pairs separated by commas, then split
         the each into key and value using colons as separator and then
         stuff the key/value (s) into a dictionary
         """
         return dict([[a.strip() for a in v.split(':')]
-                    for v in line.split(',')])
+                    for v in value.split(',')])
 
     class _StoreDictAction(argparse.Action):
         """An argparse action for parsing an option value into a dictionary."""
         def __call__(self, parser, namespace, values, option_string=None):
             if values is not None:
-                values = DictOpt._split(values)
-
+                values = DictOpt._convert_value(values)
             setattr(namespace, self.dest, values)
-
-    def _get_from_config_parser(self, cparser, section):
-        """Retrieve the opt value as a dictionary from ConfigParser."""
-        return [DictOpt._split(x)
-                for x in self._cparser_get_with_deprecated(cparser, section)]
 
     def _get_argparse_kwargs(self, group, **kwargs):
         """Extends the base argparse keyword dict for dictionary options."""
@@ -957,11 +932,6 @@ class MultiStrOpt(Opt):
         else:
             kwargs['nargs'] = '*'
         return kwargs
-
-    def _cparser_get_with_deprecated(self, cparser, section):
-        """If cannot find option as dest try deprecated_name alias."""
-        supr = super(MultiStrOpt, self)
-        return supr._cparser_get_with_deprecated(cparser, section, multi=True)
 
 
 class SubCommandOpt(Opt):
@@ -1158,11 +1128,14 @@ class MultiConfigParser(object):
 
         return read_ok
 
-    def get(self, names, multi=False, normalized=False):
+    def get(self, names, multi=False, normalized=False, convert_value=None):
         rvalue = []
 
         def normalize(name):
             return _normalize_group_name(section) if normalized else name
+
+        def convert(value):
+            return value if convert_value is None else convert_value(value)
 
         names = [(normalize(section), name) for section, name in names]
 
@@ -1171,10 +1144,11 @@ class MultiConfigParser(object):
                 if section not in sections:
                     continue
                 if name in sections[section]:
+                    val = [convert(v) for v in sections[section][name]]
                     if multi:
-                        rvalue = sections[section][name] + rvalue
+                        rvalue = val + rvalue
                     else:
-                        return sections[section][name]
+                        return val
         if multi and rvalue != []:
             return rvalue
         raise KeyError
