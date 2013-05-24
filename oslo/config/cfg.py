@@ -581,9 +581,9 @@ class Opt(object):
                 names.append((dgroup if dgroup else section,
                               dname if dname else self.dest))
 
-        return cparser.get(names,
-                           self.multi, normalized=True,
-                           convert_value=self._convert_value)
+        return cparser._get(names,
+                            self.multi, normalized=True,
+                            convert_value=self._convert_value)
 
     def _add_to_cli(self, parser, group=None):
         """Makes the option available in the command line interface.
@@ -1065,12 +1065,15 @@ class ParseError(iniparser.ParseError):
 
 
 class ConfigParser(iniparser.BaseParser):
-    def __init__(self, filename, sections, normalized=None):
+    def __init__(self, filename, sections):
         super(ConfigParser, self).__init__()
         self.filename = filename
         self.sections = sections
-        self.normalized = normalized
+        self._normalized = None
         self.section = None
+
+    def _add_normalized(self, normalized):
+        self._normalized = normalized
 
     def parse(self):
         with open(self.filename) as f:
@@ -1080,8 +1083,9 @@ class ConfigParser(iniparser.BaseParser):
         self.section = section
         self.sections.setdefault(self.section, {})
 
-        if self.normalized is not None:
-            self.normalized.setdefault(_normalize_group_name(self.section), {})
+        if self._normalized is not None:
+            self._normalized.setdefault(_normalize_group_name(self.section),
+                                        {})
 
     def assignment(self, key, value):
         if not self.section:
@@ -1094,8 +1098,8 @@ class ConfigParser(iniparser.BaseParser):
             sections[section][key].append(value)
 
         append(self.sections, self.section)
-        if self.normalized is not None:
-            append(self.normalized, _normalize_group_name(self.section))
+        if self._normalized is not None:
+            append(self._normalized, _normalize_group_name(self.section))
 
     def parse_exc(self, msg, lineno, line=None):
         return ParseError(msg, lineno, line, self.filename)
@@ -1116,7 +1120,8 @@ class MultiConfigParser(object):
         for filename in config_files:
             sections = {}
             normalized = {}
-            parser = ConfigParser(filename, sections, normalized)
+            parser = ConfigParser(filename, sections)
+            parser._add_normalized(normalized)
 
             try:
                 parser.parse()
@@ -1129,6 +1134,9 @@ class MultiConfigParser(object):
         return read_ok
 
     def get(self, names, multi=False, normalized=False, convert_value=None):
+        return self._get(names, multi=multi)
+
+    def _get(self, names, multi=False, normalized=False, convert_value=None):
         rvalue = []
 
         def normalize(name):

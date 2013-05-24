@@ -2286,8 +2286,25 @@ class ConfigParserTestCase(BaseTestCase):
                                         'bar = foo\n')])
 
         sections = {}
+        parser = cfg.ConfigParser(paths[0], sections)
+        parser.parse()
+
+        self.assertTrue('DEFAULT' in sections)
+        self.assertTrue('BLAA' in sections)
+        self.assertEquals(sections['DEFAULT']['foo'], ['bar'])
+        self.assertEquals(sections['BLAA']['bar'], ['foo'])
+
+    def test_parse_file_with_normalized(self):
+        paths = self.create_tempfiles([('test',
+                                        '[DEFAULT]\n'
+                                        'foo = bar\n'
+                                        '[BLAA]\n'
+                                        'bar = foo\n')])
+
+        sections = {}
         normalized = {}
-        parser = cfg.ConfigParser(paths[0], sections, normalized)
+        parser = cfg.ConfigParser(paths[0], sections)
+        parser._add_normalized(normalized)
         parser.parse()
 
         self.assertTrue('DEFAULT' in sections)
@@ -2327,8 +2344,10 @@ class MultiConfigParserTestCase(BaseTestCase):
         self.assertEquals(parser.get([('DEFAULT', 'foo')]), ['bar'])
         self.assertEquals(parser.get([('DEFAULT', 'foo')], multi=True),
                           ['bar'])
-        self.assertEquals(parser.get([('DEFAULT', 'foo')],
-                                     multi=True, normalized=True),
+        self.assertEquals(parser.get([('DEFAULT', 'foo')], multi=True),
+                          ['bar'])
+        self.assertEquals(parser._get([('DEFAULT', 'foo')],
+                                      multi=True, normalized=True),
                           ['bar'])
 
         self.assertTrue('BLAA' in parser.parsed[0])
@@ -2336,8 +2355,8 @@ class MultiConfigParserTestCase(BaseTestCase):
         self.assertEquals(parser.get([('BLAA', 'bar')]), ['foo'])
         self.assertEquals(parser.get([('BLAA', 'bar')], multi=True),
                           ['foo'])
-        self.assertEquals(parser.get([('blaa', 'bar')],
-                                     multi=True, normalized=True),
+        self.assertEquals(parser._get([('blaa', 'bar')],
+                                      multi=True, normalized=True),
                           ['foo'])
 
     def test_parse_multiple_files(self):
@@ -2377,8 +2396,8 @@ class MultiConfigParserTestCase(BaseTestCase):
         self.assertEquals(parser.get([('bLAa', 'bar')]), ['foofoofoo'])
         self.assertEquals(parser.get([('BLAA', 'bar')], multi=True),
                           ['foo', 'foofoo'])
-        self.assertEquals(parser.get([('BLAA', 'bar')],
-                                     multi=True, normalized=True),
+        self.assertEquals(parser._get([('BLAA', 'bar')],
+                                      multi=True, normalized=True),
                           ['foo', 'foofoo', 'foofoofoo'])
 
 
