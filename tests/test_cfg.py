@@ -1395,9 +1395,25 @@ class OptGroupsTestCase(BaseTestCase):
 
         self.conf(['--config-file', paths[0]])
 
+        self.assertFalse(hasattr(self.conf, 'BLAA'))
         self.assertTrue(hasattr(self.conf, 'blaa'))
         self.assertTrue(hasattr(self.conf.blaa, 'foo'))
         self.assertEquals(self.conf.blaa.foo, 'bar')
+
+    def test_arg_group_in_config_file_with_capital_name_on_legacy_code(self):
+        self.conf.register_group(cfg.OptGroup('BLAA'))
+        self.conf.register_opt(cfg.StrOpt('foo'), group='BLAA')
+
+        paths = self.create_tempfiles([('test',
+                                        '[BLAA]\n'
+                                        'foo = bar\n')])
+
+        self.conf(['--config-file', paths[0]])
+
+        self.assertFalse(hasattr(self.conf, 'blaa'))
+        self.assertTrue(hasattr(self.conf, 'BLAA'))
+        self.assertTrue(hasattr(self.conf.BLAA, 'foo'))
+        self.assertEquals(self.conf.BLAA.foo, 'bar')
 
 
 class MappingInterfaceTestCase(BaseTestCase):
