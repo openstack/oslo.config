@@ -749,8 +749,34 @@ class StrOpt(Opt):
 
     String opts do not have their values transformed and are returned as
     str objects.
+
+    In addition to the parameters in the base class Opt, StrOpt has an
+    additional parameter.
+
+    :param choices: Optional sequence of valid values.
     """
-    pass
+
+    def __init__(self, name, choices=None, **kwargs):
+        self.choices = choices
+        super(StrOpt, self).__init__(name, **kwargs)
+
+    def _get_argparse_kwargs(self, group, **kwargs):
+        """Extends the base argparse keyword dict for choices handling."""
+        return super(StrOpt, self)._get_argparse_kwargs(group,
+                                                        choices=self.choices,
+                                                        **kwargs)
+
+    def _get_from_config_parser(self, cparser, section):
+        """Retrieve the value from ConfigParser and validate it."""
+        def _check_valid_values(value):
+            if (self.choices and value not in self.choices):
+                message = ('Invalid value: %r (choose from %s)' %
+                           (value, ', '.join(map(repr, self.choices))))
+                raise ValueError(message)
+            return value
+
+        return [_check_valid_values(v) for v in
+                self._cparser_get_with_deprecated(cparser, section)]
 
 
 class BoolOpt(Opt):
