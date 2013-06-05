@@ -601,12 +601,12 @@ class Opt(object):
         for opt in self.deprecated_opts:
             deprecated_name = self._get_deprecated_cli_name(opt.name,
                                                             opt.group)
-            self._add_to_argparse(container, self.name, self.short,
+            self._add_to_argparse(parser, container, self.name, self.short,
                                   kwargs, prefix,
                                   self.positional, deprecated_name)
 
-    def _add_to_argparse(self, container, name, short, kwargs, prefix='',
-                         positional=False, deprecated_name=None):
+    def _add_to_argparse(self, parser, container, name, short, kwargs,
+                         prefix='', positional=False, deprecated_name=None):
         """Add an option to an argparse parser or group.
 
         :param container: an argparse._ArgumentGroup object
@@ -615,7 +615,6 @@ class Opt(object):
         :param kwargs: the keyword arguments for add_argument()
         :param prefix: an optional prefix to prepend to the opt name
         :param position: whether the optional is a positional CLI argument
-        :raises: DuplicateOptError if a naming confict is detected
         """
         def hyphen(arg):
             return arg if not positional else ''
@@ -626,10 +625,7 @@ class Opt(object):
         if deprecated_name:
             args.append(hyphen('--') + deprecated_name)
 
-        try:
-            container.add_argument(*args, **kwargs)
-        except argparse.ArgumentError as e:
-            raise DuplicateOptError(e)
+        parser.add_parser_argument(container, *args, **kwargs)
 
     def _get_argparse_container(self, parser, group):
         """Returns an argparse._ArgumentGroup.
@@ -812,8 +808,8 @@ class BoolOpt(Opt):
                                                             opt.group,
                                                             prefix='no')
             kwargs["help"] = "The inverse of --" + self.name
-            self._add_to_argparse(container, self.name, None, kwargs, prefix,
-                                  self.positional, deprecated_name)
+            self._add_to_argparse(parser, container, self.name, None, kwargs,
+                                  prefix, self.positional, deprecated_name)
 
     def _get_argparse_kwargs(self, group, action='store_true', **kwargs):
         """Extends the base argparse keyword dict for boolean options."""
@@ -1419,6 +1415,52 @@ class _Namespace(argparse.Namespace):
         return values if multi else values[-1]
 
 
+class _CachedArgumentParser(argparse.ArgumentParser):
+
+    """class for caching/collecting command line arguments.
+
+    It also sorts the arguments before intializing the ArgumentParser.
+    We need to do this since ArgumentParser by default does not sort
+    the argument options and the only way to influence the order of
+    arguments in '--help' is to ensure they are added in the sorted
+    order.
+    """
+
+    def __init__(self, prog=None, usage=None):
+        super(_CachedArgumentParser, self).__init__(prog, usage)
+        self._args_cache = {}
+
+    def add_parser_argument(self, container, *args, **kwargs):
+        values = []
+        if container in self._args_cache:
+            values = self._args_cache[container]
+        values.append({'args': args, 'kwargs': kwargs})
+        self._args_cache[container] = values
+
+    def initialize_parser_arguments(self):
+        for container, values in self._args_cache.iteritems():
+            values.sort(key=lambda x: x['args'])
+            for argument in values:
+                try:
+                    container.add_argument(*argument['args'],
+                                           **argument['kwargs'])
+                except argparse.ArgumentError as e:
+                    raise DuplicateOptError(e)
+        self._args_cache = {}
+
+    def parse_args(self, args=None, namespace=None):
+        self.initialize_parser_arguments()
+        return super(_CachedArgumentParser, self).parse_args(args, namespace)
+
+    def print_help(self, file=None):
+        self.initialize_parser_arguments()
+        super(_CachedArgumentParser, self).print_help(file)
+
+    def print_usage(self, file=None):
+        self.initialize_parser_arguments()
+        super(_CachedArgumentParser, self).print_usage(file)
+
+
 class ConfigOpts(collections.Mapping):
 
     """Config options which may be set on the command line or in config files.
@@ -1449,10 +1491,11 @@ class ConfigOpts(collections.Mapping):
         if default_config_files is None:
             default_config_files = find_config_files(project, prog)
 
-        self._oparser = argparse.ArgumentParser(prog=prog, usage=usage)
-        self._oparser.add_argument('--version',
-                                   action='version',
-                                   version=version)
+        self._oparser = _CachedArgumentParser(prog=prog, usage=usage)
+        self._oparser.add_parser_argument(self._oparser,
+                                          '--version',
+                                          action='version',
+                                          version=version)
 
         return prog, default_config_files
 
