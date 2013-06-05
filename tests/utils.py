@@ -23,33 +23,15 @@
 import os
 
 import fixtures
-import mox
-import stubout
 import testtools
 
 TRUE_VALUES = ('true', '1', 'yes')
-
-
-class MoxStubout(fixtures.Fixture):
-    """Deal with code around mox and stubout as a fixture."""
-
-    def setUp(self):
-        super(MoxStubout, self).setUp()
-        # emulate some of the mox stuff, we can't use the metaclass
-        # because it screws with our generators
-        self.mox = mox.Mox()
-        self.stubs = stubout.StubOutForTesting()
-        self.addCleanup(self.mox.UnsetStubs)
-        self.addCleanup(self.stubs.UnsetAll)
-        self.addCleanup(self.stubs.SmartUnsetAll)
-        self.addCleanup(self.mox.VerifyAll)
 
 
 class BaseTestCase(testtools.TestCase):
 
     def setUp(self):
         super(BaseTestCase, self).setUp()
-        self.stubs = self.useFixture(MoxStubout()).stubs
         self.useFixture(fixtures.FakeLogger('oslo.config'))
         test_timeout = os.environ.get('OS_TEST_TIMEOUT', 30)
         try:

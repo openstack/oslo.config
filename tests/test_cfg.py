@@ -137,16 +137,18 @@ class FindConfigFilesTestCase(BaseTestCase):
         config_files = [os.path.expanduser('~/.blaa/blaa.conf'),
                         '/etc/foo.conf']
 
-        self.stubs.Set(sys, 'argv', ['foo'])
-        self.stubs.Set(os.path, 'exists', lambda p: p in config_files)
+        self.useFixture(fixtures.MonkeyPatch('sys.argv', ['foo']))
+        self.useFixture(fixtures.MonkeyPatch('os.path.exists',
+                        lambda p: p in config_files))
 
         self.assertEquals(cfg.find_config_files(project='blaa'), config_files)
 
     def test_find_config_files_with_extension(self):
         config_files = ['/etc/foo.json']
 
-        self.stubs.Set(sys, 'argv', ['foo'])
-        self.stubs.Set(os.path, 'exists', lambda p: p in config_files)
+        self.useFixture(fixtures.MonkeyPatch('sys.argv', ['foo']))
+        self.useFixture(fixtures.MonkeyPatch('os.path.exists',
+                        lambda p: p in config_files))
 
         self.assertEquals(cfg.find_config_files(project='blaa'), [])
         self.assertEquals(cfg.find_config_files(project='blaa',
@@ -194,7 +196,9 @@ class DefaultConfigFilesTestCase(BaseTestCase):
     def test_find_default_config_file(self):
         paths = self.create_tempfiles([('def', '[DEFAULT]')])
 
-        self.stubs.Set(cfg, 'find_config_files', lambda project, prog: paths)
+        self.useFixture(fixtures.MonkeyPatch(
+                        'oslo.config.cfg.find_config_files',
+                        lambda project, prog: paths))
 
         self.conf(args=[], default_config_files=None)
         self.assertEquals(self.conf.config_file, paths)
@@ -444,7 +448,7 @@ class CliOptsTestCase(BaseTestCase):
 class CliSpecialOptsTestCase(BaseTestCase):
 
     def test_help(self):
-        self.stubs.Set(sys, 'stdout', moves.StringIO())
+        self.useFixture(fixtures.MonkeyPatch('sys.stdout', moves.StringIO()))
         self.assertRaises(SystemExit, self.conf, ['--help'])
         self.assertTrue('FOO BAR' in sys.stdout.getvalue())
         self.assertTrue('--version' in sys.stdout.getvalue())
@@ -452,7 +456,7 @@ class CliSpecialOptsTestCase(BaseTestCase):
         self.assertTrue('--config-file' in sys.stdout.getvalue())
 
     def test_version(self):
-        self.stubs.Set(sys, 'stderr', moves.StringIO())
+        self.useFixture(fixtures.MonkeyPatch('sys.stderr', moves.StringIO()))
         self.assertRaises(SystemExit, self.conf, ['--version'])
         self.assertTrue('1.0' in sys.stderr.getvalue())
 
@@ -2093,7 +2097,7 @@ class SadPathTestCase(BaseTestCase):
     def test_bad_cli_arg(self):
         self.conf.register_opt(cfg.BoolOpt('foo'))
 
-        self.stubs.Set(sys, 'stderr', moves.StringIO())
+        self.useFixture(fixtures.MonkeyPatch('sys.stderr', moves.StringIO()))
 
         self.assertRaises(SystemExit, self.conf, ['--foo'])
 
@@ -2103,7 +2107,7 @@ class SadPathTestCase(BaseTestCase):
     def _do_test_bad_cli_value(self, opt_class):
         self.conf.register_cli_opt(opt_class('foo'))
 
-        self.stubs.Set(sys, 'stderr', moves.StringIO())
+        self.useFixture(fixtures.MonkeyPatch('sys.stderr', moves.StringIO()))
 
         self.assertRaises(SystemExit, self.conf, ['--foo', 'bar'])
 
@@ -2187,7 +2191,9 @@ class FindFileTestCase(BaseTestCase):
     def test_find_policy_file(self):
         policy_file = '/etc/policy.json'
 
-        self.stubs.Set(os.path, 'exists', lambda p: p == policy_file)
+        self.useFixture(fixtures.MonkeyPatch(
+                        'os.path.exists',
+                        lambda p: p == policy_file))
 
         self.conf([])
 
@@ -2272,7 +2278,7 @@ class OptDumpingTestCase(BaseTestCase):
         self._do_test_log_opt_values(self._args)
 
     def test_log_opt_values_from_sys_argv(self):
-        self.stubs.Set(sys, 'argv', ['foo'] + self._args)
+        self.useFixture(fixtures.MonkeyPatch('sys.argv', ['foo'] + self._args))
         self._do_test_log_opt_values(None)
 
 
@@ -2413,7 +2419,9 @@ class TildeExpansionTestCase(BaseTestCase):
         except cfg.ConfigFilesNotFoundError as cfnfe:
             self.assertTrue(homedir in str(cfnfe))
 
-        self.stubs.Set(os.path, 'exists', lambda p: p == tmpfile)
+        self.useFixture(fixtures.MonkeyPatch(
+            'os.path.exists',
+            lambda p: p == tmpfile))
 
         self.assertEquals(self.conf.find_file(tmpbase), tmpfile)
 
@@ -2425,7 +2433,9 @@ class TildeExpansionTestCase(BaseTestCase):
         tmpfile = os.path.join(tmpdir, 'foo.conf')
         tmpbase = os.path.basename(tmpfile)
 
-        self.stubs.Set(cfg.glob, 'glob', lambda p: [tmpfile])
+        self.useFixture(fixtures.MonkeyPatch(
+                        'glob.glob',
+                        lambda p: [tmpfile]))
 
         try:
             self.conf(['--config-dir',
@@ -2433,7 +2443,9 @@ class TildeExpansionTestCase(BaseTestCase):
         except cfg.ConfigFilesNotFoundError as cfnfe:
             self.assertTrue(os.path.expanduser('~') in str(cfnfe))
 
-        self.stubs.Set(os.path, 'exists', lambda p: p == tmpfile)
+        self.useFixture(fixtures.MonkeyPatch(
+            'os.path.exists',
+            lambda p: p == tmpfile))
 
         self.assertEquals(self.conf.find_file(tmpbase), tmpfile)
 
@@ -2510,7 +2522,7 @@ class SubCommandTestCase(BaseTestCase):
 
     def test_sub_command_no_handler(self):
         self.conf.register_cli_opt(cfg.SubCommandOpt('cmd'))
-        self.stubs.Set(sys, 'stderr', moves.StringIO())
+        self.useFixture(fixtures.MonkeyPatch('sys.stderr', moves.StringIO()))
         self.assertRaises(SystemExit, self.conf, [])
         self.assertTrue('error' in sys.stderr.getvalue())
 
@@ -2523,7 +2535,7 @@ class SubCommandTestCase(BaseTestCase):
                                                      description='bar bar',
                                                      help='blaa blaa',
                                                      handler=add_parsers))
-        self.stubs.Set(sys, 'stdout', moves.StringIO())
+        self.useFixture(fixtures.MonkeyPatch('sys.stdout', moves.StringIO()))
         self.assertRaises(SystemExit, self.conf, ['--help'])
         self.assertTrue('foo foo' in sys.stdout.getvalue())
         self.assertTrue('bar bar' in sys.stdout.getvalue())
@@ -2544,7 +2556,7 @@ class SubCommandTestCase(BaseTestCase):
     def test_sub_command_multiple(self):
         self.conf.register_cli_opt(cfg.SubCommandOpt('cmd1'))
         self.conf.register_cli_opt(cfg.SubCommandOpt('cmd2'))
-        self.stubs.Set(sys, 'stderr', moves.StringIO())
+        self.useFixture(fixtures.MonkeyPatch('sys.stderr', moves.StringIO()))
         self.assertRaises(SystemExit, self.conf, [])
         self.assertTrue('multiple' in sys.stderr.getvalue())
 
