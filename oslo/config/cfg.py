@@ -267,6 +267,7 @@ import functools
 import glob
 import itertools
 import os
+import six
 import string
 import sys
 
@@ -1438,7 +1439,7 @@ class _CachedArgumentParser(argparse.ArgumentParser):
         self._args_cache[container] = values
 
     def initialize_parser_arguments(self):
-        for container, values in self._args_cache.iteritems():
+        for container, values in six.iteritems(self._args_cache):
             values.sort(key=lambda x: x['args'])
             for argument in values:
                 try:
