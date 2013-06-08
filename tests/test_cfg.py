@@ -15,6 +15,7 @@
 #    under the License.
 
 import os
+import shutil
 import sys
 import tempfile
 
@@ -1232,6 +1233,104 @@ class ConfigFileOptsTestCase(BaseTestCase):
 
         self.assertTrue(hasattr(self.conf, 'foo'))
         self.assertEquals(self.conf.foo, 'bar-%08x')
+
+
+class ConfigFileReloadTestCase(BaseTestCase):
+
+    def test_conf_files_reload(self):
+        self.conf.register_cli_opt(cfg.StrOpt('foo'))
+
+        paths = self.create_tempfiles([('1',
+                                        '[DEFAULT]\n'
+                                        'foo = baar\n'),
+                                       ('2',
+                                        '[DEFAULT]\n'
+                                        'foo = baaar\n')])
+
+        self.conf(['--config-file', paths[0]])
+        self.assertTrue(hasattr(self.conf, 'foo'))
+        self.assertEquals(self.conf.foo, 'baar')
+
+        shutil.copy(paths[1], paths[0])
+
+        self.conf.reload_config_files()
+        self.assertTrue(hasattr(self.conf, 'foo'))
+        self.assertEquals(self.conf.foo, 'baaar')
+
+    def test_conf_files_reload_default(self):
+        self.conf.register_cli_opt(cfg.StrOpt('foo1'))
+        self.conf.register_cli_opt(cfg.StrOpt('foo2'))
+
+        paths = self.create_tempfiles([('1',
+                                        '[DEFAULT]\n'
+                                        'foo1 = default1\n'),
+                                       ('2',
+                                        '[DEFAULT]\n'
+                                        'foo2 = default2\n')])
+
+        paths_change = self.create_tempfiles([('1',
+                                               '[DEFAULT]\n'
+                                               'foo1 = change_default1\n'),
+                                              ('2',
+                                               '[DEFAULT]\n'
+                                               'foo2 = change_default2\n')])
+
+        self.conf(args=[], default_config_files=paths)
+        self.assertTrue(hasattr(self.conf, 'foo1'))
+        self.assertEquals(self.conf.foo1, 'default1')
+        self.assertTrue(hasattr(self.conf, 'foo2'))
+        self.assertEquals(self.conf.foo2, 'default2')
+
+        shutil.copy(paths_change[0], paths[0])
+        shutil.copy(paths_change[1], paths[1])
+
+        self.conf.reload_config_files()
+        self.assertTrue(hasattr(self.conf, 'foo1'))
+        self.assertEquals(self.conf.foo1, 'change_default1')
+        self.assertTrue(hasattr(self.conf, 'foo2'))
+        self.assertEquals(self.conf.foo2, 'change_default2')
+
+    def test_conf_files_reload_file_not_found(self):
+        self.conf.register_cli_opt(cfg.StrOpt('foo', required=True))
+        paths = self.create_tempfiles([('1',
+                                        '[DEFAULT]\n'
+                                        'foo = baar\n')])
+
+        self.conf(['--config-file', paths[0]])
+        self.assertTrue(hasattr(self.conf, 'foo'))
+        self.assertEquals(self.conf.foo, 'baar')
+
+        os.remove(paths[0])
+
+        self.conf.reload_config_files()
+        self.assertTrue(hasattr(self.conf, 'foo'))
+        self.assertEquals(self.conf.foo, 'baar')
+
+    def test_conf_files_reload_error(self):
+        self.conf.register_cli_opt(cfg.StrOpt('foo', required=True))
+        self.conf.register_cli_opt(cfg.StrOpt('foo1', required=True))
+        paths = self.create_tempfiles([('1',
+                                        '[DEFAULT]\n'
+                                        'foo = test1\n'
+                                        'foo1 = test11\n'),
+                                       ('2',
+                                        '[DEFAULT]\n'
+                                        'foo2 = test2\n'
+                                        'foo3 = test22\n')])
+
+        self.conf(['--config-file', paths[0]])
+        self.assertTrue(hasattr(self.conf, 'foo'))
+        self.assertEquals(self.conf.foo, 'test1')
+        self.assertTrue(hasattr(self.conf, 'foo1'))
+        self.assertEquals(self.conf.foo1, 'test11')
+
+        shutil.copy(paths[1], paths[0])
+
+        self.conf.reload_config_files()
+        self.assertTrue(hasattr(self.conf, 'foo'))
+        self.assertEquals(self.conf.foo, 'test1')
+        self.assertTrue(hasattr(self.conf, 'foo1'))
+        self.assertEquals(self.conf.foo1, 'test11')
 
 
 class OptGroupsTestCase(BaseTestCase):
