@@ -2046,7 +2046,8 @@ class ConfigOpts(collections.Mapping):
         """
         self._args = args
 
-        for opt, group in sorted(self._all_cli_opts()):
+        for opt, group in sorted(self._all_cli_opts(),
+                                 key=lambda x: x[0].name):
             opt._add_to_cli(self._oparser, group)
 
         namespace = _Namespace(self)
