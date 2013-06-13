@@ -104,7 +104,7 @@ class BaseTestCase(utils.BaseTestCase):
                 fd = os.open(path, os.O_CREAT | os.O_WRONLY)
             tempfiles.append(path)
             try:
-                os.write(fd, contents)
+                os.write(fd, contents.encode('utf-8'))
             finally:
                 os.close(fd)
         return tempfiles
