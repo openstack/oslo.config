@@ -1262,7 +1262,7 @@ class MultiConfigParser(object):
         rvalue = []
 
         def normalize(name):
-            return _normalize_group_name(section) if normalized else name
+            return _normalize_group_name(name) if normalized else name
 
         def convert(value):
             return value if convert_value is None else convert_value(value)
