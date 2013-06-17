@@ -68,22 +68,22 @@ class ParserTestCase(unittest.TestCase):
     def test_blank_line(self):
         lines = [""]
         self.parser.parse(lines)
-        self.assertEquals(self.parser.values, {})
+        self.assertEqual(self.parser.values, {})
 
     def test_assignment_equal(self):
         lines = ["foo = bar"]
         self.parser.parse(lines)
-        self.assertEquals(self.parser.values, {'': {'foo': ['bar']}})
+        self.assertEqual(self.parser.values, {'': {'foo': ['bar']}})
 
     def test_assignment_colon(self):
         lines = ["foo: bar"]
         self.parser.parse(lines)
-        self.assertEquals(self.parser.values, {'': {'foo': ['bar']}})
+        self.assertEqual(self.parser.values, {'': {'foo': ['bar']}})
 
     def test_assignment_multiline(self):
         lines = ["foo = bar0", "  bar1"]
         self.parser.parse(lines)
-        self.assertEquals(self.parser.values, {'': {'foo': ['bar0', 'bar1']}})
+        self.assertEqual(self.parser.values, {'': {'foo': ['bar0', 'bar1']}})
 
     def test_assignment_multline_empty(self):
         lines = ["foo = bar0", "", "  bar1"]
@@ -92,12 +92,12 @@ class ParserTestCase(unittest.TestCase):
     def test_section_assignment(self):
         lines = ["[test]", "foo = bar"]
         self.parser.parse(lines)
-        self.assertEquals(self.parser.values, {'test': {'foo': ['bar']}})
+        self.assertEqual(self.parser.values, {'test': {'foo': ['bar']}})
 
     def test_new_section(self):
         lines = ["[foo]"]
         self.parser.parse(lines)
-        self.assertEquals(self.parser.section, 'foo')
+        self.assertEqual(self.parser.section, 'foo')
 
     def test_comment(self):
         lines = ["# foobar"]
@@ -107,20 +107,20 @@ class ParserTestCase(unittest.TestCase):
     def test_empty_assignment(self):
         lines = ["foo = "]
         self.parser.parse(lines)
-        self.assertEquals(self.parser.values, {'': {'foo': ['']}})
+        self.assertEqual(self.parser.values, {'': {'foo': ['']}})
 
     def test_assignment_space_single_quote(self):
         lines = ["foo = ' bar '"]
         self.parser.parse(lines)
-        self.assertEquals(self.parser.values, {'': {'foo': [' bar ']}})
+        self.assertEqual(self.parser.values, {'': {'foo': [' bar ']}})
 
     def test_assignment_space_double_quote(self):
         lines = ["foo = \" bar \""]
         self.parser.parse(lines)
-        self.assertEquals(self.parser.values, {'': {'foo': [' bar ']}})
+        self.assertEqual(self.parser.values, {'': {'foo': [' bar ']}})
 
 
 class ExceptionTestCase(unittest.TestCase):
     def test_parseerror(self):
         exc = iniparser.ParseError('test', 42, 'example')
-        self.assertEquals(str(exc), "at line 42, test: 'example'")
+        self.assertEqual(str(exc), "at line 42, test: 'example'")
