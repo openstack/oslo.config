@@ -1534,8 +1534,11 @@ class ConfigOpts(collections.Mapping):
         @functools.wraps(f)
         def __inner(self, *args, **kwargs):
             if kwargs.pop('clear_cache', True):
+                result = f(self, *args, **kwargs)
                 self.__cache.clear()
-            return f(self, *args, **kwargs)
+                return result
+            else:
+                return f(self, *args, **kwargs)
 
         return __inner
 
