@@ -266,6 +266,7 @@ import copy
 import functools
 import glob
 import itertools
+import logging
 import os
 import six
 import string
@@ -273,6 +274,8 @@ import sys
 
 from oslo.config import iniparser
 from six import moves
+
+LOG = logging.getLogger(__name__)
 
 
 class Error(Exception):
@@ -1913,23 +1916,28 @@ class ConfigOpts(collections.Mapping):
         """Print the help message for the current program."""
         self._oparser.print_help(file)
 
-    def _get(self, name, group=None):
+    def _get(self, name, group=None, namespace=None):
         if isinstance(group, OptGroup):
             key = (group.name, name)
         else:
             key = (group, name)
         try:
+            if namespace is not None:
+                raise KeyError
+
             return self.__cache[key]
         except KeyError:
-            value = self._substitute(self._do_get(name, group))
+            value = self._substitute(self._do_get(name, group, namespace))
             self.__cache[key] = value
             return value
 
-    def _do_get(self, name, group=None):
+    def _do_get(self, name, group=None, namespace=None):
         """Look up an option value.
 
         :param name: the opt name (or 'dest', more precisely)
         :param group: an OptGroup
+        :param namespace: the namespace object that retrieves the option
+                            value from
         :returns: the option value, or a GroupAttr object
         :raises: NoSuchOptError, NoSuchGroupError, ConfigFileValueError,
                  TemplateSubstitutionError
@@ -1946,10 +1954,12 @@ class ConfigOpts(collections.Mapping):
         if 'override' in info:
             return info['override']
 
-        if self._namespace is not None:
+        if namespace is None:
+            namespace = self._namespace
+        if namespace is not None:
             group_name = group.name if group is not None else None
             try:
-                return opt._get_from_namespace(self._namespace, group_name)
+                return opt._get_from_namespace(namespace, group_name)
             except KeyError:
                 pass
             except ValueError as ve:
@@ -2020,9 +2030,10 @@ class ConfigOpts(collections.Mapping):
 
         return opts[opt_name]
 
-    def _check_required_opts(self):
+    def _check_required_opts(self, namespace=None):
         """Check that all opts marked as required have values specified.
 
+        :param namespace: the namespace object be checked the required options
         :raises: RequiredOptError
         """
         for info, group in self._all_opt_infos():
@@ -2032,7 +2043,7 @@ class ConfigOpts(collections.Mapping):
                 if 'default' in info or 'override' in info:
                     continue
 
-                if self._get(opt.dest, group) is None:
+                if self._get(opt.dest, group, namespace) is None:
                     raise RequiredOptError(opt.name, group)
 
     def _parse_cli_opts(self, args):
@@ -2053,16 +2064,46 @@ class ConfigOpts(collections.Mapping):
                                  key=lambda x: x[0].name):
             opt._add_to_cli(self._oparser, group)
 
-        namespace = _Namespace(self)
+        return self._parse_config_files()
 
-        for arg in args:
+    def _parse_config_files(self):
+        """Parse configure files options.
+
+        :raises: SystemExit, ConfigFilesNotFoundError, ConfigFileParseError,
+                 RequiredOptError, DuplicateOptError
+        """
+        namespace = _Namespace(self)
+        for arg in self._args:
             if arg == '--config-file' or arg.startswith('--config-file='):
                 break
         else:
             for config_file in self.default_config_files:
                 ConfigParser._parse_file(config_file, namespace)
+        return self._oparser.parse_args(self._args, namespace)
 
-        return self._oparser.parse_args(args, namespace)
+    @__clear_cache
+    def reload_config_files(self):
+        """Reload configure files and parse all options
+
+        :return False if reload configure files failed or else return True
+        """
+        try:
+            namespace = self._parse_config_files()
+            if namespace.files_not_found:
+                raise ConfigFilesNotFoundError(namespace.files_not_found)
+            self._check_required_opts(namespace)
+
+        except SystemExit as exc:
+            LOG.warn("Caught SystemExit while reloading configure files \
+                        with exit code: %d" % exc.code)
+            return False
+        except Error as err:
+            LOG.warn("Caught Error while reloading configure files: %s"
+                     % err.__str__())
+            return False
+        else:
+            self._namespace = namespace
+            return True
 
     class GroupAttr(collections.Mapping):
 
