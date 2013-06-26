@@ -17,5 +17,7 @@
 import setuptools
 
 setuptools.setup(
+    namespace_packages=['oslo'],
+    packages=['oslo', 'oslo.config'],
     setup_requires=['d2to1', 'pbr'],
     d2to1=True)
