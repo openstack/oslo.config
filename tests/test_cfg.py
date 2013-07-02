@@ -2831,3 +2831,20 @@ class ChoicesTestCase(BaseTestCase):
 
         self.assertTrue(hasattr(self.conf, 'foo'))
         self.assertEqual(self.conf.foo, 'baaar')
+
+
+class PrintHelpTestCase(utils.BaseTestCase):
+
+    def test_print_help_without_init(self):
+        conf = cfg.ConfigOpts()
+        conf.register_opts([])
+        self.assertRaises(cfg.NotInitializedError,
+                          conf.print_help)
+
+    def test_print_help_with_clear(self):
+        conf = cfg.ConfigOpts()
+        conf.register_opts([])
+        conf([])
+        conf.clear()
+        self.assertRaises(cfg.NotInitializedError,
+                          conf.print_help)

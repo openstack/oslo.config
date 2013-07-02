@@ -288,6 +288,13 @@ class Error(Exception):
         return self.msg
 
 
+class NotInitializedError(Error):
+    """Raised if parser is not initialized yet."""
+
+    def __str__(self):
+        return "call expression on parser has not been invoked"
+
+
 class ArgsAlreadyParsedError(Error):
     """Raised if a CLI opt is registered after parsing."""
 
@@ -1635,7 +1642,7 @@ class ConfigOpts(collections.Mapping):
         removed as a side-effect of this method.
         """
         self._args = None
-        self._oparser = argparse.ArgumentParser()
+        self._oparser = None
         self._namespace = None
         self.unregister_opts(self._config_opts)
         for group in self._groups.values():
@@ -1909,11 +1916,31 @@ class ConfigOpts(collections.Mapping):
         logger.log(lvl, "*" * 80)
 
     def print_usage(self, file=None):
-        """Print the usage message for the current program."""
+        """Print the usage message for the current program.
+
+        This method is for use after all CLI options are known
+        registered using __call__() method. If this method is called
+        before the __call__() is invoked, it throws NotInitializedError
+
+        :param file: the File object (if None, output is on sys.stdout)
+        :raises: NotInitializedError
+        """
+        if not self._oparser:
+            raise NotInitializedError()
         self._oparser.print_usage(file)
 
     def print_help(self, file=None):
-        """Print the help message for the current program."""
+        """Print the help message for the current program.
+
+        This method is for use after all CLI options are known
+        registered using __call__() method. If this method is called
+        before the __call__() is invoked, it throws NotInitializedError
+
+        :param file: the File object (if None, output is on sys.stdout)
+        :raises: NotInitializedError
+        """
+        if not self._oparser:
+            raise NotInitializedError()
         self._oparser.print_help(file)
 
     def _get(self, name, group=None, namespace=None):
