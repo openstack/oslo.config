@@ -15,6 +15,25 @@ Contents
 Release Notes
 =============
 
+1.2.0a3
+-------
+
+* 1176817_: Fix the priority of CLI args vs config file values
+* 1123043_: New 'choices' param to StrOpt constructor
+* cfg-reload-config-files_: Add new ConfigOpts.reload_config_files() method
+* 1194742_: Fix regression which meant we weren't registering our namespace package
+* 1185959_: Make --help output order alphabetical
+* More progress on python3 support
+* Fix obscure cache clearing race condition
+* Move from tools/pip-requires to requirements.txt
+* Include missing .testr.conf in dist tarball
+
+.. _1176817: https://bugs.launchpad.net/oslo/+bug/1176817
+.. _1123043: https://bugs.launchpad.net/oslo/+bug/1123043
+.. _cfg-reload-config-files: https://blueprints.launchpad.net/oslo/+spec/cfg-reload-config-files
+.. _1194742: https://bugs.launchpad.net/oslo/+bug/1194742
+.. _1185959: https://bugs.launchpad.net/oslo/+bug/1185959
+
 1.2.0a2
 -------
 
