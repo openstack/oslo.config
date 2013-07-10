@@ -5,12 +5,17 @@ An OpenStack library for parsing configuration options from the command
 line and configuration files.
 
 Contents
---------
+========
 
 .. toctree::
-   :maxdepth: 1
+   :maxdepth: 2
 
-   api/autoindex
+   cfg
+   opts
+   configopts
+   helpers
+   parser
+   exceptions
 
 Release Notes
 =============
