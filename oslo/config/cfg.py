@@ -370,7 +370,7 @@ class ConfigFilesNotFoundError(Error):
 
     def __str__(self):
         return ('Failed to read some config files: %s' %
-                string.join(self.config_files, ','))
+                ",".join(self.config_files))
 
 
 class ConfigFileParseError(Error):
@@ -715,6 +715,13 @@ class Opt(object):
 
         return self._get_argparse_prefix(prefix, dgroup) + dname
 
+    def __lt__(self, another):
+        return hash(self) < hash(another)
+
+# NOTE(jd) Not available for py2.6
+if six.PY3:
+    Opt = functools.total_ordering(Opt)
+
 
 class DeprecatedOpt(object):
 
@@ -988,6 +995,9 @@ class SubCommandOpt(Opt):
                                            title=self.title,
                                            description=self.description,
                                            help=self.help)
+        # NOTE(jd) Set explicitely to True for Python 3
+        # See http://bugs.python.org/issue9253 for context
+        subparsers.required = True
 
         if self.handler is not None:
             self.handler(subparsers)
@@ -1610,7 +1620,10 @@ class ConfigOpts(collections.Mapping):
         :returns: the option value (after string subsititution) or a GroupAttr
         :raises: NoSuchOptError,ConfigFileValueError,TemplateSubstitutionError
         """
-        return self._get(name)
+        try:
+            return self._get(name)
+        except Exception:
+            raise AttributeError
 
     def __getitem__(self, key):
         """Look up an option value and perform string substitution."""

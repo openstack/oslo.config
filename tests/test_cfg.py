@@ -23,6 +23,7 @@ import fixtures
 import testscenarios
 
 from oslo.config import cfg
+import six
 from six import moves
 from tests import utils
 
@@ -2155,7 +2156,8 @@ class SadPathTestCase(BaseTestCase):
     def test_unknown_attr(self):
         self.conf([])
         self.assertFalse(hasattr(self.conf, 'foo'))
-        self.assertRaises(cfg.NoSuchOptError, getattr, self.conf, 'foo')
+        self.assertRaises(AttributeError, getattr, self.conf, 'foo')
+        self.assertRaises(cfg.NoSuchOptError, self.conf._get, 'foo')
 
     def test_unknown_attr_is_attr_error(self):
         self.conf([])
@@ -2257,7 +2259,8 @@ class SadPathTestCase(BaseTestCase):
 
         self.conf(['--config-file', paths[0]])
 
-        self.assertRaises(cfg.ConfigFileValueError, getattr, self.conf, 'foo')
+        self.assertRaises(AttributeError, getattr, self.conf, 'foo')
+        self.assertRaises(cfg.ConfigFileValueError, self.conf._get, 'foo')
 
     def test_conf_file_bad_bool(self):
         self._do_test_conf_file_bad_value(cfg.BoolOpt)
@@ -2277,7 +2280,9 @@ class SadPathTestCase(BaseTestCase):
 
         self.assertFalse(hasattr(self.conf, 'bar'))
         self.assertRaises(
-            cfg.TemplateSubstitutionError, getattr, self.conf, 'bar')
+            AttributeError, getattr, self.conf, 'bar')
+        self.assertRaises(
+            cfg.TemplateSubstitutionError, self.conf._get, 'bar')
 
     def test_set_default_unknown_attr(self):
         self.conf([])
@@ -2438,7 +2443,7 @@ class ConfigParserTestCase(BaseTestCase):
 
     def test_no_section(self):
         with tempfile.NamedTemporaryFile() as tmpfile:
-            tmpfile.write('foo = bar')
+            tmpfile.write(six.b('foo = bar'))
             tmpfile.flush()
 
             parser = cfg.ConfigParser(tmpfile.name, {})
@@ -2812,7 +2817,8 @@ class ChoicesTestCase(BaseTestCase):
 
         self.conf(['--config-file', paths[0]])
 
-        self.assertRaises(cfg.ConfigFileValueError, getattr, self.conf, 'foo')
+        self.assertRaises(cfg.ConfigFileValueError, self.conf._get, 'foo')
+        self.assertRaises(AttributeError, getattr, self.conf, 'foo')
 
     def test_conf_file_choice_value_override(self):
         self.conf.register_cli_opt(cfg.StrOpt('foo',
