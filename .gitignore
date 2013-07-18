@@ -12,3 +12,5 @@ doc/build/
 doc/source/api/
 dist/
 .testrepository/
+.project
+.pydevproject
