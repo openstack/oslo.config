@@ -533,6 +533,7 @@ class Opt(object):
     """
     multi = False
     _convert_value = None
+    _validate_value = None
 
     def __init__(self, name, dest=None, short=None, default=None,
                  positional=False, metavar=None, help=None,
@@ -595,7 +596,8 @@ class Opt(object):
 
         return namespace._get_value(names,
                                     self.multi, self.positional,
-                                    self._convert_value)
+                                    self._convert_value,
+                                    self._validate_value)
 
     def _add_to_cli(self, parser, group=None):
         """Makes the option available in the command line interface.
@@ -783,13 +785,12 @@ class StrOpt(Opt):
                                                         choices=self.choices,
                                                         **kwargs)
 
-    def _convert_value(self, value):
+    def _validate_value(self, value):
         """Validate a value, no actual conversion required."""
         if self.choices and value not in self.choices:
             message = ('Invalid value: %r (choose from %s)' %
                        (value, ', '.join(map(repr, self.choices))))
             raise ValueError(message)
-        return value
 
 
 class BoolOpt(Opt):
@@ -810,6 +811,11 @@ class BoolOpt(Opt):
         if 'positional' in kwargs:
             raise ValueError('positional boolean args not supported')
         super(BoolOpt, self).__init__(*args, **kwargs)
+
+    @staticmethod
+    def _validate_value(value):
+        if not isinstance(value, bool):
+            raise ValueError("Value is not a bool")
 
     @staticmethod
     def _convert_value(value):
@@ -857,6 +863,11 @@ class IntOpt(Opt):
 
     _convert_value = int
 
+    @staticmethod
+    def _validate_value(value):
+        if not isinstance(value, int):
+            raise ValueError("Value is not an int")
+
     def _get_argparse_kwargs(self, group, **kwargs):
         """Extends the base argparse keyword dict for integer options."""
         return super(IntOpt,
@@ -868,6 +879,11 @@ class FloatOpt(Opt):
     """Float opt values are converted to floats using the float() builtin."""
 
     _convert_value = float
+
+    @staticmethod
+    def _validate_value(value):
+        if not isinstance(value, float):
+            raise ValueError("Value is not an float")
 
     def _get_argparse_kwargs(self, group, **kwargs):
         """Extends the base argparse keyword dict for float options."""
@@ -882,6 +898,8 @@ class ListOpt(Opt):
     List opt values are simple string values separated by commas. The opt value
     is a list containing these strings.
     """
+
+    _validate_value = iter
 
     @staticmethod
     def _convert_value(value):
@@ -910,6 +928,13 @@ class DictOpt(Opt):
     Dictionary opt values are key:value pairs separated by commas. The opt
     value is a dictionary of these key/value pairs
     """
+
+    @staticmethod
+    def _validate_value(value):
+        try:
+            return dict(value)
+        except TypeError as e:
+            raise ValueError("Unable to convert value to a dict: %s" % str(e))
 
     @staticmethod
     def _convert_value(value):
@@ -1293,13 +1318,15 @@ class MultiConfigParser(object):
     def get(self, names, multi=False):
         return self._get(names, multi=multi)
 
-    def _get(self, names, multi=False, normalized=False, convert_value=None):
+    def _get(self, names, multi=False, normalized=False, convert_value=None,
+             validate_value=None):
         """Fetch a config file value from the parsed files.
 
         :param names: a list of (section, name) tuples
         :param multi: a boolean indicating whether to return multiple values
         :param normalized: whether to normalize group names to lowercase
         :param convert_value: callable to convert a string into the proper type
+        :param validate_value: callable to validate value
         """
         rvalue = []
 
@@ -1317,6 +1344,9 @@ class MultiConfigParser(object):
                     continue
                 if name in sections[section]:
                     val = [convert(v) for v in sections[section][name]]
+                    if validate_value:
+                        for v in val:
+                            validate_value(v)
                     if multi:
                         rvalue = val + rvalue
                     else:
@@ -1435,7 +1465,8 @@ class _Namespace(argparse.Namespace):
                 pass
         raise KeyError
 
-    def _get_value(self, names, multi, positional, convert_value):
+    def _get_value(self, names, multi, positional, convert_value,
+                   validate_value):
         """Fetch a value from config files.
 
         Multiple names for a given configuration option may be supplied so
@@ -1446,6 +1477,7 @@ class _Namespace(argparse.Namespace):
         :param multi: a boolean indicating whether to return multiple values
         :param positional: whether this is a positional option
         :param convert_value: callable to convert a string into the proper type
+        :param validate_value: callable to validate the converted value
         """
         try:
             return self._get_cli_value(names, positional)
@@ -1454,7 +1486,8 @@ class _Namespace(argparse.Namespace):
 
         names = [(g if g is not None else 'DEFAULT', n) for g, n in names]
         values = self.parser._get(names, multi=multi, normalized=True,
-                                  convert_value=convert_value)
+                                  convert_value=convert_value,
+                                  validate_value=validate_value)
         return values if multi else values[-1]
 
 
@@ -1524,6 +1557,7 @@ class ConfigOpts(collections.Mapping):
         self._namespace = None
         self.__cache = {}
         self._config_opts = []
+        self._validate_default_values = False
 
     def _pre_setup(self, project, prog, version, usage, default_config_files):
         """Initialize a ConfigCliParser object for option parsing."""
@@ -1590,7 +1624,8 @@ class ConfigOpts(collections.Mapping):
                  prog=None,
                  version=None,
                  usage=None,
-                 default_config_files=None):
+                 default_config_files=None,
+                 validate_default_values=False):
         """Parse command line arguments and config files.
 
         Calling a ConfigOpts object causes the supplied command line arguments
@@ -1613,12 +1648,14 @@ class ConfigOpts(collections.Mapping):
         :param version: the program version (for --version)
         :param usage: a usage string (%prog will be expanded)
         :param default_config_files: config files to use by default
+        :param validate_default_values: whether to validate the default values
         :returns: the list of arguments left over after parsing options
         :raises: SystemExit, ConfigFilesNotFoundError, ConfigFileParseError,
                  RequiredOptError, DuplicateOptError
         """
-
         self.clear()
+
+        self._validate_default_values = validate_default_values
 
         prog, default_config_files = self._pre_setup(project,
                                                      prog,
@@ -1679,6 +1716,7 @@ class ConfigOpts(collections.Mapping):
         self._args = None
         self._oparser = None
         self._namespace = None
+        self._validate_default_values = False
         self.unregister_opts(self._config_opts)
         for group in self._groups.values():
             group._clear()
@@ -2029,6 +2067,15 @@ class ConfigOpts(collections.Mapping):
 
         if 'default' in info:
             return info['default']
+
+        if self._validate_default_values:
+            if opt._validate_value and opt.default is not None:
+                try:
+                    opt._validate_value(opt.default)
+                except ValueError as e:
+                    raise ConfigFileValueError(
+                        "Default value for option %s is not valid: %s"
+                        % (opt.name, str(e)))
 
         return opt.default
 

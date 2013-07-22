@@ -88,7 +88,8 @@ class BaseTestCase(utils.BaseTestCase):
                 prog='test',
                 version='1.0',
                 usage='%(prog)s FOO BAR',
-                default_config_files=default_config_files)
+                default_config_files=default_config_files,
+                validate_default_values=True)
 
     def setUp(self):
         super(BaseTestCase, self).setUp()
@@ -790,6 +791,18 @@ class ConfigFileOptsTestCase(BaseTestCase):
         self.assertTrue(hasattr(self.conf, 'foo'))
         self.assertEqual(self.conf.foo, 666)
 
+    def test_conf_file_int_wrong_default(self):
+        self.conf.register_opt(cfg.IntOpt('foo', default='t666'))
+
+        paths = self.create_tempfiles([('test',
+                                        '[DEFAULT]\n')])
+
+        self.conf(['--config-file', paths[0]])
+        self.assertRaises(AttributeError,
+                          getattr,
+                          self.conf,
+                          'foo')
+
     def test_conf_file_int_value(self):
         self.conf.register_opt(cfg.IntOpt('foo'))
 
@@ -850,6 +863,18 @@ class ConfigFileOptsTestCase(BaseTestCase):
 
         self.assertTrue(hasattr(self.conf, 'foo'))
         self.assertEqual(self.conf.foo, 6.66)
+
+    def test_conf_file_float_default_wrong_type(self):
+        self.conf.register_opt(cfg.FloatOpt('foo', default='foobar6.66'))
+
+        paths = self.create_tempfiles([('test',
+                                        '[DEFAULT]\n')])
+
+        self.conf(['--config-file', paths[0]])
+        self.assertRaises(AttributeError,
+                          getattr,
+                          self.conf,
+                          'foo')
 
     def test_conf_file_float_value(self):
         self.conf.register_opt(cfg.FloatOpt('foo'))
@@ -2908,6 +2933,16 @@ class ChoicesTestCase(BaseTestCase):
 
         self.assertTrue(hasattr(self.conf, 'foo'))
         self.assertEqual(self.conf.foo, 'baaar')
+
+    def test_conf_file_choice_bad_default(self):
+        self.conf.register_cli_opt(cfg.StrOpt('foo',
+                                              choices=['baar', 'baaar'],
+                                              default='foobaz'))
+        self.conf([])
+        self.assertRaises(AttributeError,
+                          getattr,
+                          self.conf,
+                          'foobaz')
 
 
 class PrintHelpTestCase(utils.BaseTestCase):
