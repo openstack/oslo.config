@@ -20,11 +20,11 @@ import sys
 import tempfile
 
 import fixtures
+import six
+from six import moves
 import testscenarios
 
 from oslo.config import cfg
-import six
-from six import moves
 from tests import utils
 
 load_tests = testscenarios.load_tests_apply_scenarios

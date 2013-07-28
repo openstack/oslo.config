@@ -268,12 +268,13 @@ import glob
 import itertools
 import logging
 import os
-import six
 import string
 import sys
 
-from oslo.config import iniparser
+import six
 from six import moves
+
+from oslo.config import iniparser
 
 LOG = logging.getLogger(__name__)
 
