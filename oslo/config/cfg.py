@@ -1619,12 +1619,12 @@ class ConfigOpts(collections.Mapping):
 
         :param name: the opt name (or 'dest', more precisely)
         :returns: the option value (after string subsititution) or a GroupAttr
-        :raises: NoSuchOptError,ConfigFileValueError,TemplateSubstitutionError
+        :raises: NoSuchOptError
         """
         try:
             return self._get(name)
         except Exception:
-            raise AttributeError
+            raise NoSuchOptError(name)
 
     def __getitem__(self, key):
         """Look up an option value and perform string substitution."""

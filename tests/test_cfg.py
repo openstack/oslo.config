@@ -2158,6 +2158,7 @@ class SadPathTestCase(BaseTestCase):
         self.assertFalse(hasattr(self.conf, 'foo'))
         self.assertRaises(AttributeError, getattr, self.conf, 'foo')
         self.assertRaises(cfg.NoSuchOptError, self.conf._get, 'foo')
+        self.assertRaises(cfg.NoSuchOptError, self.conf.__getattr__, 'foo')
 
     def test_unknown_attr_is_attr_error(self):
         self.conf([])
