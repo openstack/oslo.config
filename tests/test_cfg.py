@@ -1347,8 +1347,18 @@ class OptGroupsTestCase(BaseTestCase):
         self.assertTrue(hasattr(self.conf.blaa, 'foo'))
         self.assertEqual(self.conf.blaa.foo, 'bar')
 
-    def test_autocreate_group(self):
+    def test_autocreate_group_by_name(self):
         self.conf.register_cli_opt(cfg.StrOpt('foo'), group='blaa')
+
+        self.conf(['--blaa-foo', 'bar'])
+
+        self.assertTrue(hasattr(self.conf, 'blaa'))
+        self.assertTrue(hasattr(self.conf.blaa, 'foo'))
+        self.assertEqual(self.conf.blaa.foo, 'bar')
+
+    def test_autocreate_group_by_group(self):
+        group = cfg.OptGroup(name='blaa', title='Blaa options')
+        self.conf.register_cli_opt(cfg.StrOpt('foo'), group=group)
 
         self.conf(['--blaa-foo', 'bar'])
 
@@ -2199,11 +2209,6 @@ class SadPathTestCase(BaseTestCase):
         self.conf.register_cli_opt(cfg.StrOpt('foo', short='f'))
         self.conf.register_cli_opt(cfg.StrOpt('bar', short='f'))
         self.assertRaises(cfg.DuplicateOptError, self.conf, [])
-
-    def test_no_such_group(self):
-        group = cfg.OptGroup('blaa')
-        self.assertRaises(cfg.NoSuchGroupError, self.conf.register_cli_opt,
-                          cfg.StrOpt('foo'), group=group)
 
     def test_already_parsed(self):
         self.conf([])

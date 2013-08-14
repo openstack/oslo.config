@@ -2038,6 +2038,10 @@ class ConfigOpts(collections.Mapping):
         objects, which will be a copy of any OptGroup object that users of
         the API have access to.
 
+        If autocreate is True, the group will be created if it's not found. If
+        group is an instance of OptGroup, that same instance will be
+        registered, otherwise a new instance of OptGroup will be created.
+
         :param group_or_name: the group's name or the OptGroup object itself
         :param autocreate: whether to auto-create the group if it's not found
         :raises: NoSuchGroupError
@@ -2046,10 +2050,10 @@ class ConfigOpts(collections.Mapping):
         group_name = group.name if group else group_or_name
 
         if group_name not in self._groups:
-            if group is not None or not autocreate:
+            if not autocreate:
                 raise NoSuchGroupError(group_name)
 
-            self.register_group(OptGroup(name=group_name))
+            self.register_group(group or OptGroup(name=group_name))
 
         return self._groups[group_name]
 
