@@ -2740,6 +2740,19 @@ class SetDefaultsTestCase(BaseTestCase):
         self.assertEqual(self.conf.blaa.foo, 'bar')
 
 
+class DeprecatedOptionsTestCase(BaseTestCase):
+
+    def test_deprecated_opts_equal(self):
+        d1 = cfg.DeprecatedOpt('oldfoo', group='oldgroup')
+        d2 = cfg.DeprecatedOpt('oldfoo', group='oldgroup')
+        self.assertEqual(d1, d2)
+
+    def test_deprecated_opts_not_equal(self):
+        d1 = cfg.DeprecatedOpt('oldfoo', group='oldgroup')
+        d2 = cfg.DeprecatedOpt('oldfoo2', group='oldgroup')
+        self.assertNotEqual(d1, d2)
+
+
 class MultipleDeprecatedOptionsTestCase(BaseTestCase):
 
     def test_conf_file_override_use_deprecated_name_and_group(self):
