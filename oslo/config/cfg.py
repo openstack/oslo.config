@@ -912,8 +912,8 @@ class DictOpt(Opt):
         the each into key and value using colons as separator and then
         stuff the key/value (s) into a dictionary
         """
-        return dict([[a.strip() for a in v.split(':')]
-                    for v in value.split(',')])
+        return dict([[a.strip() for a in v.split(':', 1)]
+                     for v in value.split(',')])
 
     class _StoreDictAction(argparse.Action):
         """An argparse action for parsing an option value into a dictionary."""

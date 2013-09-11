@@ -1010,6 +1010,18 @@ class ConfigFileOptsTestCase(BaseTestCase):
         self.assertTrue(hasattr(self.conf, 'foo'))
         self.assertEqual(self.conf.foo, {'key': 'bar'})
 
+    def test_conf_file_dict_colon_in_value(self):
+        self.conf.register_opt(cfg.DictOpt('foo'))
+
+        paths = self.create_tempfiles([('test',
+                                        '[DEFAULT]\n'
+                                        'foo = key:bar:baz\n')])
+
+        self.conf(['--config-file', paths[0]])
+
+        self.assertTrue(hasattr(self.conf, 'foo'))
+        self.assertEqual(self.conf.foo, {'key': 'bar:baz'})
+
     def test_conf_file_dict_values_override_deprecated(self):
         self.conf.register_cli_opt(cfg.DictOpt('foo',
                                    deprecated_name='oldfoo'))
