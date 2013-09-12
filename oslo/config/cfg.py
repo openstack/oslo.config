@@ -911,9 +911,23 @@ class DictOpt(Opt):
         Split a value into key/value pairs separated by commas, then split
         the each into key and value using colons as separator and then
         stuff the key/value (s) into a dictionary
+
+        :param value: the string value of key/value pairs separated by commas
+        :returns: a dict object
+        :raises: ConfigFileValueError
         """
-        return dict([[a.strip() for a in v.split(':', 1)]
-                     for v in value.split(',')])
+        res = dict()
+        for v in [a for a in value.split(',')]:
+            try:
+                key, val = [a.strip() for a in v.split(':', 1)]
+            except ValueError:
+                raise ConfigFileValueError("Failed to parse '%s' as a colon "
+                                           "separated key/value pair" % v)
+            if key in res:
+                raise ConfigFileValueError("Duplicate key error. Key: '%s'" %
+                                           key)
+            res[key] = val
+        return res
 
     class _StoreDictAction(argparse.Action):
         """An argparse action for parsing an option value into a dictionary."""

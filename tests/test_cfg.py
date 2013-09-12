@@ -1022,6 +1022,30 @@ class ConfigFileOptsTestCase(BaseTestCase):
         self.assertTrue(hasattr(self.conf, 'foo'))
         self.assertEqual(self.conf.foo, {'key': 'bar:baz'})
 
+    def test_conf_file_dict_value_no_colon(self):
+        self.conf.register_opt(cfg.DictOpt('foo'))
+
+        paths = self.create_tempfiles([('test',
+                                        '[DEFAULT]\n'
+                                        'foo = key:bar,baz\n')])
+
+        self.conf(['--config-file', paths[0]])
+
+        self.assertRaises(cfg.ConfigFileValueError, self.conf._get, 'foo')
+        self.assertRaises(AttributeError, getattr, self.conf, 'foo')
+
+    def test_conf_file_dict_value_duplicate_key(self):
+        self.conf.register_opt(cfg.DictOpt('foo'))
+
+        paths = self.create_tempfiles([('test',
+                                        '[DEFAULT]\n'
+                                        'foo = key:bar,key:baz\n')])
+
+        self.conf(['--config-file', paths[0]])
+
+        self.assertRaises(cfg.ConfigFileValueError, self.conf._get, 'foo')
+        self.assertRaises(AttributeError, getattr, self.conf, 'foo')
+
     def test_conf_file_dict_values_override_deprecated(self):
         self.conf.register_cli_opt(cfg.DictOpt('foo',
                                    deprecated_name='oldfoo'))
