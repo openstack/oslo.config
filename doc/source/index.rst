@@ -20,6 +20,17 @@ Contents
 Release Notes
 =============
 
+1.2.0
+-----
+
+* 1223667_: Fix DictOpt to split only the first colon
+* 1228995_: Disallow duplicate keys in DictOpt
+* Explicit version removed from setup.cfg
+* Dependency version updates
+
+.. _1223667: https://bugs.launchpad.net/oslo/+bug/1223667
+.. _1228995: https://bugs.launchpad.net/oslo/+bug/1228995
+
 1.2.0a4
 -------
 
