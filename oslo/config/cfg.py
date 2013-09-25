@@ -733,6 +733,13 @@ class DeprecatedOpt(object):
         cfg.CONF.register_group(cfg.OptGroup('blaa'))
         cfg.CONF.register_opt(cfg.StrOpt('foo', deprecated_opts=oldopts),
                                group='blaa')
+
+        Multi-value options will return all new and deprecated
+        options.  For single options, if the new option is present
+        ("[blaa]/foo" above) it will override any deprecated options
+        present.  If the new option is not present and multiple
+        deprecated options are present, the option corresponding to
+        the first element of deprecated_opts will be chosen.
     """
 
     def __init__(self, name, group=None):
