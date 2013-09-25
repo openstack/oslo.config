@@ -14,6 +14,7 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+import argparse
 import os
 import shutil
 import sys
@@ -2617,6 +2618,21 @@ class SubCommandTestCase(BaseTestCase):
         def add_parsers(subparsers):
             sub = subparsers.add_parser('a')
             sub.add_argument('bar', type=int)
+
+        self.conf.register_cli_opt(
+            cfg.SubCommandOpt('cmd', handler=add_parsers))
+        self.assertTrue(hasattr(self.conf, 'cmd'))
+        self.conf(['a', '10'])
+        self.assertTrue(hasattr(self.conf.cmd, 'name'))
+        self.assertTrue(hasattr(self.conf.cmd, 'bar'))
+        self.assertEqual(self.conf.cmd.name, 'a')
+        self.assertEqual(self.conf.cmd.bar, 10)
+
+    def test_sub_command_with_parent(self):
+        def add_parsers(subparsers):
+            parent = argparse.ArgumentParser(add_help=False)
+            parent.add_argument('bar', type=int)
+            subparsers.add_parser('a', parents=[parent])
 
         self.conf.register_cli_opt(
             cfg.SubCommandOpt('cmd', handler=add_parsers))

@@ -1462,8 +1462,8 @@ class _CachedArgumentParser(argparse.ArgumentParser):
     order.
     """
 
-    def __init__(self, prog=None, usage=None):
-        super(_CachedArgumentParser, self).__init__(prog, usage)
+    def __init__(self, prog=None, usage=None, **kwargs):
+        super(_CachedArgumentParser, self).__init__(prog, usage, **kwargs)
         self._args_cache = {}
 
     def add_parser_argument(self, container, *args, **kwargs):
