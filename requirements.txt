@@ -1,2 +1,2 @@
 argparse
-six
+six>=1.4.1
