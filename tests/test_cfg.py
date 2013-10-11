@@ -1312,13 +1312,13 @@ class ConfigFileReloadTestCase(BaseTestCase):
 
         self.conf(['--config-file', paths[0]])
         self.assertTrue(hasattr(self.conf, 'foo'))
-        self.assertEquals(self.conf.foo, 'baar')
+        self.assertEqual(self.conf.foo, 'baar')
 
         shutil.copy(paths[1], paths[0])
 
         self.conf.reload_config_files()
         self.assertTrue(hasattr(self.conf, 'foo'))
-        self.assertEquals(self.conf.foo, 'baaar')
+        self.assertEqual(self.conf.foo, 'baaar')
 
     def test_conf_files_reload_default(self):
         self.conf.register_cli_opt(cfg.StrOpt('foo1'))
@@ -1340,18 +1340,18 @@ class ConfigFileReloadTestCase(BaseTestCase):
 
         self.conf(args=[], default_config_files=paths)
         self.assertTrue(hasattr(self.conf, 'foo1'))
-        self.assertEquals(self.conf.foo1, 'default1')
+        self.assertEqual(self.conf.foo1, 'default1')
         self.assertTrue(hasattr(self.conf, 'foo2'))
-        self.assertEquals(self.conf.foo2, 'default2')
+        self.assertEqual(self.conf.foo2, 'default2')
 
         shutil.copy(paths_change[0], paths[0])
         shutil.copy(paths_change[1], paths[1])
 
         self.conf.reload_config_files()
         self.assertTrue(hasattr(self.conf, 'foo1'))
-        self.assertEquals(self.conf.foo1, 'change_default1')
+        self.assertEqual(self.conf.foo1, 'change_default1')
         self.assertTrue(hasattr(self.conf, 'foo2'))
-        self.assertEquals(self.conf.foo2, 'change_default2')
+        self.assertEqual(self.conf.foo2, 'change_default2')
 
     def test_conf_files_reload_file_not_found(self):
         self.conf.register_cli_opt(cfg.StrOpt('foo', required=True))
@@ -1361,13 +1361,13 @@ class ConfigFileReloadTestCase(BaseTestCase):
 
         self.conf(['--config-file', paths[0]])
         self.assertTrue(hasattr(self.conf, 'foo'))
-        self.assertEquals(self.conf.foo, 'baar')
+        self.assertEqual(self.conf.foo, 'baar')
 
         os.remove(paths[0])
 
         self.conf.reload_config_files()
         self.assertTrue(hasattr(self.conf, 'foo'))
-        self.assertEquals(self.conf.foo, 'baar')
+        self.assertEqual(self.conf.foo, 'baar')
 
     def test_conf_files_reload_error(self):
         self.conf.register_cli_opt(cfg.StrOpt('foo', required=True))
@@ -1383,17 +1383,17 @@ class ConfigFileReloadTestCase(BaseTestCase):
 
         self.conf(['--config-file', paths[0]])
         self.assertTrue(hasattr(self.conf, 'foo'))
-        self.assertEquals(self.conf.foo, 'test1')
+        self.assertEqual(self.conf.foo, 'test1')
         self.assertTrue(hasattr(self.conf, 'foo1'))
-        self.assertEquals(self.conf.foo1, 'test11')
+        self.assertEqual(self.conf.foo1, 'test11')
 
         shutil.copy(paths[1], paths[0])
 
         self.conf.reload_config_files()
         self.assertTrue(hasattr(self.conf, 'foo'))
-        self.assertEquals(self.conf.foo, 'test1')
+        self.assertEqual(self.conf.foo, 'test1')
         self.assertTrue(hasattr(self.conf, 'foo1'))
-        self.assertEquals(self.conf.foo1, 'test11')
+        self.assertEqual(self.conf.foo1, 'test11')
 
 
 class OptGroupsTestCase(BaseTestCase):
