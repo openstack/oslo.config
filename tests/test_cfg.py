@@ -1914,7 +1914,7 @@ class OverridesTestCase(BaseTestCase):
         self.conf([])
         self.assertEqual(self.conf.foo, 'foo')
         self.conf.set_default('foo', None)
-        self.assertEqual(self.conf.foo, None)
+        self.assertIsNone(self.conf.foo)
         self.conf.clear_default('foo')
         self.assertEqual(self.conf.foo, 'foo')
 
@@ -1923,18 +1923,18 @@ class OverridesTestCase(BaseTestCase):
         self.conf([])
         self.assertEqual(self.conf.foo, 'foo')
         self.conf.set_override('foo', None)
-        self.assertEqual(self.conf.foo, None)
+        self.assertIsNone(self.conf.foo)
         self.conf.clear_override('foo')
         self.assertEqual(self.conf.foo, 'foo')
 
     def test_no_default_override(self):
         self.conf.register_opt(cfg.StrOpt('foo'))
         self.conf([])
-        self.assertEqual(self.conf.foo, None)
+        self.assertIsNone(self.conf.foo)
         self.conf.set_default('foo', 'bar')
         self.assertEqual(self.conf.foo, 'bar')
         self.conf.clear_default('foo')
-        self.assertEqual(self.conf.foo, None)
+        self.assertIsNone(self.conf.foo)
 
     def test_default_override(self):
         self.conf.register_opt(cfg.StrOpt('foo', default='foo'))
@@ -1951,17 +1951,17 @@ class OverridesTestCase(BaseTestCase):
         self.conf([])
         self.assertEqual(self.conf.foo, 'bar')
         self.conf.clear_override('foo')
-        self.assertEqual(self.conf.foo, None)
+        self.assertIsNone(self.conf.foo)
 
     def test_group_no_default_override(self):
         self.conf.register_group(cfg.OptGroup('blaa'))
         self.conf.register_opt(cfg.StrOpt('foo'), group='blaa')
         self.conf([])
-        self.assertEqual(self.conf.blaa.foo, None)
+        self.assertIsNone(self.conf.blaa.foo)
         self.conf.set_default('foo', 'bar', group='blaa')
         self.assertEqual(self.conf.blaa.foo, 'bar')
         self.conf.clear_default('foo', group='blaa')
-        self.assertEqual(self.conf.blaa.foo, None)
+        self.assertIsNone(self.conf.blaa.foo)
 
     def test_group_default_override(self):
         self.conf.register_group(cfg.OptGroup('blaa'))
@@ -1976,12 +1976,12 @@ class OverridesTestCase(BaseTestCase):
     def test_group_override(self):
         self.conf.register_group(cfg.OptGroup('blaa'))
         self.conf.register_opt(cfg.StrOpt('foo'), group='blaa')
-        self.assertEqual(self.conf.blaa.foo, None)
+        self.assertIsNone(self.conf.blaa.foo)
         self.conf.set_override('foo', 'bar', group='blaa')
         self.conf([])
         self.assertEqual(self.conf.blaa.foo, 'bar')
         self.conf.clear_override('foo', group='blaa')
-        self.assertEqual(self.conf.blaa.foo, None)
+        self.assertIsNone(self.conf.blaa.foo)
 
     def test_cli_bool_default(self):
         self.conf.register_cli_opt(cfg.BoolOpt('foo'))
@@ -1992,7 +1992,7 @@ class OverridesTestCase(BaseTestCase):
         self.conf.set_default('foo', False)
         self.assertFalse(self.conf.foo)
         self.conf.clear_default('foo')
-        self.assertTrue(self.conf.foo is None)
+        self.assertIsNone(self.conf.foo)
 
     def test_cli_bool_override(self):
         self.conf.register_cli_opt(cfg.BoolOpt('foo'))
@@ -2003,7 +2003,7 @@ class OverridesTestCase(BaseTestCase):
         self.conf.set_override('foo', False)
         self.assertFalse(self.conf.foo)
         self.conf.clear_override('foo')
-        self.assertTrue(self.conf.foo is None)
+        self.assertIsNone(self.conf.foo)
 
 
 class ResetAndClearTestCase(BaseTestCase):
@@ -2012,8 +2012,8 @@ class ResetAndClearTestCase(BaseTestCase):
         self.conf.register_cli_opt(cfg.StrOpt('foo'))
         self.conf.register_cli_opt(cfg.StrOpt('bar'), group='blaa')
 
-        self.assertEqual(self.conf.foo, None)
-        self.assertEqual(self.conf.blaa.bar, None)
+        self.assertIsNone(self.conf.foo)
+        self.assertIsNone(self.conf.blaa.bar)
 
         self.conf(['--foo', 'foo', '--blaa-bar', 'bar'])
 
@@ -2022,8 +2022,8 @@ class ResetAndClearTestCase(BaseTestCase):
 
         self.conf.clear()
 
-        self.assertEqual(self.conf.foo, None)
-        self.assertEqual(self.conf.blaa.bar, None)
+        self.assertIsNone(self.conf.foo)
+        self.assertIsNone(self.conf.blaa.bar)
 
     def test_reset_and_clear_with_defaults_and_overrides(self):
         self.conf.register_cli_opt(cfg.StrOpt('foo'))
@@ -2044,8 +2044,8 @@ class ResetAndClearTestCase(BaseTestCase):
 
         self.conf.reset()
 
-        self.assertEqual(self.conf.foo, None)
-        self.assertEqual(self.conf.blaa.bar, None)
+        self.assertIsNone(self.conf.foo)
+        self.assertIsNone(self.conf.blaa.bar)
 
 
 class UnregisterOptTestCase(BaseTestCase):
@@ -2257,7 +2257,7 @@ class SadPathTestCase(BaseTestCase):
         self.conf([])
 
         self.assertTrue(hasattr(self.conf, 'foo'))
-        self.assertEqual(self.conf.foo, None)
+        self.assertIsNone(self.conf.foo)
 
     def test_error_duplicate(self):
         self.conf.register_cli_opt(cfg.StrOpt('foo', help='bar'))
@@ -2386,7 +2386,7 @@ class FindFileTestCase(BaseTestCase):
 
         self.conf([])
 
-        self.assertEqual(self.conf.find_file('foo.json'), None)
+        self.assertIsNone(self.conf.find_file('foo.json'))
         self.assertEqual(self.conf.find_file('policy.json'), policy_file)
 
     def test_find_policy_file_with_config_file(self):
@@ -2783,7 +2783,7 @@ class SetDefaultsTestCase(BaseTestCase):
         self.conf.register_opts(opts)
         cfg.set_defaults(opts, foo=None)
         self.conf([])
-        self.assertEqual(self.conf.foo, None)
+        self.assertIsNone(self.conf.foo)
 
     def test_default_from_none(self):
         opts = [cfg.StrOpt('foo')]
@@ -2813,7 +2813,7 @@ class SetDefaultsTestCase(BaseTestCase):
         self.conf.register_opts(opts, group='blaa')
         cfg.set_defaults(opts, foo=None)
         self.conf([])
-        self.assertEqual(self.conf.blaa.foo, None)
+        self.assertIsNone(self.conf.blaa.foo)
 
     def test_group_default_from_none(self):
         opts = [cfg.StrOpt('foo')]
