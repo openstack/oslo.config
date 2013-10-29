@@ -15,12 +15,14 @@
 #    under the License.
 
 import argparse
+import errno
 import os
 import shutil
 import sys
 import tempfile
 
 import fixtures
+import mock
 import six
 from six import moves
 import testscenarios
@@ -2516,6 +2518,17 @@ class ConfigParserTestCase(BaseTestCase):
 
             parser = cfg.ConfigParser(tmpfile.name, {})
             self.assertRaises(cfg.ParseError, parser.parse)
+
+    def test__parse_file_ioerror(self):
+        # Test that IOErrors (other than 'No such file or directory')
+        # are propagated.
+        filename = 'fake'
+        namespace = mock.Mock()
+        with mock.patch('oslo.config.cfg.ConfigParser.parse') as parse:
+            parse.side_effect = IOError(errno.EMFILE, filename,
+                                        'Too many open files')
+            self.assertRaises(IOError, cfg.ConfigParser._parse_file, filename,
+                              namespace)
 
 
 class MultiConfigParserTestCase(BaseTestCase):

@@ -263,6 +263,7 @@ command line arguments using the SubCommandOpt class:
 import argparse
 import collections
 import copy
+import errno
 import functools
 import glob
 import itertools
@@ -1275,9 +1276,11 @@ class ConfigParser(iniparser.BaseParser):
             parser.parse()
         except iniparser.ParseError as pe:
             raise ConfigFileParseError(pe.filename, str(pe))
-        except IOError:
-            namespace._file_not_found(config_file)
-            return
+        except IOError as err:
+            if err.errno in (errno.ENOENT, errno.EACCES):
+                namespace._file_not_found(config_file)
+                return
+            raise
 
         namespace.add_parsed_config_file(sections, normalized)
 
