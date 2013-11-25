@@ -1767,6 +1767,117 @@ class TemplateSubstitutionTestCase(BaseTestCase):
         self.assertTrue(hasattr(self.conf.ba, 'r'))
         self.assertEqual(self.conf.ba.r, 'blaa')
 
+    def _prep_test_str_int_sub(self, foo_default=None, bar_default=None):
+        self.conf.register_cli_opt(cfg.StrOpt('foo', default=foo_default))
+        self.conf.register_cli_opt(cfg.IntOpt('bar', default=bar_default))
+
+    def _assert_int_sub(self):
+        self.assertTrue(hasattr(self.conf, 'bar'))
+        self.assertEqual(self.conf.bar, 123)
+
+    def test_sub_default_from_default(self):
+        self._prep_test_str_int_sub(foo_default='123', bar_default='$foo')
+
+        self.conf([])
+
+        self._assert_int_sub()
+
+    def test_sub_default_from_default_recurse(self):
+        self.conf.register_cli_opt(cfg.StrOpt('blaa', default='123'))
+        self._prep_test_str_int_sub(foo_default='$blaa', bar_default='$foo')
+
+        self.conf([])
+
+        self._assert_int_sub()
+
+    def test_sub_default_from_arg(self):
+        self._prep_test_str_int_sub(bar_default='$foo')
+
+        self.conf(['--foo', '123'])
+
+        self._assert_int_sub()
+
+    def test_sub_default_from_config_file(self):
+        self._prep_test_str_int_sub(bar_default='$foo')
+
+        paths = self.create_tempfiles([('test',
+                                        '[DEFAULT]\n'
+                                        'foo = 123\n')])
+
+        self.conf(['--config-file', paths[0]])
+
+        self._assert_int_sub()
+
+    def test_sub_arg_from_default(self):
+        self._prep_test_str_int_sub(foo_default='123')
+
+        self.conf(['--bar', '$foo'])
+
+        self._assert_int_sub()
+
+    def test_sub_arg_from_arg(self):
+        self._prep_test_str_int_sub()
+
+        self.conf(['--foo', '123', '--bar', '$foo'])
+
+        self._assert_int_sub()
+
+    def test_sub_arg_from_config_file(self):
+        self._prep_test_str_int_sub()
+
+        paths = self.create_tempfiles([('test',
+                                        '[DEFAULT]\n'
+                                        'foo = 123\n')])
+
+        self.conf(['--config-file', paths[0], '--bar=$foo'])
+
+        self._assert_int_sub()
+
+    def test_sub_config_file_from_default(self):
+        self._prep_test_str_int_sub(foo_default='123')
+
+        paths = self.create_tempfiles([('test',
+                                        '[DEFAULT]\n'
+                                        'bar = $foo\n')])
+
+        self.conf(['--config-file', paths[0]])
+
+        self._assert_int_sub()
+
+    def test_sub_config_file_from_arg(self):
+        self._prep_test_str_int_sub()
+
+        paths = self.create_tempfiles([('test',
+                                        '[DEFAULT]\n'
+                                        'bar = $foo\n')])
+
+        self.conf(['--config-file', paths[0], '--foo=123'])
+
+        self._assert_int_sub()
+
+    def test_sub_config_file_from_config_file(self):
+        self._prep_test_str_int_sub()
+
+        paths = self.create_tempfiles([('test',
+                                        '[DEFAULT]\n'
+                                        'bar = $foo\n'
+                                        'foo = 123\n')])
+
+        self.conf(['--config-file', paths[0]])
+
+        self._assert_int_sub()
+
+    def test_sub_group_from_default(self):
+        self.conf.register_cli_opt(cfg.StrOpt('foo', default='123'))
+        self.conf.register_group(cfg.OptGroup('ba'))
+        self.conf.register_cli_opt(cfg.IntOpt('r', default='$foo'), group='ba')
+
+        self.conf([])
+
+        self.assertTrue(hasattr(self.conf, 'ba'))
+        self.assertTrue(hasattr(self.conf.ba, 'r'))
+        self.assertEqual(self.conf.ba.r, 123)
+
 
 class ConfigDirTestCase(BaseTestCase):
 

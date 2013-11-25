@@ -17,21 +17,32 @@
 r"""
 Configuration options which may be set on the command line or in config files.
 
-The schema for each option is defined using the Opt sub-classes, e.g.:
+The schema for each option is defined using the Opt class or its sub-classes,
+e.g.:
 
 ::
+    from oslo.config import cfg
+    from oslo.config import types
+
+    PortType = types.Integer(1, 65535)
 
     common_opts = [
         cfg.StrOpt('bind_host',
                    default='0.0.0.0',
                    help='IP address to listen on'),
-        cfg.IntOpt('bind_port',
-                   default=9292,
-                   help='Port number to listen on')
+        cfg.Opt('bind_port',
+                type=PortType(),
+                default=9292,
+                help='Port number to listen on')
     ]
 
-Options can be strings, integers, floats, booleans, lists, or 'multi strings'
-or 'key/value pairs' (dictionary) ::
+Options can have arbitrary types, you just need to pass type constructor
+to Opt. Type constructor is a callable object that takes a string and returns
+value of particular type or raises ValueError if given string can't be
+converted to that type.
+
+There are predefined types: strings, integers, floats, booleans, lists,
+'multi strings' and 'key/value pairs' (dictionary) ::
 
     enabled_apis_opt = cfg.ListOpt('enabled_apis',
                                    default=['ec2', 'osapi_compute'],
@@ -276,6 +287,7 @@ import six
 from six import moves
 
 from oslo.config import iniparser
+from oslo.config import types
 
 LOG = logging.getLogger(__name__)
 
@@ -519,6 +531,9 @@ class Opt(object):
 
       name:
         the name of the option, which may include hyphens
+      type:
+        a callable object that takes string and returns
+        converted and validated value
       dest:
         the (hyphen-less) ConfigOpts property which contains the option value
       short:
@@ -533,11 +548,9 @@ class Opt(object):
         an string explaining how the options value is used
     """
     multi = False
-    _convert_value = None
-    _validate_value = None
 
-    def __init__(self, name, dest=None, short=None, default=None,
-                 positional=False, metavar=None, help=None,
+    def __init__(self, name, type=None, dest=None, short=None,
+                 default=None, positional=False, metavar=None, help=None,
                  secret=False, required=False,
                  deprecated_name=None, deprecated_group=None,
                  deprecated_opts=None):
@@ -547,6 +560,8 @@ class Opt(object):
         common to also supply a default and help string for all options.
 
         :param name: the option's name
+        :param type: the option's type. Must be a callable object that
+                     takes string and returns converted and validated value
         :param dest: the name of the corresponding ConfigOpts property
         :param short: a single character CLI option name
         :param default: the default value of the option
@@ -560,6 +575,14 @@ class Opt(object):
         :param deprecated_opts: array of DeprecatedOpt(s)
         """
         self.name = name
+
+        if type is None:
+            type = types.String()
+
+        if not callable(type):
+            raise TypeError('type must be callable')
+        self.type = type
+
         if dest is None:
             self.dest = self.name.replace('-', '_')
         else:
@@ -595,10 +618,7 @@ class Opt(object):
                 names.append((dgroup if dgroup else group_name,
                               dname if dname else self.dest))
 
-        return namespace._get_value(names,
-                                    self.multi, self.positional,
-                                    self._convert_value,
-                                    self._validate_value)
+        return namespace._get_value(names, self.multi, self.positional)
 
     def _add_to_cli(self, parser, group=None):
         """Makes the option available in the command line interface.
@@ -765,33 +785,15 @@ class DeprecatedOpt(object):
 
 
 class StrOpt(Opt):
-    """String options.
-
-    String opts do not have their values transformed and are returned as
-    str objects.
-
-    In addition to the parameters in the base class Opt, StrOpt has an
-    additional parameter.
+    """Option with String type (for backward compatibility).
 
     :param choices: Optional sequence of valid values.
     """
 
     def __init__(self, name, choices=None, **kwargs):
-        self.choices = choices
-        super(StrOpt, self).__init__(name, **kwargs)
-
-    def _get_argparse_kwargs(self, group, **kwargs):
-        """Extends the base argparse keyword dict for choices handling."""
-        return super(StrOpt, self)._get_argparse_kwargs(group,
-                                                        choices=self.choices,
-                                                        **kwargs)
-
-    def _validate_value(self, value):
-        """Validate a value, no actual conversion required."""
-        if self.choices and value not in self.choices:
-            message = ('Invalid value: %r (choose from %s)' %
-                       (value, ', '.join(map(repr, self.choices))))
-            raise ValueError(message)
+        super(StrOpt, self).__init__(name,
+                                     type=types.String(choices=choices),
+                                     **kwargs)
 
 
 class BoolOpt(Opt):
@@ -801,30 +803,13 @@ class BoolOpt(Opt):
     Bool opts are set to True or False on the command line using --optname or
     --noopttname respectively.
 
-    In config files, boolean values are case insensitive and can be set using
-    1/0, yes/no, true/false or on/off.
+    In config files, boolean values are cast with Boolean type.
     """
 
-    _boolean_states = {'1': True, 'yes': True, 'true': True, 'on': True,
-                       '0': False, 'no': False, 'false': False, 'off': False}
-
-    def __init__(self, *args, **kwargs):
+    def __init__(self, name, **kwargs):
         if 'positional' in kwargs:
             raise ValueError('positional boolean args not supported')
-        super(BoolOpt, self).__init__(*args, **kwargs)
-
-    @staticmethod
-    def _validate_value(value):
-        if not isinstance(value, bool):
-            raise ValueError("Value is not a bool")
-
-    @staticmethod
-    def _convert_value(value):
-        """Convert a string value to a bool."""
-        ret = BoolOpt._boolean_states.get(value.lower())
-        if ret is None:
-            raise ValueError('Unexpected boolean value %r' % value)
-        return ret
+        super(BoolOpt, self).__init__(name, type=types.Boolean(), **kwargs)
 
     def _add_to_cli(self, parser, group=None):
         """Extends the base class method to add the --nooptname option."""
@@ -848,6 +833,10 @@ class BoolOpt(Opt):
         """Extends the base argparse keyword dict for boolean options."""
 
         kwargs = super(BoolOpt, self)._get_argparse_kwargs(group, **kwargs)
+        # type has no effect for BoolOpt, it only matters for
+        # values that came from config files
+        if 'type' in kwargs:
+            del kwargs['type']
 
         # metavar has no effect for BoolOpt
         if 'metavar' in kwargs:
@@ -860,140 +849,66 @@ class BoolOpt(Opt):
 
 class IntOpt(Opt):
 
-    """Int opt values are converted to integers using the int() builtin."""
+    """Opt with Integer type (for backward compatibility)."""
 
-    _convert_value = int
-
-    @staticmethod
-    def _validate_value(value):
-        if not isinstance(value, int):
-            raise ValueError("Value is not an int")
-
-    def _get_argparse_kwargs(self, group, **kwargs):
-        """Extends the base argparse keyword dict for integer options."""
-        return super(IntOpt,
-                     self)._get_argparse_kwargs(group, type=int, **kwargs)
+    def __init__(self, name, **kwargs):
+        super(IntOpt, self).__init__(name, type=types.Integer(), **kwargs)
 
 
 class FloatOpt(Opt):
 
-    """Float opt values are converted to floats using the float() builtin."""
+    """Opt with Float type (for backward compatibility)."""
 
-    _convert_value = float
-
-    @staticmethod
-    def _validate_value(value):
-        if not isinstance(value, float):
-            raise ValueError("Value is not an float")
-
-    def _get_argparse_kwargs(self, group, **kwargs):
-        """Extends the base argparse keyword dict for float options."""
-        return super(FloatOpt, self)._get_argparse_kwargs(group,
-                                                          type=float, **kwargs)
+    def __init__(self, name, **kwargs):
+        super(FloatOpt, self).__init__(name, type=types.Float(), **kwargs)
 
 
 class ListOpt(Opt):
 
-    """List Options.
+    """Opt with List(String) type (for backward compatibility)."""
 
-    List opt values are simple string values separated by commas. The opt value
-    is a list containing these strings.
-    """
-
-    _validate_value = iter
-
-    @staticmethod
-    def _convert_value(value):
-        """Convert a string value to a list."""
-        return [a.strip() for a in value.split(',')]
-
-    class _StoreListAction(argparse.Action):
-        """An argparse action for parsing an option value into a list."""
-        def __call__(self, parser, namespace, values, option_string=None):
-            if values is not None:
-                values = ListOpt._convert_value(values)
-            setattr(namespace, self.dest, values)
-
-    def _get_argparse_kwargs(self, group, **kwargs):
-        """Extends the base argparse keyword dict for list options."""
-        return Opt._get_argparse_kwargs(self,
-                                        group,
-                                        action=ListOpt._StoreListAction,
-                                        **kwargs)
+    def __init__(self, name, **kwargs):
+        super(ListOpt, self).__init__(name, type=types.List(), **kwargs)
 
 
 class DictOpt(Opt):
 
-    """Dictionary options.
+    """Opt with Dict(String) type (for backward compatibility)."""
 
-    Dictionary opt values are key:value pairs separated by commas. The opt
-    value is a dictionary of these key/value pairs
-    """
-
-    @staticmethod
-    def _validate_value(value):
-        try:
-            return dict(value)
-        except TypeError as e:
-            raise ValueError("Unable to convert value to a dict: %s" % str(e))
-
-    @staticmethod
-    def _convert_value(value):
-        """Split a line.
-
-        Split a value into key/value pairs separated by commas, then split
-        the each into key and value using colons as separator and then
-        stuff the key/value (s) into a dictionary
-
-        :param value: the string value of key/value pairs separated by commas
-        :returns: a dict object
-        :raises: ConfigFileValueError
-        """
-        res = dict()
-        for v in [a for a in value.split(',')]:
-            try:
-                key, val = [a.strip() for a in v.split(':', 1)]
-            except ValueError:
-                raise ConfigFileValueError("Failed to parse '%s' as a colon "
-                                           "separated key/value pair" % v)
-            if key in res:
-                raise ConfigFileValueError("Duplicate key error. Key: '%s'" %
-                                           key)
-            res[key] = val
-        return res
-
-    class _StoreDictAction(argparse.Action):
-        """An argparse action for parsing an option value into a dictionary."""
-        def __call__(self, parser, namespace, values, option_string=None):
-            if values is not None:
-                values = DictOpt._convert_value(values)
-            setattr(namespace, self.dest, values)
-
-    def _get_argparse_kwargs(self, group, **kwargs):
-        """Extends the base argparse keyword dict for dictionary options."""
-        return Opt._get_argparse_kwargs(self,
-                                        group,
-                                        action=DictOpt._StoreDictAction,
-                                        **kwargs)
+    def __init__(self, name, **kwargs):
+        super(DictOpt, self).__init__(name, type=types.Dict(), **kwargs)
 
 
-class MultiStrOpt(Opt):
+class MultiOpt(Opt):
 
-    """Multi-string option.
+    """Multi-value option.
 
-    Multistr opt values are string opts which may be specified multiple times.
-    The opt value is a list containing all the string values specified.
+    Multi opt values are typed opts which may be specified multiple times.
+    The opt value is a list containing all the values specified.
     """
     multi = True
 
+    def __init__(self, name, item_type, **kwargs):
+        super(MultiOpt, self).__init__(name, item_type, **kwargs)
+
     def _get_argparse_kwargs(self, group, **kwargs):
-        """Extends the base argparse keyword dict for multi str options."""
-        kwargs = super(MultiStrOpt, self)._get_argparse_kwargs(group)
+        """Extends the base argparse keyword dict for multi value options."""
+        kwargs = super(MultiOpt, self)._get_argparse_kwargs(group)
         if not self.positional:
             kwargs['action'] = 'append'
         else:
             kwargs['nargs'] = '*'
         return kwargs
+
+
+class MultiStrOpt(MultiOpt):
+
+    """Multi opt with String item type (for backward compatibility)."""
+
+    def __init__(self, name, **kwargs):
+        super(MultiStrOpt, self).__init__(name,
+                                          item_type=types.String(),
+                                          **kwargs)
 
 
 class SubCommandOpt(Opt):
@@ -1028,7 +943,8 @@ class SubCommandOpt(Opt):
         :param description: description of the group in help output
         :param help: a help string giving an overview of available sub-commands
         """
-        super(SubCommandOpt, self).__init__(name, dest=dest, help=help)
+        super(SubCommandOpt, self).__init__(name, type=types.String(),
+                                            dest=dest, help=help)
         self.handler = handler
         self.title = title
         self.description = description
@@ -1087,6 +1003,9 @@ class _ConfigFileOpt(Opt):
 
             ConfigParser._parse_file(values, namespace)
 
+    def __init__(self, name, **kwargs):
+        super(_ConfigFileOpt, self).__init__(name, lambda x: x, **kwargs)
+
     def _get_argparse_kwargs(self, group, **kwargs):
         """Extends the base argparse keyword dict for the config file opt."""
         kwargs = super(_ConfigFileOpt, self)._get_argparse_kwargs(group)
@@ -1129,6 +1048,10 @@ class _ConfigDirOpt(Opt):
 
             for config_file in sorted(glob.glob(config_dir_glob)):
                 ConfigParser._parse_file(config_file, namespace)
+
+    def __init__(self, name, **kwargs):
+        super(_ConfigDirOpt, self).__init__(name, type=types.String(),
+                                            **kwargs)
 
     def _get_argparse_kwargs(self, group, **kwargs):
         """Extends the base argparse keyword dict for the config dir option."""
@@ -1321,23 +1244,17 @@ class MultiConfigParser(object):
     def get(self, names, multi=False):
         return self._get(names, multi=multi)
 
-    def _get(self, names, multi=False, normalized=False, convert_value=None,
-             validate_value=None):
+    def _get(self, names, multi=False, normalized=False):
         """Fetch a config file value from the parsed files.
 
         :param names: a list of (section, name) tuples
         :param multi: a boolean indicating whether to return multiple values
         :param normalized: whether to normalize group names to lowercase
-        :param convert_value: callable to convert a string into the proper type
-        :param validate_value: callable to validate value
         """
         rvalue = []
 
         def normalize(name):
             return _normalize_group_name(name) if normalized else name
-
-        def convert(value):
-            return value if convert_value is None else convert_value(value)
 
         names = [(normalize(section), name) for section, name in names]
 
@@ -1346,10 +1263,7 @@ class MultiConfigParser(object):
                 if section not in sections:
                     continue
                 if name in sections[section]:
-                    val = [convert(v) for v in sections[section][name]]
-                    if validate_value:
-                        for v in val:
-                            validate_value(v)
+                    val = sections[section][name]
                     if multi:
                         rvalue = val + rvalue
                     else:
@@ -1453,7 +1367,6 @@ class _Namespace(argparse.Namespace):
 
         :param names: a list of (section, name) tuples
         :param multi: a boolean indicating whether to return multiple values
-        :param convert_value: callable to convert a string into the proper type
         """
         for group_name, name in names:
             name = name if group_name is None else group_name + '_' + name
@@ -1468,8 +1381,7 @@ class _Namespace(argparse.Namespace):
                 pass
         raise KeyError
 
-    def _get_value(self, names, multi, positional, convert_value,
-                   validate_value):
+    def _get_value(self, names, multi, positional):
         """Fetch a value from config files.
 
         Multiple names for a given configuration option may be supplied so
@@ -1479,8 +1391,6 @@ class _Namespace(argparse.Namespace):
         :param names: a list of (section, name) tuples
         :param multi: a boolean indicating whether to return multiple values
         :param positional: whether this is a positional option
-        :param convert_value: callable to convert a string into the proper type
-        :param validate_value: callable to validate the converted value
         """
         try:
             return self._get_cli_value(names, positional)
@@ -1488,9 +1398,7 @@ class _Namespace(argparse.Namespace):
             pass
 
         names = [(g if g is not None else 'DEFAULT', n) for g, n in names]
-        values = self.parser._get(names, multi=multi, normalized=True,
-                                  convert_value=convert_value,
-                                  validate_value=validate_value)
+        values = self.parser._get(names, multi=multi, normalized=True)
         return values if multi else values[-1]
 
 
@@ -2030,7 +1938,7 @@ class ConfigOpts(collections.Mapping):
 
             return self.__cache[key]
         except KeyError:
-            value = self._substitute(self._do_get(name, group, namespace))
+            value = self._do_get(name, group, namespace)
             self.__cache[key] = value
             return value
 
@@ -2059,10 +1967,14 @@ class ConfigOpts(collections.Mapping):
 
         if namespace is None:
             namespace = self._namespace
+
+        def convert(value):
+            return self._convert_value(self._substitute(value, namespace), opt)
+
         if namespace is not None:
-            group_name = group.name if group is not None else None
+            group_name = group.name if group else None
             try:
-                return opt._get_from_namespace(namespace, group_name)
+                return convert(opt._get_from_namespace(namespace, group_name))
             except KeyError:
                 pass
             except ValueError as ve:
@@ -2072,32 +1984,53 @@ class ConfigOpts(collections.Mapping):
             return info['default']
 
         if self._validate_default_values:
-            if opt._validate_value and opt.default is not None:
+            if opt.default is not None:
                 try:
-                    opt._validate_value(opt.default)
+                    convert(opt.default)
                 except ValueError as e:
                     raise ConfigFileValueError(
                         "Default value for option %s is not valid: %s"
                         % (opt.name, str(e)))
 
-        return opt.default
+        if opt.default is not None:
+            return convert(opt.default)
 
-    def _substitute(self, value):
+        return None
+
+    def _substitute(self, value, namespace=None):
         """Perform string template substitution.
 
         Substitute any template variables (e.g. $foo, ${bar}) in the supplied
         string value(s) with opt values.
 
         :param value: the string value, or list of string values
+        :param namespace: the namespace object that retrieves the option
+                          value from
         :returns: the substituted string(s)
         """
         if isinstance(value, list):
-            return [self._substitute(i) for i in value]
+            return [self._substitute(i, namespace=namespace) for i in value]
         elif isinstance(value, str):
             tmpl = string.Template(value)
-            return tmpl.safe_substitute(self.StrSubWrapper(self))
+            return tmpl.safe_substitute(
+                self.StrSubWrapper(self, namespace=namespace))
         else:
             return value
+
+    def _convert_value(self, value, opt):
+        """Perform value type conversion.
+
+        Converts values using option's type. Handles cases when value is
+        actually a list of values (e.g. for multi opts).
+
+        :param value: the string value, or list of string values
+        :param opt: option defintion (instance of Opt class or it's subclasses)
+        :returns: converted value
+        """
+        if opt.multi:
+            return [opt.type(v) for v in value]
+        else:
+            return opt.type(value)
 
     def _get_group(self, group_or_name, autocreate=False):
         """Looks up a OptGroup object.
@@ -2195,7 +2128,30 @@ class ConfigOpts(collections.Mapping):
         else:
             for config_file in self.default_config_files:
                 ConfigParser._parse_file(config_file, namespace)
-        return self._oparser.parse_args(self._args, namespace)
+
+        self._oparser.parse_args(self._args, namespace)
+
+        self._validate_cli_options(namespace)
+
+        return namespace
+
+    def _validate_cli_options(self, namespace):
+        for opt, group in sorted(self._all_cli_opts(),
+                                 key=lambda x: x[0].name):
+            group_name = group.name if group else None
+            try:
+                value = opt._get_from_namespace(namespace, group_name)
+            except KeyError:
+                continue
+
+            value = self._substitute(value, namespace=namespace)
+
+            try:
+                self._convert_value(value, opt)
+            except ValueError:
+                sys.stderr.write('argument --%s: Invalid %s value: %s' % (
+                    opt.dest, repr(opt.type), value))
+                raise SystemExit
 
     @__clear_cache
     def reload_config_files(self):
@@ -2299,12 +2255,13 @@ class ConfigOpts(collections.Mapping):
         Exposes opt values as a dict for string substitution.
         """
 
-        def __init__(self, conf):
+        def __init__(self, conf, namespace=None):
             """Construct a StrSubWrapper object.
 
             :param conf: a ConfigOpts object
             """
             self.conf = conf
+            self.namespace = namespace
 
         def __getitem__(self, key):
             """Look up an opt value from the ConfigOpts object.
@@ -2313,7 +2270,7 @@ class ConfigOpts(collections.Mapping):
             :returns: an opt value
             :raises: TemplateSubstitutionError if attribute is a group
             """
-            value = getattr(self.conf, key)
+            value = self.conf._get(key, namespace=self.namespace)
             if isinstance(value, self.conf.GroupAttr):
                 raise TemplateSubstitutionError(
                     'substituting group %s not supported' % key)
