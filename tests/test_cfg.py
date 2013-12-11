@@ -1756,6 +1756,30 @@ class TemplateSubstitutionTestCase(BaseTestCase):
 
         self._assert_str_sub()
 
+    def test_str_sub_with_dollar_escape_char(self):
+        self._prep_test_str_sub()
+
+        paths = self.create_tempfiles([('test',
+                                        '[DEFAULT]\n'
+                                        'bar=foo-somethin$$k2\n')])
+
+        self.conf(['--config-file', paths[0]])
+
+        self.assertTrue(hasattr(self.conf, 'bar'))
+        self.assertEqual(self.conf.bar, 'foo-somethin$k2')
+
+    def test_str_sub_with_backslash_escape_char(self):
+        self._prep_test_str_sub()
+
+        paths = self.create_tempfiles([('test',
+                                        '[DEFAULT]\n'
+                                        'bar=foo-somethin\$k2\n')])
+
+        self.conf(['--config-file', paths[0]])
+
+        self.assertTrue(hasattr(self.conf, 'bar'))
+        self.assertEqual(self.conf.bar, 'foo-somethin$k2')
+
     def test_str_sub_group_from_default(self):
         self.conf.register_cli_opt(cfg.StrOpt('foo', default='blaa'))
         self.conf.register_group(cfg.OptGroup('ba'))
