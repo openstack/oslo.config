@@ -75,6 +75,10 @@ class ExceptionsTestCase(utils.BaseTestCase):
         msg = str(cfg.ConfigFilesNotFoundError(['foo', 'bar']))
         self.assertEqual(msg, 'Failed to read some config files: foo,bar')
 
+    def test_config_dir_not_found_error(self):
+        msg = str(cfg.ConfigDirNotFoundError('foobar'))
+        self.assertEqual(msg, 'Failed to read config file directory: foobar')
+
     def test_config_file_parse_error(self):
         msg = str(cfg.ConfigFileParseError('foo', 'foobar'))
         self.assertEqual(msg, 'Failed to parse foo: foobar')
@@ -2011,6 +2015,14 @@ class ConfigDirTestCase(BaseTestCase):
         self.assertTrue(hasattr(self.conf.snafu, 'bell'))
         self.assertEqual(self.conf.snafu.bell, 'whistle-11')
 
+    def test_config_dir_doesnt_exist(self):
+        tmpdir = '/tmp/foo'
+
+        self.assertRaises(cfg.ConfigDirNotFoundError,
+                          self.conf,
+                          ['--config-dir', tmpdir]
+                          )
+
 
 class ReparseTestCase(BaseTestCase):
 
@@ -2762,27 +2774,29 @@ class TildeExpansionTestCase(BaseTestCase):
 
     def test_config_dir_tilde(self):
         homedir = os.path.expanduser('~')
-        tmpdir = tempfile.mktemp(dir=homedir,
-                                 prefix='cfg-',
-                                 suffix='.d')
-        tmpfile = os.path.join(tmpdir, 'foo.conf')
-        tmpbase = os.path.basename(tmpfile)
-
-        self.useFixture(fixtures.MonkeyPatch(
-                        'glob.glob',
-                        lambda p: [tmpfile]))
-
         try:
-            self.conf(['--config-dir',
-                       os.path.join('~', os.path.basename(tmpdir))])
-        except cfg.ConfigFilesNotFoundError as cfnfe:
-            self.assertTrue(os.path.expanduser('~') in str(cfnfe))
+            tmpdir = tempfile.mkdtemp(dir=homedir,
+                                      prefix='cfg-',
+                                      suffix='.d')
+            tmpfile = os.path.join(tmpdir, 'foo.conf')
 
-        self.useFixture(fixtures.MonkeyPatch(
-            'os.path.exists',
-            lambda p: p == tmpfile))
+            self.useFixture(fixtures.MonkeyPatch(
+                            'glob.glob',
+                            lambda p: [tmpfile]))
 
-        self.assertEqual(self.conf.find_file(tmpbase), tmpfile)
+            e = self.assertRaises(cfg.ConfigFilesNotFoundError,
+                                  self.conf,
+                                  ['--config-dir',
+                                   os.path.join('~',
+                                                os.path.basename(tmpdir))]
+                                  )
+            self.assertIn(tmpdir, str(e))
+        finally:
+            try:
+                shutil.rmtree(tmpdir)
+            except OSError as exc:
+                if exc.errno != 2:
+                    raise
 
 
 class SubCommandTestCase(BaseTestCase):
