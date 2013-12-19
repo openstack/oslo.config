@@ -2973,3 +2973,16 @@ class PrintHelpTestCase(utils.BaseTestCase):
         conf.clear()
         self.assertRaises(cfg.NotInitializedError,
                           conf.print_help)
+
+
+class OptTestCase(utils.BaseTestCase):
+
+    def test_opt_eq(self):
+        d1 = cfg.ListOpt('oldfoo')
+        d2 = cfg.ListOpt('oldfoo')
+        self.assertEqual(d1, d2)
+
+    def test_opt_not_eq(self):
+        d1 = cfg.ListOpt('oldfoo')
+        d2 = cfg.ListOpt('oldbar')
+        self.assertNotEqual(d1, d2)

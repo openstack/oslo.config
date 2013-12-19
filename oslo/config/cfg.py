@@ -581,6 +581,11 @@ class Opt(object):
     def __ne__(self, another):
         return vars(self) != vars(another)
 
+    def __eq__(self, another):
+        return vars(self) == vars(another)
+
+    __hash__ = object.__hash__
+
     def _get_from_namespace(self, namespace, group_name):
         """Retrieves the option value from a _Namespace object.
 
