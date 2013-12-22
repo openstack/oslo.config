@@ -1008,7 +1008,7 @@ class SubCommandOpt(Opt):
     Sub-command options allow argparse sub-parsers to be used to parse
     additional command line arguments.
 
-    The handler argument to the SubCommandOpt contructor is a callable
+    The handler argument to the SubCommandOpt constructor is a callable
     which is supplied an argparse subparsers object. Use this handler
     callable to add sub-parsers.
 
@@ -1048,7 +1048,7 @@ class SubCommandOpt(Opt):
                                            title=self.title,
                                            description=self.description,
                                            help=self.help)
-        # NOTE(jd) Set explicitely to True for Python 3
+        # NOTE(jd) Set explicitly to True for Python 3
         # See http://bugs.python.org/issue9253 for context
         subparsers.required = True
 
@@ -1503,7 +1503,7 @@ class _CachedArgumentParser(argparse.ArgumentParser):
 
     """class for caching/collecting command line arguments.
 
-    It also sorts the arguments before intializing the ArgumentParser.
+    It also sorts the arguments before initializing the ArgumentParser.
     We need to do this since ArgumentParser by default does not sort
     the argument options and the only way to influence the order of
     arguments in '--help' is to ensure they are added in the sorted
@@ -1684,7 +1684,7 @@ class ConfigOpts(collections.Mapping):
         """Look up an option value and perform string substitution.
 
         :param name: the opt name (or 'dest', more precisely)
-        :returns: the option value (after string subsititution) or a GroupAttr
+        :returns: the option value (after string substitution) or a GroupAttr
         :raises: NoSuchOptError
         """
         try:
