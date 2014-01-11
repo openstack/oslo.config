@@ -2099,6 +2099,11 @@ class ConfigOpts(collections.Mapping):
         if isinstance(value, list):
             return [self._substitute(i) for i in value]
         elif isinstance(value, str):
+            # Treat a backslash followed by the dollar sign "\$"
+            # the same as the string template escape "$$" as it is
+            # a bit more natural for users
+            if '\$' in value:
+                value = value.replace('\$', '$$')
             tmpl = string.Template(value)
             return tmpl.safe_substitute(self.StrSubWrapper(self))
         else:
