@@ -16,6 +16,7 @@ Contents
    helpers
    parser
    exceptions
+   styleguide
 
 Release Notes
 =============
