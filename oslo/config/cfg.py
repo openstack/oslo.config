@@ -387,6 +387,16 @@ class ConfigFilesNotFoundError(Error):
                 ",".join(self.config_files))
 
 
+class ConfigDirNotFoundError(Error):
+    """Raised if the requested config-dir is not found."""
+
+    def __init__(self, config_dir):
+        self.config_dir = config_dir
+
+    def __str__(self):
+        return ('Failed to read config file directory: %s' % self.config_dir)
+
+
 class ConfigFileParseError(Error):
     """Raised if there is an error parsing a config file."""
 
@@ -1045,9 +1055,15 @@ class _ConfigDirOpt(Opt):
         def __call__(self, parser, namespace, values, option_string=None):
             """Handle a --config-dir command line argument.
 
-            :raises: ConfigFileParseError, ConfigFileValueError
+            :raises: ConfigFileParseError, ConfigFileValueError,
+                     ConfigDirNotFoundError
             """
             setattr(namespace, self.dest, values)
+
+            values = os.path.expanduser(values)
+
+            if not os.path.exists(values):
+                raise ConfigDirNotFoundError(values)
 
             config_dir_glob = os.path.join(values, '*.conf')
 
