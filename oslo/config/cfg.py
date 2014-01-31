@@ -21,6 +21,7 @@ The schema for each option is defined using the Opt class or its sub-classes,
 e.g.:
 
 ::
+
     from oslo.config import cfg
     from oslo.config import types
 
@@ -764,7 +765,9 @@ if six.PY3:
 
 class DeprecatedOpt(object):
 
-    """Represents a Deprecated option. Here's how you can use it
+    """Represents a Deprecated option.
+
+    Here's how you can use it::
 
         oldopts = [cfg.DeprecatedOpt('oldfoo', group='oldgroup'),
                    cfg.DeprecatedOpt('oldfoo2', group='oldgroup2')]
@@ -772,12 +775,13 @@ class DeprecatedOpt(object):
         cfg.CONF.register_opt(cfg.StrOpt('foo', deprecated_opts=oldopts),
                                group='blaa')
 
-        Multi-value options will return all new and deprecated
-        options.  For single options, if the new option is present
-        ("[blaa]/foo" above) it will override any deprecated options
-        present.  If the new option is not present and multiple
-        deprecated options are present, the option corresponding to
-        the first element of deprecated_opts will be chosen.
+    Multi-value options will return all new and deprecated
+    options.  For single options, if the new option is present
+    ("[blaa]/foo" above) it will override any deprecated options
+    present.  If the new option is not present and multiple
+    deprecated options are present, the option corresponding to
+    the first element of deprecated_opts will be chosen.
+
     """
 
     def __init__(self, name, group=None):

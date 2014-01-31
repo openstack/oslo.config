@@ -14,6 +14,13 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+"""Type conversion and validation classes for configuration options.
+
+Use these classes as values for the `type` argument to
+:class:`oslo.config.cfg.Opt` and its subclasses.
+
+"""
+
 
 class String(object):
 
