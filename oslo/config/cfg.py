@@ -2050,7 +2050,7 @@ class ConfigOpts(collections.Mapping):
         actually a list of values (e.g. for multi opts).
 
         :param value: the string value, or list of string values
-        :param opt: option defintion (instance of Opt class or it's subclasses)
+        :param opt: option definition (instance of Opt class or its subclasses)
         :returns: converted value
         """
         if opt.multi:
