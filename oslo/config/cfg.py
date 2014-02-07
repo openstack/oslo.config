@@ -28,11 +28,11 @@ e.g.:
     common_opts = [
         cfg.StrOpt('bind_host',
                    default='0.0.0.0',
-                   help='IP address to listen on'),
+                   help='IP address to listen on.'),
         cfg.Opt('bind_port',
                 type=PortType(),
                 default=9292,
-                help='Port number to listen on')
+                help='Port number to listen on.')
     ]
 
 Options can have arbitrary types, you just need to pass type constructor
@@ -45,7 +45,7 @@ There are predefined types: strings, integers, floats, booleans, lists,
 
     enabled_apis_opt = cfg.ListOpt('enabled_apis',
                                    default=['ec2', 'osapi_compute'],
-                                   help='List of APIs to enable by default')
+                                   help='List of APIs to enable by default.')
 
     DEFAULT_EXTENSIONS = [
         'nova.api.openstack.compute.contrib.standard_extensions'
@@ -91,11 +91,11 @@ must be registered with the config manager before the command line is parsed
         cfg.BoolOpt('verbose',
                     short='v',
                     default=False,
-                    help='Print more verbose output'),
+                    help='Print more verbose output.'),
         cfg.BoolOpt('debug',
                     short='d',
                     default=False,
-                    help='Print debugging output'),
+                    help='Print debugging output.'),
     ]
 
     def add_common_opts(conf):
@@ -149,10 +149,10 @@ Options can be registered as belonging to a group::
 
     rabbit_host_opt = cfg.StrOpt('host',
                                  default='localhost',
-                                 help='IP/hostname to listen on'),
+                                 help='IP/hostname to listen on.'),
     rabbit_port_opt = cfg.IntOpt('port',
                                  default=5672,
-                                 help='Port number to listen on')
+                                 help='Port number to listen on.')
 
     def register_rabbit_opts(conf):
         conf.register_group(rabbit_group)
@@ -205,13 +205,13 @@ Option values may reference other values using PEP 292 string substitution::
     opts = [
         cfg.StrOpt('state_path',
                    default=os.path.join(os.path.dirname(__file__), '../'),
-                   help='Top-level directory for maintaining nova state'),
+                   help='Top-level directory for maintaining nova state.'),
         cfg.StrOpt('sqlite_db',
                    default='nova.sqlite',
-                   help='file name for sqlite'),
+                   help='File name for SQLite.'),
         cfg.StrOpt('sql_connection',
                    default='sqlite:///$state_path/$sqlite_db',
-                   help='connection string for sql database'),
+                   help='Connection string for SQL database.'),
     ]
 
 Note that interpolation can be avoided by using '$$'.
@@ -1520,7 +1520,7 @@ class ConfigOpts(collections.Mapping):
                            help=('Path to a config file to use. Multiple '
                                  'config files can be specified, with values '
                                  'in later files taking precedence. The '
-                                 'default files used are: %(default)s')),
+                                 'default files used are: %(default)s.')),
             _ConfigDirOpt('config-dir',
                           metavar='DIR',
                           help='Path to a config directory to pull *.conf '
