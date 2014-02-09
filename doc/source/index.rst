@@ -12,6 +12,7 @@ Contents
 
    cfg
    opts
+   types
    configopts
    helpers
    parser
