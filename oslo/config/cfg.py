@@ -131,9 +131,9 @@ e.g. glance-api.conf and glance-common.conf::
       [DEFAULT]
       bind_host = 0.0.0.0
 
-Option values in config files override those on the command line. Config files
-are parsed in order, with values in later files overriding those in earlier
-files.
+Option values in config files and those on the command line are parsed
+in order. The same option can appear many times, in config files or on
+the command line. Later values always override earlier ones.
 
 The parsing of CLI args and config files is initiated by invoking the config
 manager e.g.::
