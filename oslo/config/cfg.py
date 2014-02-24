@@ -771,7 +771,7 @@ class DeprecatedOpt(object):
                    cfg.DeprecatedOpt('oldfoo2', group='oldgroup2')]
         cfg.CONF.register_group(cfg.OptGroup('blaa'))
         cfg.CONF.register_opt(cfg.StrOpt('foo', deprecated_opts=oldopts),
-                               group='blaa')
+                              group='blaa')
 
     Multi-value options will return all new and deprecated
     options.  For single options, if the new option is present
