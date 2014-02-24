@@ -26,12 +26,12 @@ from six import moves
 import testscenarios
 
 from oslo.config import cfg
-from tests import utils
+from oslotest import base
 
 load_tests = testscenarios.load_tests_apply_scenarios
 
 
-class ExceptionsTestCase(utils.BaseTestCase):
+class ExceptionsTestCase(base.BaseTestCase):
 
     def test_error(self):
         msg = str(cfg.Error('foobar'))
@@ -82,7 +82,7 @@ class ExceptionsTestCase(utils.BaseTestCase):
         self.assertEqual(msg, 'Failed to parse foo: foobar')
 
 
-class BaseTestCase(utils.BaseTestCase):
+class BaseTestCase(base.BaseTestCase):
 
     class TestConfigOpts(cfg.ConfigOpts):
         def __call__(self, args=None, default_config_files=[]):
@@ -3105,7 +3105,7 @@ class ChoicesTestCase(BaseTestCase):
                           'foobaz')
 
 
-class PrintHelpTestCase(utils.BaseTestCase):
+class PrintHelpTestCase(base.BaseTestCase):
 
     def test_print_help_without_init(self):
         conf = cfg.ConfigOpts()
@@ -3122,7 +3122,7 @@ class PrintHelpTestCase(utils.BaseTestCase):
                           conf.print_help)
 
 
-class OptTestCase(utils.BaseTestCase):
+class OptTestCase(base.BaseTestCase):
 
     def test_opt_eq(self):
         d1 = cfg.ListOpt('oldfoo')
