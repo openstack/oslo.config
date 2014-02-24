@@ -639,8 +639,9 @@ class Opt(object):
             deprecated_name = deprecated_name.replace('-', '_')
 
         self.deprecated_opts = copy.deepcopy(deprecated_opts) or []
-        self.deprecated_opts.append(DeprecatedOpt(deprecated_name,
-                                                  group=deprecated_group))
+        if deprecated_name is not None or deprecated_group is not None:
+            self.deprecated_opts.append(DeprecatedOpt(deprecated_name,
+                                                      group=deprecated_group))
 
     def __ne__(self, another):
         return vars(self) != vars(another)
@@ -679,15 +680,18 @@ class Opt(object):
         container = self._get_argparse_container(parser, group)
         kwargs = self._get_argparse_kwargs(group)
         prefix = self._get_argparse_prefix('', group.name if group else None)
+        deprecated_names = []
         for opt in self.deprecated_opts:
             deprecated_name = self._get_deprecated_cli_name(opt.name,
                                                             opt.group)
-            self._add_to_argparse(parser, container, self.name, self.short,
-                                  kwargs, prefix,
-                                  self.positional, deprecated_name)
+            if deprecated_name is not None:
+                deprecated_names.append(deprecated_name)
+        self._add_to_argparse(parser, container, self.name, self.short,
+                              kwargs, prefix,
+                              self.positional, deprecated_names)
 
     def _add_to_argparse(self, parser, container, name, short, kwargs,
-                         prefix='', positional=False, deprecated_name=None):
+                         prefix='', positional=False, deprecated_names=None):
         """Add an option to an argparse parser or group.
 
         :param container: an argparse._ArgumentGroup object
@@ -703,7 +707,7 @@ class Opt(object):
         args = [hyphen('--') + prefix + name]
         if short:
             args.append(hyphen('-') + short)
-        if deprecated_name:
+        for deprecated_name in deprecated_names:
             args.append(hyphen('--') + deprecated_name)
 
         parser.add_parser_argument(container, *args, **kwargs)
@@ -870,13 +874,16 @@ class BoolOpt(Opt):
         container = self._get_argparse_container(parser, group)
         kwargs = self._get_argparse_kwargs(group, action='store_false')
         prefix = self._get_argparse_prefix('no', group.name if group else None)
+        deprecated_names = []
         for opt in self.deprecated_opts:
             deprecated_name = self._get_deprecated_cli_name(opt.name,
                                                             opt.group,
                                                             prefix='no')
-            kwargs["help"] = "The inverse of --" + self.name
-            self._add_to_argparse(parser, container, self.name, None, kwargs,
-                                  prefix, self.positional, deprecated_name)
+            if deprecated_name is not None:
+                deprecated_names.append(deprecated_name)
+        kwargs["help"] = "The inverse of --" + self.name
+        self._add_to_argparse(parser, container, self.name, None, kwargs,
+                              prefix, self.positional, deprecated_names)
 
     def _get_argparse_kwargs(self, group, action='store_true', **kwargs):
         """Extends the base argparse keyword dict for boolean options."""
