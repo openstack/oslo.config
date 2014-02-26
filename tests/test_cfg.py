@@ -3158,3 +3158,6 @@ class OptTestCase(base.BaseTestCase):
         d1 = cfg.ListOpt('oldfoo')
         d2 = cfg.ListOpt('oldbar')
         self.assertNotEqual(d1, d2)
+
+    def test_illegal_name(self):
+        self.assertRaises(ValueError, cfg.BoolOpt, '_foo')
