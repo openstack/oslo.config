@@ -1389,7 +1389,7 @@ class _Namespace(argparse.Namespace):
         options at this point.
 
         :param names: a list of (section, name) tuples
-        :param multi: a boolean indicating whether to return multiple values
+        :param positional: whether this is a positional option
         """
         for group_name, name in names:
             name = name if group_name is None else group_name + '_' + name
