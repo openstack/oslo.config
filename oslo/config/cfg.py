@@ -1228,7 +1228,7 @@ class ConfigParser(iniparser.BaseParser):
                 return
             raise
 
-        namespace.add_parsed_config_file(sections, normalized)
+        namespace._add_parsed_config_file(sections, normalized)
 
 
 class MultiConfigParser(object):
@@ -1312,9 +1312,9 @@ class _Namespace(argparse.Namespace):
     """
 
     def __init__(self, conf):
-        self.conf = conf
-        self.parser = MultiConfigParser()
-        self.files_not_found = []
+        self._conf = conf
+        self._parser = MultiConfigParser()
+        self._files_not_found = []
 
     def _parse_cli_opts_from_config_file(self, sections, normalized):
         """Parse CLI options from a config file.
@@ -1338,10 +1338,10 @@ class _Namespace(argparse.Namespace):
         objects. Values in later config files or on the command line will
         override values found in this file.
         """
-        namespace = _Namespace(self.conf)
-        namespace.parser._add_parsed_config_file(sections, normalized)
+        namespace = _Namespace(self._conf)
+        namespace._parser._add_parsed_config_file(sections, normalized)
 
-        for opt, group in sorted(self.conf._all_cli_opts()):
+        for opt, group in sorted(self._conf._all_cli_opts()):
             group_name = group.name if group is not None else None
             try:
                 value = opt._get_from_namespace(namespace, group_name)
@@ -1363,7 +1363,7 @@ class _Namespace(argparse.Namespace):
             else:
                 setattr(self, dest, value)
 
-    def add_parsed_config_file(self, sections, normalized):
+    def _add_parsed_config_file(self, sections, normalized):
         """Add a parsed config file to the list of parsed files.
 
         :param sections: a mapping of section name to dicts of config values
@@ -1371,14 +1371,14 @@ class _Namespace(argparse.Namespace):
         :raises: ConfigFileValueError
         """
         self._parse_cli_opts_from_config_file(sections, normalized)
-        self.parser._add_parsed_config_file(sections, normalized)
+        self._parser._add_parsed_config_file(sections, normalized)
 
     def _file_not_found(self, config_file):
         """Record that we were unable to open a config file.
 
         :param config_file: the path to the failed file
         """
-        self.files_not_found.append(config_file)
+        self._files_not_found.append(config_file)
 
     def _get_cli_value(self, names, positional):
         """Fetch a CLI option value.
@@ -1421,7 +1421,7 @@ class _Namespace(argparse.Namespace):
             pass
 
         names = [(g if g is not None else 'DEFAULT', n) for g, n in names]
-        values = self.parser._get(names, multi=multi, normalized=True)
+        values = self._parser._get(names, multi=multi, normalized=True)
         return values if multi else values[-1]
 
 
@@ -1601,8 +1601,8 @@ class ConfigOpts(collections.Mapping):
 
         self._namespace = self._parse_cli_opts(args if args is not None
                                                else sys.argv[1:])
-        if self._namespace.files_not_found:
-            raise ConfigFilesNotFoundError(self._namespace.files_not_found)
+        if self._namespace._files_not_found:
+            raise ConfigFilesNotFoundError(self._namespace._files_not_found)
 
         self._check_required_opts()
 
@@ -2189,8 +2189,8 @@ class ConfigOpts(collections.Mapping):
         """
         try:
             namespace = self._parse_config_files()
-            if namespace.files_not_found:
-                raise ConfigFilesNotFoundError(namespace.files_not_found)
+            if namespace._files_not_found:
+                raise ConfigFilesNotFoundError(namespace._files_not_found)
             self._check_required_opts(namespace)
 
         except SystemExit as exc:
