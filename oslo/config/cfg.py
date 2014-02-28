@@ -1986,7 +1986,7 @@ class ConfigOpts(collections.Mapping):
             return self.SubCommandAttr(self, group, opt.dest)
 
         if 'override' in info:
-            return info['override']
+            return self._substitute(info['override'])
 
         if namespace is None:
             namespace = self._namespace
@@ -2004,7 +2004,7 @@ class ConfigOpts(collections.Mapping):
                 raise ConfigFileValueError(str(ve))
 
         if 'default' in info:
-            return info['default']
+            return self._substitute(info['default'])
 
         if self._validate_default_values:
             if opt.default is not None:
