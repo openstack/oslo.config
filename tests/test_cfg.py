@@ -1793,6 +1793,24 @@ class TemplateSubstitutionTestCase(BaseTestCase):
         self.assertTrue(hasattr(self.conf.ba, 'r'))
         self.assertEqual(self.conf.ba.r, 'blaa')
 
+    def test_str_sub_set_default(self):
+        self._prep_test_str_sub()
+        self.conf.set_default('bar', '$foo')
+        self.conf.set_default('foo', 'blaa')
+
+        self.conf([])
+
+        self._assert_str_sub()
+
+    def test_str_sub_set_override(self):
+        self._prep_test_str_sub()
+        self.conf.set_override('bar', '$foo')
+        self.conf.set_override('foo', 'blaa')
+
+        self.conf([])
+
+        self._assert_str_sub()
+
     def _prep_test_str_int_sub(self, foo_default=None, bar_default=None):
         self.conf.register_cli_opt(cfg.StrOpt('foo', default=foo_default))
         self.conf.register_cli_opt(cfg.IntOpt('bar', default=bar_default))
