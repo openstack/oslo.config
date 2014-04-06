@@ -479,9 +479,16 @@ class CliSpecialOptsTestCase(BaseTestCase):
         self.assertTrue('--config-file' in sys.stdout.getvalue())
 
     def test_version(self):
-        self.useFixture(fixtures.MonkeyPatch('sys.stderr', moves.StringIO()))
+        # In Python 3.4+, argparse prints the version on stdout; before 3.4, it
+        # printed it on stderr.
+        if sys.version_info >= (3, 4):
+            stream_name = 'stdout'
+        else:
+            stream_name = 'stderr'
+        self.useFixture(fixtures.MonkeyPatch("sys.%s" % stream_name,
+                                             moves.StringIO()))
         self.assertRaises(SystemExit, self.conf, ['--version'])
-        self.assertTrue('1.0' in sys.stderr.getvalue())
+        self.assertTrue('1.0' in getattr(sys, stream_name).getvalue())
 
     def test_config_file(self):
         paths = self.create_tempfiles([('1', '[DEFAULT]'),
