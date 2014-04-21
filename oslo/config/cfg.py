@@ -35,6 +35,9 @@ e.g.:
                 help='Port number to listen on.')
     ]
 
+Option Types
+------------
+
 Options can have arbitrary types, you just need to pass type constructor
 to Opt. Type constructor is a callable object that takes a string and returns
 value of particular type or raises ValueError if given string can't be
@@ -52,6 +55,9 @@ There are predefined types: strings, integers, floats, booleans, lists,
     ]
     osapi_compute_extension_opt = cfg.MultiStrOpt('osapi_compute_extension',
                                                   default=DEFAULT_EXTENSIONS)
+
+Registering Options
+-------------------
 
 Option schemas are registered with the config manager at runtime, but before
 the option is referenced::
@@ -101,6 +107,9 @@ must be registered with the config manager before the command line is parsed
     def add_common_opts(conf):
         conf.register_cli_opts(cli_opts)
 
+Loading Config Files
+--------------------
+
 The config manager has two CLI options defined by default, --config-file
 and --config-dir::
 
@@ -142,6 +151,9 @@ manager e.g.::
     if conf.verbose:
         ...
 
+Option Groups
+-------------
+
 Options can be registered as belonging to a group::
 
     rabbit_group = cfg.OptGroup(name='rabbit',
@@ -161,7 +173,7 @@ Options can be registered as belonging to a group::
         conf.register_opt(rabbit_port_opt, group='rabbit')
 
 If no group attributes are required other than the group name, the group
-need not be explicitly registered e.g.
+need not be explicitly registered e.g.::
 
     def register_rabbit_opts(conf):
         # The group will automatically be created, equivalent calling::
@@ -189,6 +201,9 @@ group name::
 
     --rabbit-host localhost --rabbit-port 9999
 
+Accessing Option Values In Your Code
+------------------------------------
+
 Option values in the default group are referenced as attributes/properties on
 the config manager; groups are also attributes on the config manager, with
 attributes for each of the options associated with the group::
@@ -199,6 +214,9 @@ attributes for each of the options associated with the group::
         hostname=conf.rabbit.host,
         port=conf.rabbit.port,
         ...)
+
+Option Value Interpolation
+--------------------------
 
 Option values may reference other values using PEP 292 string substitution::
 
@@ -214,7 +232,10 @@ Option values may reference other values using PEP 292 string substitution::
                    help='Connection string for SQL database.'),
     ]
 
-Note that interpolation can be avoided by using '$$'.
+Note that interpolation can be avoided by using `$$`.
+
+Special Handling Instructions
+-----------------------------
 
 Options may be declared as required so that an error is raised if the user
 does not supply a value for the option.
@@ -227,6 +248,9 @@ log files::
         cfg.StrOpt('s3_store_secret_key', secret=True),
         ...
      ]
+
+Global ConfigOpts
+-----------------
 
 This module also contains a global instance of the ConfigOpts class
 in order to support a common usage pattern in OpenStack::
@@ -244,6 +268,9 @@ in order to support a common usage pattern in OpenStack::
     def start(server, app):
         server.start(app, CONF.bind_port, CONF.bind_host)
 
+Positional Command Line Arguments
+---------------------------------
+
 Positional command line arguments are supported via a 'positional' Opt
 constructor argument::
 
@@ -253,6 +280,9 @@ constructor argument::
     >>> conf(['a', 'b'])
     >>> conf.bar
     ['a', 'b']
+
+Sub-Parsers
+-----------
 
 It is also possible to use argparse "sub-parsers" to parse additional
 command line arguments using the SubCommandOpt class:
