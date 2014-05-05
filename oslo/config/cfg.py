@@ -583,6 +583,8 @@ class Opt(object):
         :param deprecated_group: the group containing a deprecated alias
         :param deprecated_opts: array of DeprecatedOpt(s)
         """
+        if name.startswith('_'):
+            raise ValueError('illegal name %s with prefix _' % (name,))
         self.name = name
 
         if type is None:
