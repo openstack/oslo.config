@@ -14,6 +14,7 @@
 
 import argparse
 import errno
+import functools
 import os
 import shutil
 import sys
@@ -265,6 +266,9 @@ class CliOptsTestCase(BaseTestCase):
     deps - a tuple of deprecated name/group
     """
 
+    IPv4Opt = functools.partial(cfg.IPOpt, version=4)
+    IPv6Opt = functools.partial(cfg.IPOpt, version=6)
+
     scenarios = [
         ('str_default',
          dict(opt_class=cfg.StrOpt, default=None, cli_args=[], value=None,
@@ -364,6 +368,22 @@ class CliOptsTestCase(BaseTestCase):
         ('float_arg_deprecated_group_and_name',
          dict(opt_class=cfg.FloatOpt, default=None,
               cli_args=['--old-oof', '2.0'], value=2.0, deps=('oof', 'old'))),
+        ('ipv4addr_arg',
+         dict(opt_class=IPv4Opt, default=None,
+              cli_args=['--foo', '192.168.0.1'], value='192.168.0.1',
+              deps=(None, None))),
+        ('ipaddr_arg_implicitv4',
+         dict(opt_class=cfg.IPOpt, default=None,
+              cli_args=['--foo', '192.168.0.1'], value='192.168.0.1',
+              deps=(None, None))),
+        ('ipaddr_arg_implicitv6',
+         dict(opt_class=cfg.IPOpt, default=None,
+              cli_args=['--foo', 'abcd:ef::1'], value='abcd:ef::1',
+              deps=(None, None))),
+        ('ipv6addr_arg',
+         dict(opt_class=IPv6Opt, default=None,
+              cli_args=['--foo', 'abcd:ef::1'], value='abcd:ef::1',
+              deps=(None, None))),
         ('list_default',
          dict(opt_class=cfg.ListOpt, default=['bar'],
               cli_args=[], value=['bar'], deps=(None, None))),

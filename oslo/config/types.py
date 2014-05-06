@@ -18,6 +18,7 @@ Use these classes as values for the `type` argument to
 :class:`oslo.config.cfg.Opt` and its subclasses.
 
 """
+import netaddr
 
 
 class String(object):
@@ -332,3 +333,52 @@ class Dict(object):
             (self.__class__ == other.__class__) and
             (self.value_type == other.value_type)
         )
+
+
+class IPAddress(object):
+
+    """IP address type
+
+    Represents either ipv4 or ipv6. Without specifying version parameter both
+    versions are checked
+
+    :param version: defines which version should be explicitly checked (4 or 6)
+
+    """
+
+    def __init__(self, version=None):
+        version_checkers = {
+            None: self._check_both_versions,
+            4: self._check_ipv4,
+            6: self._check_ipv6
+        }
+
+        self.version_checker = version_checkers.get(version)
+        if self.version_checker is None:
+            raise TypeError("%s is not a valid IP version." % version)
+
+    def __call__(self, value):
+        value = str(value)
+        if not value:
+            raise ValueError("IP address cannot be an empty string")
+        self.version_checker(value)
+        return value
+
+    def __repr__(self):
+        return "IPAddress"
+
+    def __eq__(self, other):
+        return self.__class__ == other.__class__
+
+    def _check_ipv4(self, address):
+        if not netaddr.valid_ipv4(address, netaddr.core.INET_PTON):
+            raise ValueError("%s is not an IPv4 address" % address)
+
+    def _check_ipv6(self, address):
+        if not netaddr.valid_ipv6(address, netaddr.core.INET_PTON):
+            raise ValueError("%s is not an IPv6 address" % address)
+
+    def _check_both_versions(self, address):
+        if not (netaddr.valid_ipv4(address, netaddr.core.INET_PTON) or
+                netaddr.valid_ipv6(address, netaddr.core.INET_PTON)):
+            raise ValueError("%s is not IPv4 or IPv6 address" % address)

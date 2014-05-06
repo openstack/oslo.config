@@ -950,6 +950,15 @@ class DictOpt(Opt):
         super(DictOpt, self).__init__(name, type=types.Dict(), **kwargs)
 
 
+class IPOpt(Opt):
+
+    """Opt with IPAddress type (either IPv4, IPv6 or both)."""
+
+    def __init__(self, name, version=None, **kwargs):
+        super(IPOpt, self).__init__(name, type=types.IPAddress(version),
+                                    **kwargs)
+
+
 class MultiOpt(Opt):
 
     """Multi-value option.
