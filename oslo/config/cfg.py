@@ -2233,12 +2233,12 @@ class ConfigOpts(collections.Mapping):
             self._check_required_opts(namespace)
 
         except SystemExit as exc:
-            LOG.warn("Caught SystemExit while reloading configure files \
-                        with exit code: %d" % exc.code)
+            LOG.warn("Caught SystemExit while reloading configure files "
+                     "with exit code: %d", exc.code)
             return False
         except Error as err:
-            LOG.warn("Caught Error while reloading configure files: %s"
-                     % err.__str__())
+            LOG.warn("Caught Error while reloading configure files: %s",
+                     err)
             return False
         else:
             self._namespace = namespace
