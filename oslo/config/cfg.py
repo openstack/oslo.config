@@ -238,7 +238,13 @@ Special Handling Instructions
 -----------------------------
 
 Options may be declared as required so that an error is raised if the user
-does not supply a value for the option.
+does not supply a value for the option::
+
+    opts = [
+        cfg.StrOpt('service_name', required=True),
+        cfg.StrOpt('image_id', required=True),
+        ...
+    ]
 
 Options may be declared as secret so that their values are not leaked into
 log files::
