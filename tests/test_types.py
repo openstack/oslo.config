@@ -202,6 +202,14 @@ class IntegerTypeTests(TypeTestHelper, unittest.TestCase):
     def test_not_equal_to_other_class(self):
         self.assertFalse(types.Integer() == types.String())
 
+    def test_with_max_and_min(self):
+        t = types.Integer(min=123, max=456)
+        self.assertRaises(ValueError, t, 122)
+        t(123)
+        t(300)
+        t(456)
+        self.assertRaises(ValueError, t, 457)
+
 
 class FloatTypeTests(TypeTestHelper, unittest.TestCase):
     type = types.Float()

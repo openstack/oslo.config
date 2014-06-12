@@ -134,8 +134,7 @@ class Integer(object):
             raise ValueError('Should be greater than or equal to %d' %
                              self.min)
         if self.max and value > self.max:
-            return ValueError('Should be less than or equal to %d' %
-                              self.max)
+            raise ValueError('Should be less than or equal to %d' % self.max)
 
     def __repr__(self):
         props = []
