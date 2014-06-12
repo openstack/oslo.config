@@ -109,7 +109,7 @@ import sys
 import textwrap
 
 from oslo.config import cfg
-import stevedore.named
+import stevedore.named  # noqa
 
 LOG = logging.getLogger(__name__)
 
