@@ -1447,15 +1447,14 @@ class _Namespace(argparse.Namespace):
         """
         for group_name, name in names:
             name = name if group_name is None else group_name + '_' + name
-            try:
-                value = getattr(self, name)
-                if value is not None:
-                    # argparse ignores default=None for nargs='*'
-                    if positional and not value:
-                        value = self.default
-                    return value
-            except AttributeError:
-                pass
+            value = getattr(self, name, None)
+            if value is not None:
+                # argparse ignores default=None for nargs='*' and returns []
+                if positional and not value:
+                    continue
+
+                return value
+
         raise KeyError
 
     def _get_value(self, names, multi, positional):
