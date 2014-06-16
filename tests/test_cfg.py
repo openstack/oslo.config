@@ -511,11 +511,17 @@ class PositionalTestCase(BaseTestCase):
         self.assertTrue(hasattr(self.conf, 'foo'))
         self.assertEqual(self.conf.foo, value)
 
-    def test_positional_str_default(self):
+    def test_positional_str_none_default(self):
         self._do_pos_test(cfg.StrOpt, None, [], None)
+
+    def test_positional_str_default(self):
+        self._do_pos_test(cfg.StrOpt, 'bar', [], 'bar')
 
     def test_positional_str_arg(self):
         self._do_pos_test(cfg.StrOpt, None, ['bar'], 'bar')
+
+    def test_positional_int_none_default(self):
+        self._do_pos_test(cfg.IntOpt, None, [], None)
 
     def test_positional_int_default(self):
         self._do_pos_test(cfg.IntOpt, 10, [], 10)
@@ -523,11 +529,20 @@ class PositionalTestCase(BaseTestCase):
     def test_positional_int_arg(self):
         self._do_pos_test(cfg.IntOpt, None, ['20'], 20)
 
+    def test_positional_float_none_default(self):
+        self._do_pos_test(cfg.FloatOpt, None, [], None)
+
     def test_positional_float_default(self):
         self._do_pos_test(cfg.FloatOpt, 1.0, [], 1.0)
 
     def test_positional_float_arg(self):
         self._do_pos_test(cfg.FloatOpt, None, ['2.0'], 2.0)
+
+    def test_positional_list_none_default(self):
+        self._do_pos_test(cfg.ListOpt, None, [], None)
+
+    def test_positional_list_empty_default(self):
+        self._do_pos_test(cfg.ListOpt, [], [], [])
 
     def test_positional_list_default(self):
         self._do_pos_test(cfg.ListOpt, ['bar'], [], ['bar'])
@@ -536,6 +551,12 @@ class PositionalTestCase(BaseTestCase):
         self._do_pos_test(cfg.ListOpt, None,
                           ['blaa,bar'], ['blaa', 'bar'])
 
+    def test_positional_dict_none_default(self):
+        self._do_pos_test(cfg.DictOpt, None, [], None)
+
+    def test_positional_dict_empty_default(self):
+        self._do_pos_test(cfg.DictOpt, {}, [], {})
+
     def test_positional_dict_default(self):
         self._do_pos_test(cfg.DictOpt, {'key1': 'bar'}, [], {'key1': 'bar'})
 
@@ -543,6 +564,12 @@ class PositionalTestCase(BaseTestCase):
         self._do_pos_test(cfg.DictOpt, None,
                           ['key1:blaa,key2:bar'],
                           {'key1': 'blaa', 'key2': 'bar'})
+
+    def test_positional_multistr_none_default(self):
+        self._do_pos_test(cfg.MultiStrOpt, None, [], None)
+
+    def test_positional_multistr_empty_default(self):
+        self._do_pos_test(cfg.MultiStrOpt, [], [], [])
 
     def test_positional_multistr_default(self):
         self._do_pos_test(cfg.MultiStrOpt, ['bar'], [], ['bar'])
