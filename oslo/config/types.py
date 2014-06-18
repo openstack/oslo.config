@@ -306,7 +306,6 @@ class Dict(object):
                     value = value.strip()
 
                     value = self.value_type(value)
-                    print(pair, value)
                     break
                 except ValueError as e:
                     if not first_error:
