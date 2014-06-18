@@ -18,6 +18,7 @@ Contents
    parser
    exceptions
    styleguide
+   generator
 
 Release Notes
 =============

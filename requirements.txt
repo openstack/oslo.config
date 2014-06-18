@@ -1,2 +1,3 @@
 argparse
 six>=1.7.0
+stevedore>=0.14
