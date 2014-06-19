@@ -232,7 +232,16 @@ Option values may reference other values using PEP 292 string substitution::
                    help='Connection string for SQL database.'),
     ]
 
-Note that interpolation can be avoided by using `$$`.
+.. note::
+
+  Interpolation can be avoided by using `$$`.
+
+.. warning::
+
+  Interpolation using the values of options in groups is not yet
+  supported. The interpolated option must be in the DEFAULT group
+  (i.e., ``"$state_path"`` works but ``"$database.state_path"`` does
+  not).
 
 Special Handling Instructions
 -----------------------------
