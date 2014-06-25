@@ -84,3 +84,35 @@ class Config(fixtures.Fixture):
         """
         for opt in opts:
             self.register_opt(opt, group=group)
+
+    def register_cli_opt(self, opt, group=None):
+        """Register a single CLI option for the test run.
+
+        Options registered in this manner will automatically be unregistered
+        during cleanup.
+
+        If a `group` argument is supplied, it will register the new option
+        to that group, otherwise the option is registered to the ``default``
+        group.
+
+        CLI options must be registered before the command line and config files
+        are parsed. This is to ensure that all CLI options are shown in --help
+        and option validation works as expected.
+        """
+        self.conf.register_cli_opt(opt, group=group)
+        self._registered_config_opts.setdefault(group, set()).add(opt)
+
+    def register_cli_opts(self, opts, group=None):
+        """Register multiple CLI options for the test run.
+
+        This works in the same manner as register_opt() but takes a list of
+        options as the first argument. All arguments will be registered to the
+        same group if the ``group`` argument is supplied, otherwise all options
+        will be registered to the ``default`` group.
+
+        CLI options must be registered before the command line and config files
+        are parsed. This is to ensure that all CLI options are shown in --help
+        and option validation works as expected.
+        """
+        for opt in opts:
+            self.register_cli_opt(opt, group=group)

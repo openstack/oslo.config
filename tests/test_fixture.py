@@ -28,8 +28,6 @@ class ConfigTestCase(base.BaseTestCase):
         super(ConfigTestCase, self).setUp()
         self.config_fixture = self.useFixture(config.Config(conf))
         self.config = self.config_fixture.config
-        self.register_opt = self.config_fixture.register_opt
-        self.register_opts = self.config_fixture.register_opts
         self.config_fixture.register_opt(cfg.StrOpt(
             'testing_option', default='initial_value'))
 
@@ -55,13 +53,34 @@ class ConfigTestCase(base.BaseTestCase):
     def test_register_options(self):
         opt1 = cfg.StrOpt('first_test_opt', default='initial_value_1')
         opt2 = cfg.StrOpt('second_test_opt', default='initial_value_2')
-        self.register_opts([opt1, opt2])
+        self.config_fixture.register_opts([opt1, opt2])
         self.assertEqual(conf.get('first_test_opt'), opt1.default)
         self.assertEqual(conf.get('second_test_opt'), opt2.default)
 
     def test_cleanup_unregister_option(self):
         opt = cfg.StrOpt('new_test_opt', default='initial_value')
         self.config_fixture.register_opt(opt)
+        self.assertEqual(conf.get('new_test_opt'),
+                         opt.default)
+        self.config_fixture.cleanUp()
+        self.assertRaises(cfg.NoSuchOptError, conf.get, 'new_test_opt')
+
+    def test_register_cli_option(self):
+        opt = cfg.StrOpt('new_test_opt', default='initial_value')
+        self.config_fixture.register_cli_opt(opt)
+        self.assertEqual(conf.get('new_test_opt'),
+                         opt.default)
+
+    def test_register_cli_options(self):
+        opt1 = cfg.StrOpt('first_test_opt', default='initial_value_1')
+        opt2 = cfg.StrOpt('second_test_opt', default='initial_value_2')
+        self.config_fixture.register_cli_opts([opt1, opt2])
+        self.assertEqual(conf.get('first_test_opt'), opt1.default)
+        self.assertEqual(conf.get('second_test_opt'), opt2.default)
+
+    def test_cleanup_unregister_cli_option(self):
+        opt = cfg.StrOpt('new_test_opt', default='initial_value')
+        self.config_fixture.register_cli_opt(opt)
         self.assertEqual(conf.get('new_test_opt'),
                          opt.default)
         self.config_fixture.cleanUp()
