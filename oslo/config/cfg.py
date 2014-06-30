@@ -714,7 +714,7 @@ class Opt(object):
         :param short: the short opt name
         :param kwargs: the keyword arguments for add_argument()
         :param prefix: an optional prefix to prepend to the opt name
-        :param position: whether the optional is a positional CLI argument
+        :param positional: whether the option is a positional CLI argument
         """
         def hyphen(arg):
             return arg if not positional else ''
@@ -1935,7 +1935,7 @@ class ConfigOpts(collections.Mapping):
         searched by the module level find_config_files() function is
         used. The first matching file is returned.
 
-        :param basename: the filename, e.g. 'policy.json'
+        :param name: the filename, e.g. 'policy.json'
         :returns: the path to a matching file, or None
         """
         dirs = []
