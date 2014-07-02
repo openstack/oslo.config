@@ -96,7 +96,13 @@ The default runtime values of configuration options are not always the most
 suitable values to include in sample config files - for example, rather than
 including the IP address or hostname of the machine where the config file
 was generated, you might want to include something like '10.0.0.1'. To
-facilitate this, applications can supply their own 'sanitizer' function via
+facilitate this, options can be supplied with a 'sample_default' attribute::
+
+  cfg.StrOpt('base_dir'
+             default=os.getcwd(),
+             sample_default='/usr/lib/myapp')
+
+Alternatively, applications can supply their own 'sanitizer' function via
 the 'oslo.config.sanitizer' entry point namespace. For example::
 
     def sanitize_default(self, opt, default_str):
@@ -208,12 +214,16 @@ class _OptFormatter(object):
                          (d.group or 'DEFAULT', d.name or opt.dest))
 
         if isinstance(opt, cfg.MultiStrOpt):
-            if opt.default is None:
+            if opt.sample_default is not None:
+                defaults = opt.sample_default
+            elif opt.default is None:
                 defaults = ['<None>']
             else:
                 defaults = opt.default
         else:
-            if opt.default is None:
+            if opt.sample_default is not None:
+                default_str = str(opt.sample_default)
+            elif opt.default is None:
                 default_str = '<None>'
             elif isinstance(opt, cfg.StrOpt):
                 default_str = opt.default
