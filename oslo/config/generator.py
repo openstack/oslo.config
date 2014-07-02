@@ -101,29 +101,6 @@ facilitate this, options can be supplied with a 'sample_default' attribute::
   cfg.StrOpt('base_dir'
              default=os.getcwd(),
              sample_default='/usr/lib/myapp')
-
-Alternatively, applications can supply their own 'sanitizer' function via
-the 'oslo.config.sanitizer' entry point namespace. For example::
-
-    def sanitize_default(self, opt, default_str):
-        if opt.dest == 'base_dir' and default_str == os.getcwd():
-            return '.'
-        else:
-            return default_str
-
-the callable is registered as a entry point::
-
-  [entry_points]
-  oslo.config.opts =
-      myapp = myapp.opts:list_opts
-
-  oslo.config.sanitizer
-      myapp = myapp.opts:sanitize_default
-
-before being passed via the --sanitizer command line option:
-
-  $> oslo-config-generator --namespace myapp \
-                           --sanitizer myapp > myapp.conf
 """
 
 import logging
@@ -145,11 +122,6 @@ _generator_opts = [
     cfg.MultiStrOpt('namespace',
                     help='Option namespace under "oslo.config.opts" in which '
                          'to query for options.'),
-    cfg.StrOpt('sanitizer',
-               help='An entry point name under "oslo.config.sanitizer" for a '
-                    'sanitize_default(opt, default_str) callable which will '
-                    'sanitize the stringified default value of an option '
-                    'before outputting it.'),
 ]
 
 
@@ -179,15 +151,13 @@ class _OptFormatter(object):
         cfg.MultiStrOpt: 'multi valued',
     }
 
-    def __init__(self, output_file=None, sanitize_default=None, wrap_width=70):
+    def __init__(self, output_file=None, wrap_width=70):
         """Construct an OptFormatter object.
 
         :param output_file: a writeable file object
-        :param sanitize_default: a sanitize_default(opt, default_str) callable
         :param wrap_width: The maximum length of help lines, 0 to not wrap
         """
         self.output_file = output_file or sys.stdout
-        self.sanitize_default = sanitize_default or (lambda o, d: d)
         self.wrap_width = wrap_width
 
     def format(self, opt):
@@ -244,7 +214,6 @@ class _OptFormatter(object):
             defaults = [default_str]
 
         for default_str in defaults:
-            default_str = self.sanitize_default(opt, default_str)
             if default_str.strip() != default_str:
                 default_str = '"%s"' % default_str
             lines.append('#%s = %s\n' % (opt.dest, default_str))
@@ -264,21 +233,6 @@ class _OptFormatter(object):
         :param l: a list of arbitrary strings
         """
         self.output_file.writelines(l)
-
-
-def _get_sanitizer(name):
-    """Look up a sanitizer entry point name.
-
-    Look up the supplied name under the 'oslo.config.sanitizer' entry point
-    namespace and return the callable found there.
-
-    :param name: the entry point name, or None
-    :returns: the callable found, or None
-    """
-    if name is None:
-        return None
-    return stevedore.driver.DriverManager('oslo.config.sanitizer',
-                                          name=name).driver
 
 
 def _list_opts(namespaces):
@@ -306,10 +260,7 @@ def generate(conf):
     output_file = (open(conf.output_file, 'w')
                    if conf.output_file else sys.stdout)
 
-    sanitizer = _get_sanitizer(conf.sanitizer)
-
     formatter = _OptFormatter(output_file=output_file,
-                              sanitize_default=sanitizer,
                               wrap_width=conf.wrap_width)
 
     groups = {'DEFAULT': []}
