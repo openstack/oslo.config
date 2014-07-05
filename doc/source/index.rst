@@ -14,6 +14,7 @@ Contents
    opts
    types
    configopts
+   cfgfilter
    helpers
    parser
    exceptions
