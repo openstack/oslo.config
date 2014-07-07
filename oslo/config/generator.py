@@ -207,30 +207,31 @@ class _OptFormatter(object):
             lines.append('# Deprecated group/name - [%s]/%s\n' %
                          (d.group or 'DEFAULT', d.name or opt.dest))
 
-        if opt.default is None:
-            default_str = '<None>'
-        elif isinstance(opt, cfg.StrOpt):
-            default_str = opt.default
-        elif isinstance(opt, cfg.BoolOpt):
-            default_str = str(opt.default).lower()
-        elif (isinstance(opt, cfg.IntOpt) or
-              isinstance(opt, cfg.FloatOpt)):
-            default_str = str(opt.default)
-        elif isinstance(opt, cfg.ListOpt):
-            default_str = ','.join(opt.default)
-        elif isinstance(opt, cfg.DictOpt):
-            sorted_items = sorted(opt.default.items(),
-                                  key=operator.itemgetter(0))
-            default_str = ','.join(['%s:%s' % i for i in sorted_items])
-        elif isinstance(opt, cfg.MultiStrOpt):
-            default_str = str(opt.default)
+        if isinstance(opt, cfg.MultiStrOpt):
+            if opt.default is None:
+                defaults = ['<None>']
+            else:
+                defaults = opt.default
         else:
-            LOG.warning('Unknown option type: %s', repr(opt))
-            default_str = str(opt.default)
-
-        defaults = [default_str]
-        if isinstance(opt, cfg.MultiStrOpt) and opt.default:
-            defaults = opt.default
+            if opt.default is None:
+                default_str = '<None>'
+            elif isinstance(opt, cfg.StrOpt):
+                default_str = opt.default
+            elif isinstance(opt, cfg.BoolOpt):
+                default_str = str(opt.default).lower()
+            elif (isinstance(opt, cfg.IntOpt) or
+                  isinstance(opt, cfg.FloatOpt)):
+                default_str = str(opt.default)
+            elif isinstance(opt, cfg.ListOpt):
+                default_str = ','.join(opt.default)
+            elif isinstance(opt, cfg.DictOpt):
+                sorted_items = sorted(opt.default.items(),
+                                      key=operator.itemgetter(0))
+                default_str = ','.join(['%s:%s' % i for i in sorted_items])
+            else:
+                LOG.warning('Unknown option type: %s', repr(opt))
+                default_str = str(opt.default)
+            defaults = [default_str]
 
         for default_str in defaults:
             default_str = self.sanitize_default(opt, default_str)
