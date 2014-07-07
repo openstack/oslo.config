@@ -53,7 +53,7 @@ get away with only declaring a dependency on a single option.
 
 The ConfigFilter class provides a way to ensure that options are not
 available unless they have been registered in the module or imported using
-import_opt() e.g. with::
+import_opt() for example with::
 
   CONF = ConfigFilter(cfg.CONF)
   CONF.import_opt('blaa', 'foo')
