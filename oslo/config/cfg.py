@@ -594,6 +594,8 @@ class Opt(object):
         a single character CLI option name
       default:
         the default value of the option
+      sample_default:
+        a sample default value string to include in sample config files
       positional:
         True if the option is a positional CLI argument
       metavar:
@@ -607,7 +609,7 @@ class Opt(object):
                  default=None, positional=False, metavar=None, help=None,
                  secret=False, required=False,
                  deprecated_name=None, deprecated_group=None,
-                 deprecated_opts=None):
+                 deprecated_opts=None, sample_default=None):
         """Construct an Opt object.
 
         The only required parameter is the option's name. However, it is
@@ -627,6 +629,7 @@ class Opt(object):
         :param deprecated_name: deprecated name option.  Acts like an alias
         :param deprecated_group: the group containing a deprecated alias
         :param deprecated_opts: array of DeprecatedOpt(s)
+        :param sample_default: a default string for sample config files
         """
         if name.startswith('_'):
             raise ValueError('illegal name %s with prefix _' % (name,))
@@ -645,6 +648,7 @@ class Opt(object):
             self.dest = dest
         self.short = short
         self.default = default
+        self.sample_default = sample_default
         self.positional = positional
         self.metavar = metavar
         self.help = help

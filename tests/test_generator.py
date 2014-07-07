@@ -61,6 +61,9 @@ class GeneratorTestCase(base.BaseTestCase):
         'str_opt': cfg.StrOpt('str_opt',
                               default='foo bar',
                               help='a string'),
+        'str_opt_sample_default': cfg.StrOpt('str_opt',
+                                             default='fooishbar',
+                                             help='a string'),
         'str_opt_with_space': cfg.StrOpt('str_opt',
                                          default='  foo bar  ',
                                          help='a string with spaces'),
@@ -82,6 +85,10 @@ class GeneratorTestCase(base.BaseTestCase):
         'multi_opt': cfg.MultiStrOpt('multi_opt',
                                      default=['1', '2', '3'],
                                      help='multiple strings'),
+        'multi_opt_sample_default': cfg.MultiStrOpt('multi_opt',
+                                                    default=['1', '2', '3'],
+                                                    sample_default=['5', '6'],
+                                                    help='multiple strings'),
     }
 
     content_scenarios = [
@@ -400,6 +407,29 @@ class GeneratorTestCase(base.BaseTestCase):
 #multi_opt = 1
 #multi_opt = 2
 #multi_opt = 3
+''')),
+        ('str_opt_sample_default',
+         dict(opts=[('test', [(None, [opts['str_opt_sample_default']])])],
+              expected='''[DEFAULT]
+
+#
+# From test
+#
+
+# a string (string value)
+#str_opt = fooishbar
+''')),
+        ('multi_opt_sample_default',
+         dict(opts=[('test', [(None, [opts['multi_opt_sample_default']])])],
+              expected='''[DEFAULT]
+
+#
+# From test
+#
+
+# multiple strings (multi valued)
+#multi_opt = 5
+#multi_opt = 6
 ''')),
         ('sanitizer',
          dict(opts=[('test', [(None, [opts['str_opt']])])],
