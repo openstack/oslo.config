@@ -186,8 +186,8 @@ class _OptFormatter(object):
         if isinstance(opt, cfg.MultiStrOpt):
             if opt.sample_default is not None:
                 defaults = opt.sample_default
-            elif opt.default is None:
-                defaults = ['<None>']
+            elif not opt.default:
+                defaults = ['']
             else:
                 defaults = opt.default
         else:
@@ -216,7 +216,9 @@ class _OptFormatter(object):
         for default_str in defaults:
             if default_str.strip() != default_str:
                 default_str = '"%s"' % default_str
-            lines.append('#%s = %s\n' % (opt.dest, default_str))
+            if default_str:
+                default_str = ' ' + default_str
+            lines.append('#%s =%s\n' % (opt.dest, default_str))
 
         self.writelines(lines)
 
