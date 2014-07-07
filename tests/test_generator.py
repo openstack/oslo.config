@@ -431,18 +431,6 @@ class GeneratorTestCase(base.BaseTestCase):
 #multi_opt = 5
 #multi_opt = 6
 ''')),
-        ('sanitizer',
-         dict(opts=[('test', [(None, [opts['str_opt']])])],
-              sanitizer=lambda o, s: s.replace(' ', 'ish'),
-              expected='''[DEFAULT]
-
-#
-# From test
-#
-
-# a string (string value)
-#str_opt = fooishbar
-''')),
     ]
 
     output_file_scenarios = [
@@ -477,9 +465,8 @@ class GeneratorTestCase(base.BaseTestCase):
         return self._capture_stream('stdout')
 
     @mock.patch('stevedore.named.NamedExtensionManager')
-    @mock.patch('stevedore.driver.DriverManager')
     @mock.patch.object(generator, 'LOG')
-    def test_generate(self, mock_log, driver_mgr, named_mgr):
+    def test_generate(self, mock_log, named_mgr):
         generator.register_cli_opts(self.conf)
 
         namespaces = [i[0] for i in self.opts]
@@ -502,12 +489,6 @@ class GeneratorTestCase(base.BaseTestCase):
             mock_eps.append(mock_ep)
         named_mgr.return_value = mock_eps
 
-        sanitizer = getattr(self, 'sanitizer', None)
-        if sanitizer is not None:
-            self.config(sanitizer='test_sanitizer')
-            driver = mock.Mock(driver=sanitizer)
-            driver_mgr.return_value = driver
-
         generator.generate(self.conf)
 
         if self.stdout:
@@ -519,13 +500,6 @@ class GeneratorTestCase(base.BaseTestCase):
         named_mgr.assert_called_once_with('oslo.config.opts',
                                           names=namespaces,
                                           invoke_on_load=True)
-
-        if sanitizer is not None:
-            driver_mgr.assert_called_once_with('oslo.config.sanitizer',
-                                               name='test_sanitizer')
-            pass
-        else:
-            self.assertFalse(driver_mgr.called)
 
         log_warning = getattr(self, 'log_warning', None)
         if log_warning is not None:
