@@ -12,6 +12,7 @@ Option Definitions
 .. autoclass:: ListOpt
 .. autoclass:: DictOpt
 .. autoclass:: MultiStrOpt
+.. autoclass:: IPOpt
 .. autoclass:: DeprecatedOpt
 .. autoclass:: SubCommandOpt
 .. autoclass:: OptGroup
