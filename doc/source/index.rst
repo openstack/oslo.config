@@ -16,6 +16,7 @@ Contents
    configopts
    cfgfilter
    helpers
+   fixture
    parser
    exceptions
    styleguide
