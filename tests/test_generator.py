@@ -55,8 +55,9 @@ class GeneratorTestCase(base.BaseTestCase):
                                        deprecated_group='group1',
                                        deprecated_name='foobar',
                                        help='deprecated'),
+        # Unknown Opt default must be a string
         'unknown_type': cfg.Opt('unknown_opt',
-                                default=123,
+                                default='123',
                                 help='unknown'),
         'str_opt': cfg.StrOpt('str_opt',
                               default='foo bar',

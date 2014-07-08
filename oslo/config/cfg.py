@@ -661,6 +661,27 @@ class Opt(object):
         if deprecated_name is not None or deprecated_group is not None:
             self.deprecated_opts.append(DeprecatedOpt(deprecated_name,
                                                       group=deprecated_group))
+        self._assert_default_is_of_opt_type()
+
+    def _default_is_ref(self):
+        """Check if default is a reference to another var."""
+        if isinstance(self.default, six.string_types):
+            tmpl = self.default.replace('\$', '').replace('$$', '')
+            return '$' in tmpl
+        return False
+
+    def _assert_default_is_of_opt_type(self):
+        if (self.default is not None
+                and not self._default_is_ref()
+                and hasattr(self.type, 'is_base_type')
+                and not self.type.is_base_type(self.default)):
+            # NOTE(tcammann) Change this to raise error after K relase
+            expected_types = ", ".join(
+                [t.__name__ for t in self.type.BASE_TYPES])
+            LOG.debug(('Expected default value of type(s) {0} but got '
+                      '"{1}" of type {2}').format(expected_types,
+                                                  self.default,
+                                                  type(self.default).__name__))
 
     def __ne__(self, another):
         return vars(self) != vars(another)
@@ -999,11 +1020,11 @@ class MultiOpt(Opt):
 
 class MultiStrOpt(MultiOpt):
 
-    """Multi opt with String item type (for backward compatibility)."""
+    """Multi opt with MultiString item type (for backward compatibility)."""
 
     def __init__(self, name, **kwargs):
         super(MultiStrOpt, self).__init__(name,
-                                          item_type=types.String(),
+                                          item_type=types.MultiString(),
                                           **kwargs)
 
 
