@@ -16,7 +16,7 @@ r"""
 Configuration options which may be set on the command line or in config files.
 
 The schema for each option is defined using the Opt class or its sub-classes,
-e.g.:
+for example:
 
 ::
 
@@ -128,7 +128,7 @@ and --config-dir::
 
 Option values are parsed from any supplied config files using
 oslo.config.iniparser. If none are specified, a default set is used
-e.g. glance-api.conf and glance-common.conf::
+for example glance-api.conf and glance-common.conf::
 
     glance-api.conf:
       [DEFAULT]
@@ -143,7 +143,7 @@ in order. The same option can appear many times, in config files or on
 the command line. Later values always override earlier ones.
 
 The parsing of CLI args and config files is initiated by invoking the config
-manager e.g.::
+manager for example::
 
     conf = ConfigOpts()
     conf.register_opt(BoolOpt('verbose', ...))
@@ -173,7 +173,7 @@ Options can be registered as belonging to a group::
         conf.register_opt(rabbit_port_opt, group='rabbit')
 
 If no group attributes are required other than the group name, the group
-need not be explicitly registered e.g.::
+need not be explicitly registered for example::
 
     def register_rabbit_opts(conf):
         # The group will automatically be created, equivalent calling::
@@ -496,8 +496,8 @@ def _search_dirs(dirs, basename, extension=""):
     found with the supplied name and extension.
 
     :param dirs: a list of directories
-    :param basename: the filename, e.g. 'glance-api'
-    :param extension: the file extension, e.g. '.conf'
+    :param basename: the filename, for example 'glance-api'
+    :param extension: the file extension, for example '.conf'
     :returns: the path to a matching file, or None
     """
     for d in dirs:
@@ -772,7 +772,7 @@ class Opt(object):
         to avoid conflicts between similarly named options in different
         groups.
 
-        :param prefix: an existing prefix to append to (e.g. 'no' or '')
+        :param prefix: an existing prefix to append to (for example 'no' or '')
         :param group_name: an optional group name
         :returns: a CLI option prefix including the group name, if appropriate
         """
@@ -794,7 +794,7 @@ class Opt(object):
 
         :param dname: a deprecated name, which can be None
         :param dgroup: a deprecated group, which can be None
-        :param prefix: an prefix to append to (e.g. 'no' or '')
+        :param prefix: an prefix to append to (for example 'no' or '')
         :returns: a CLI argument name
         """
         if dgroup == 'DEFAULT':
@@ -1939,7 +1939,7 @@ class ConfigOpts(collections.Mapping):
         searched by the module level find_config_files() function is
         used. The first matching file is returned.
 
-        :param name: the filename, e.g. 'policy.json'
+        :param name: the filename, for example 'policy.json'
         :returns: the path to a matching file, or None
         """
         dirs = []
@@ -1961,7 +1961,8 @@ class ConfigOpts(collections.Mapping):
         the supplied logger at a given log level.
 
         :param logger: a logging.Logger object
-        :param lvl: the log level (e.g. logging.DEBUG) arg to logger.log()
+        :param lvl: the log level (for example logging.DEBUG) arg to
+                    logger.log()
         """
         logger.log(lvl, "*" * 80)
         logger.log(lvl, "Configuration options gathered from:")
@@ -2089,8 +2090,8 @@ class ConfigOpts(collections.Mapping):
     def _substitute(self, value, namespace=None):
         """Perform string template substitution.
 
-        Substitute any template variables (e.g. $foo, ${bar}) in the supplied
-        string value(s) with opt values.
+        Substitute any template variables (for example $foo, ${bar}) in
+        the supplied string value(s) with opt values.
 
         :param value: the string value, or list of string values
         :param namespace: the namespace object that retrieves the option
@@ -2115,7 +2116,7 @@ class ConfigOpts(collections.Mapping):
         """Perform value type conversion.
 
         Converts values using option's type. Handles cases when value is
-        actually a list of values (e.g. for multi opts).
+        actually a list of values (for example for multi opts).
 
         :param value: the string value, or list of string values
         :param opt: option definition (instance of Opt class or its subclasses)
