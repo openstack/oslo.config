@@ -85,6 +85,11 @@ class GeneratorTestCase(base.BaseTestCase):
         'multi_opt': cfg.MultiStrOpt('multi_opt',
                                      default=['1', '2', '3'],
                                      help='multiple strings'),
+        'multi_opt_none': cfg.MultiStrOpt('multi_opt_none',
+                                          help='multiple strings'),
+        'multi_opt_empty': cfg.MultiStrOpt('multi_opt_empty',
+                                           default=[],
+                                           help='multiple strings'),
         'multi_opt_sample_default': cfg.MultiStrOpt('multi_opt',
                                                     default=['1', '2', '3'],
                                                     sample_default=['5', '6'],
@@ -407,6 +412,28 @@ class GeneratorTestCase(base.BaseTestCase):
 #multi_opt = 1
 #multi_opt = 2
 #multi_opt = 3
+''')),
+        ('multi_opt_none',
+         dict(opts=[('test', [(None, [opts['multi_opt_none']])])],
+              expected='''[DEFAULT]
+
+#
+# From test
+#
+
+# multiple strings (multi valued)
+#multi_opt_none =
+''')),
+        ('multi_opt_empty',
+         dict(opts=[('test', [(None, [opts['multi_opt_empty']])])],
+              expected='''[DEFAULT]
+
+#
+# From test
+#
+
+# multiple strings (multi valued)
+#multi_opt_empty =
 ''')),
         ('str_opt_sample_default',
          dict(opts=[('test', [(None, [opts['str_opt_sample_default']])])],
