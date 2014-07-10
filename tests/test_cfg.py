@@ -22,12 +22,12 @@ import tempfile
 
 import fixtures
 import mock
+from oslotest import base
 import six
 from six import moves
 import testscenarios
 
 from oslo.config import cfg
-from oslotest import base
 
 load_tests = testscenarios.load_tests_apply_scenarios
 
