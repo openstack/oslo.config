@@ -49,6 +49,7 @@ Cleanups:
 
 * Replaced 'e.g.' with 'for example'.
 * Fix confusing logic in _Namespace._get_cli_value().
+* Changes imports order to pass H305, enables check.
 
 Docs:
 
@@ -59,7 +60,7 @@ Docs:
 .. _1284684: https://code.launchpad.net/bugs/1284684
 
 Thanks to Christian Berendt, David Stanek, Jakub Libosvar, liu-sheng
-and Mark McLoughlin for their contributions to this release.
+Mark McLoughlin and Petr Blaho for their contributions to this release.
 
 1.4.0.0a1
 ---------
