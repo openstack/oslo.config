@@ -13,5 +13,5 @@ testtools>=0.9.32
 coverage>=3.6
 
 # this is required for the docs build jobs
-sphinx>=1.1.2,<1.2
+sphinx>=1.1.2,<1.1.999
 oslo.sphinx
