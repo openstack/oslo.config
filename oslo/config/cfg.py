@@ -1972,7 +1972,7 @@ class ConfigOpts(collections.Mapping):
 
         def _sanitize(opt, value):
             """Obfuscate values of options declared secret."""
-            return value if not opt.secret else '*' * len(str(value))
+            return value if not opt.secret else '*' * 4
 
         for opt_name in sorted(self._opts):
             opt = self._get_opt_info(opt_name)['opt']
