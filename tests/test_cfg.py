@@ -2803,7 +2803,7 @@ class OptDumpingTestCase(BaseTestCase):
                          "foo                            = this",
                          "passwd                         = ****",
                          "blaa.bar                       = that",
-                         "blaa.key                       = *****",
+                         "blaa.key                       = ****",
                          "*" * 80,
                          ])
 
