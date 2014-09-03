@@ -835,6 +835,18 @@ class DeprecatedOpt(object):
     deprecated options are present, the option corresponding to
     the first element of deprecated_opts will be chosen.
 
+    If group is None, the DeprecatedOpt lookup will happen within the same
+    group the new option is in. For example::
+
+        oldopts = [cfg.DeprecatedOpt('oldfoo'),
+                   cfg.DeprecatedOpt('oldfoo2', group='DEFAULT')]
+
+        cfg.CONF.register_group(cfg.OptGroup('blaa'))
+        cfg.CONF.register_opt(cfg.StrOpt('foo', deprecated_opts=oldopts),
+                              group='blaa')
+
+    In the example above, `oldfoo` will be looked up in the `blaa` group and
+    `oldfoo2` in the `DEFAULT` group.
     """
 
     def __init__(self, name, group=None):
