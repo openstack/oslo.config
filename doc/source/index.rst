@@ -21,6 +21,7 @@ Contents
    exceptions
    styleguide
    generator
+   contributing
 
 Release Notes
 =============
