@@ -2101,7 +2101,54 @@ class TemplateSubstitutionTestCase(BaseTestCase):
 
         self.assertTrue(hasattr(self.conf, 'ba'))
         self.assertTrue(hasattr(self.conf.ba, 'r'))
+        self.assertEqual(self.conf.foo, '123')
         self.assertEqual(self.conf.ba.r, 123)
+
+    def test_sub_group_from_default_deprecated(self):
+        self.conf.register_group(cfg.OptGroup('ba'))
+        self.conf.register_cli_opt(cfg.StrOpt(
+            'foo', default='123', deprecated_group='DEFAULT'), group='ba')
+        self.conf.register_cli_opt(cfg.IntOpt('r', default='$foo'), group='ba')
+
+        self.conf([])
+
+        self.assertTrue(hasattr(self.conf, 'ba'))
+        self.assertTrue(hasattr(self.conf.ba, 'foo'))
+        self.assertEqual(self.conf.ba.foo, '123')
+        self.assertTrue(hasattr(self.conf.ba, 'r'))
+        self.assertEqual(self.conf.ba.r, 123)
+
+    def test_sub_group_from_args_deprecated(self):
+        self.conf.register_group(cfg.OptGroup('ba'))
+        self.conf.register_cli_opt(cfg.StrOpt(
+            'foo', default='123', deprecated_group='DEFAULT'), group='ba')
+        self.conf.register_cli_opt(cfg.IntOpt('r', default='$foo'), group='ba')
+
+        self.conf(['--ba-foo=4242'])
+
+        self.assertTrue(hasattr(self.conf, 'ba'))
+        self.assertTrue(hasattr(self.conf.ba, 'foo'))
+        self.assertTrue(hasattr(self.conf.ba, 'r'))
+        self.assertEqual(self.conf.ba.foo, '4242')
+        self.assertEqual(self.conf.ba.r, 4242)
+
+    def test_sub_group_from_configfile_deprecated(self):
+        self.conf.register_group(cfg.OptGroup('ba'))
+        self.conf.register_cli_opt(cfg.StrOpt(
+            'foo', default='123', deprecated_group='DEFAULT'), group='ba')
+        self.conf.register_cli_opt(cfg.IntOpt('r', default='$foo'), group='ba')
+
+        paths = self.create_tempfiles([('test',
+                                        '[DEFAULT]\n'
+                                        'foo=4242\n')])
+
+        self.conf(['--config-file', paths[0]])
+
+        self.assertTrue(hasattr(self.conf, 'ba'))
+        self.assertTrue(hasattr(self.conf.ba, 'foo'))
+        self.assertTrue(hasattr(self.conf.ba, 'r'))
+        self.assertEqual(self.conf.ba.foo, '4242')
+        self.assertEqual(self.conf.ba.r, 4242)
 
 
 class ConfigDirTestCase(BaseTestCase):
