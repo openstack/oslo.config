@@ -21,8 +21,8 @@ Examples::
                help='Port number to listen on.')
 
 
-Style Guide:
-------------
+Style Guide
+-----------
 
 1. Use sentence-style capitalization for help strings: Capitalize or
    uppercase the first character (see the examples above).
