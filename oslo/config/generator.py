@@ -86,7 +86,7 @@ files::
   [DEFAULT]
   output_file = etc/nova/nova-compute.conf
   namespace = oslo.messaging
-  namespace = nova.compute
+  namespace = nova.common
   namespace = nova.compute
   EOF
   $> oslo-config-generator --config-file config-generator/api.conf
