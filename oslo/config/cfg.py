@@ -427,7 +427,18 @@ class ConfigFilesNotFoundError(Error):
         self.config_files = config_files
 
     def __str__(self):
-        return ('Failed to read some config files: %s' %
+        return ('Failed to find some config files: %s' %
+                ",".join(self.config_files))
+
+
+class ConfigFilesPermissionDeniedError(Error):
+    """Raised if one or more config files are not readable."""
+
+    def __init__(self, config_files):
+        self.config_files = config_files
+
+    def __str__(self):
+        return ('Failed to open some config files: %s' %
                 ",".join(self.config_files))
 
 
@@ -1302,8 +1313,11 @@ class ConfigParser(iniparser.BaseParser):
         except iniparser.ParseError as pe:
             raise ConfigFileParseError(pe.filename, str(pe))
         except IOError as err:
-            if err.errno in (errno.ENOENT, errno.EACCES):
+            if err.errno == errno.ENOENT:
                 namespace._file_not_found(config_file)
+                return
+            if err.errno == errno.EACCES:
+                namespace._file_permission_denied(config_file)
                 return
             raise
 
@@ -1394,6 +1408,7 @@ class _Namespace(argparse.Namespace):
         self._conf = conf
         self._parser = MultiConfigParser()
         self._files_not_found = []
+        self._files_permission_denied = []
 
     def _parse_cli_opts_from_config_file(self, sections, normalized):
         """Parse CLI options from a config file.
@@ -1458,6 +1473,13 @@ class _Namespace(argparse.Namespace):
         :param config_file: the path to the failed file
         """
         self._files_not_found.append(config_file)
+
+    def _file_permission_denied(self, config_file):
+        """Record that we have no permission to open a config file.
+
+        :param config_file: the path to the failed file
+        """
+        self._files_permission_denied.append(config_file)
 
     def _get_cli_value(self, names, positional):
         """Fetch a CLI option value.
@@ -1663,6 +1685,7 @@ class ConfigOpts(collections.Mapping):
         :param validate_default_values: whether to validate the default values
         :returns: the list of arguments left over after parsing options
         :raises: SystemExit, ConfigFilesNotFoundError, ConfigFileParseError,
+                 ConfigFilesPermissionDeniedError,
                  RequiredOptError, DuplicateOptError
         """
         self.clear()
@@ -1681,6 +1704,9 @@ class ConfigOpts(collections.Mapping):
                                                else sys.argv[1:])
         if self._namespace._files_not_found:
             raise ConfigFilesNotFoundError(self._namespace._files_not_found)
+        if self._namespace._files_permission_denied:
+            raise ConfigFilesPermissionDeniedError(
+                self._namespace._files_permission_denied)
 
         self._check_required_opts()
 
@@ -2230,6 +2256,7 @@ class ConfigOpts(collections.Mapping):
         """Parse configure files options.
 
         :raises: SystemExit, ConfigFilesNotFoundError, ConfigFileParseError,
+                 ConfigFilesPermissionDeniedError,
                  RequiredOptError, DuplicateOptError
         """
         namespace = _Namespace(self)
@@ -2274,6 +2301,9 @@ class ConfigOpts(collections.Mapping):
             namespace = self._parse_config_files()
             if namespace._files_not_found:
                 raise ConfigFilesNotFoundError(namespace._files_not_found)
+            if namespace._files_permission_denied:
+                raise ConfigFilesPermissionDeniedError(
+                    namespace._files_permission_denied)
             self._check_required_opts(namespace)
 
         except SystemExit as exc:

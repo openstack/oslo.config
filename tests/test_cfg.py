@@ -72,7 +72,11 @@ class ExceptionsTestCase(base.BaseTestCase):
 
     def test_config_files_not_found_error(self):
         msg = str(cfg.ConfigFilesNotFoundError(['foo', 'bar']))
-        self.assertEqual(msg, 'Failed to read some config files: foo,bar')
+        self.assertEqual(msg, 'Failed to find some config files: foo,bar')
+
+    def test_config_files_permission_denied_error(self):
+        msg = str(cfg.ConfigFilesPermissionDeniedError(['foo', 'bar']))
+        self.assertEqual(msg, 'Failed to open some config files: foo,bar')
 
     def test_config_dir_not_found_error(self):
         msg = str(cfg.ConfigDirNotFoundError('foobar'))
@@ -2704,6 +2708,15 @@ class SadPathTestCase(BaseTestCase):
 
         self.assertRaises(cfg.ConfigFilesNotFoundError,
                           self.conf, ['--config-file', path])
+
+    def test_conf_file_permission_denied(self):
+        (fd, path) = tempfile.mkstemp()
+
+        os.chmod(path, 0x000)
+
+        self.assertRaises(cfg.ConfigFilesPermissionDeniedError,
+                          self.conf, ['--config-file', path])
+        os.remove(path)
 
     def test_conf_file_broken(self):
         paths = self.create_tempfiles([('test', 'foo')])
