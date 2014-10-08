@@ -678,10 +678,11 @@ class Opt(object):
             # NOTE(tcammann) Change this to raise error after K relase
             expected_types = ", ".join(
                 [t.__name__ for t in self.type.BASE_TYPES])
-            LOG.debug(('Expected default value of type(s) {0} but got '
-                      '"{1}" of type {2}').format(expected_types,
-                                                  self.default,
-                                                  type(self.default).__name__))
+            LOG.debug(('Expected default value of type(s) %(extypes)s but got '
+                       '%(default)r of type %(deftypes)s'),
+                      {'extypes': expected_types,
+                       'default': self.default,
+                       'deftypes': type(self.default).__name__})
 
     def __ne__(self, another):
         return vars(self) != vars(another)
