@@ -372,6 +372,9 @@ class CliOptsTestCase(BaseTestCase):
         ('float_arg_deprecated_group_and_name',
          dict(opt_class=cfg.FloatOpt, default=None,
               cli_args=['--old-oof', '2.0'], value=2.0, deps=('oof', 'old'))),
+        ('float_default_as_integer',
+         dict(opt_class=cfg.FloatOpt, default=2,
+              cli_args=['--old-oof', '2.0'], value=2.0, deps=('oof', 'old'))),
         ('ipv4addr_arg',
          dict(opt_class=IPv4Opt, default=None,
               cli_args=['--foo', '192.168.0.1'], value='192.168.0.1',
@@ -853,17 +856,10 @@ class ConfigFileOptsTestCase(BaseTestCase):
         self.assertTrue(hasattr(self.conf, 'foo'))
         self.assertEqual(self.conf.foo, 666)
 
-    def test_conf_file_int_wrong_default(self):
-        self.conf.register_opt(cfg.IntOpt('foo', default='t666'))
-
-        paths = self.create_tempfiles([('test',
-                                        '[DEFAULT]\n')])
-
-        self.conf(['--config-file', paths[0]])
-        self.assertRaises(AttributeError,
-                          getattr,
-                          self.conf,
-                          'foo')
+    @mock.patch.object(cfg, 'LOG')
+    def test_conf_file_int_wrong_default(self, mock_log):
+        cfg.IntOpt('foo', default='666')
+        mock_log.debug.assert_call_count(1)
 
     def test_conf_file_int_value(self):
         self.conf.register_opt(cfg.IntOpt('foo'))
@@ -926,17 +922,10 @@ class ConfigFileOptsTestCase(BaseTestCase):
         self.assertTrue(hasattr(self.conf, 'foo'))
         self.assertEqual(self.conf.foo, 6.66)
 
-    def test_conf_file_float_default_wrong_type(self):
-        self.conf.register_opt(cfg.FloatOpt('foo', default='foobar6.66'))
-
-        paths = self.create_tempfiles([('test',
-                                        '[DEFAULT]\n')])
-
-        self.conf(['--config-file', paths[0]])
-        self.assertRaises(AttributeError,
-                          getattr,
-                          self.conf,
-                          'foo')
+    @mock.patch.object(cfg, 'LOG')
+    def test_conf_file_float_default_wrong_type(self, mock_log):
+        cfg.FloatOpt('foo', default='foobar6.66')
+        mock_log.debug.assert_call_count(1)
 
     def test_conf_file_float_value(self):
         self.conf.register_opt(cfg.FloatOpt('foo'))
@@ -998,6 +987,13 @@ class ConfigFileOptsTestCase(BaseTestCase):
 
         self.assertTrue(hasattr(self.conf, 'foo'))
         self.assertEqual(self.conf.foo, ['bar'])
+
+    @mock.patch.object(cfg, 'LOG')
+    def test_conf_file_list_default_wrong_type(self, mock_log):
+        cfg.ListOpt('foo', default=25)
+        mock_log.debug.assert_called_once_with(
+            'Expected default value of type(s) list but '
+            'got "25" of type int')
 
     def test_conf_file_list_value(self):
         self.conf.register_opt(cfg.ListOpt('foo'))
