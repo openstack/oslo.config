@@ -992,8 +992,11 @@ class ConfigFileOptsTestCase(BaseTestCase):
     def test_conf_file_list_default_wrong_type(self, mock_log):
         cfg.ListOpt('foo', default=25)
         mock_log.debug.assert_called_once_with(
-            'Expected default value of type(s) list but '
-            'got "25" of type int')
+            'Expected default value of type(s) %(extypes)s but '
+            'got %(default)r of type %(deftypes)s',
+            {'extypes': 'list',
+             'default': 25,
+             'deftypes': 'int'})
 
     def test_conf_file_list_value(self):
         self.conf.register_opt(cfg.ListOpt('foo'))
