@@ -474,7 +474,7 @@ def _fixpath(p):
 
 
 def _get_config_dirs(project=None):
-    """Return a list of directors where config files may be located.
+    """Return a list of directories where config files may be located.
 
     :param project: an optional project name
 
