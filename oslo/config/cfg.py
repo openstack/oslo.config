@@ -2309,7 +2309,7 @@ class ConfigOpts(collections.Mapping):
             try:
                 self._convert_value(value, opt)
             except ValueError:
-                sys.stderr.write('argument --%s: Invalid %s value: %s' % (
+                sys.stderr.write("argument --%s: Invalid %s value: %s\n" % (
                     opt.dest, repr(opt.type), value))
                 raise SystemExit
 
