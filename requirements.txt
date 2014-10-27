@@ -5,4 +5,4 @@
 argparse
 netaddr>=0.7.12
 six>=1.7.0
-stevedore>=1.0.0  # Apache-2.0
+stevedore>=1.1.0  # Apache-2.0
