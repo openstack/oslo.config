@@ -13,10 +13,10 @@
 #    under the License.
 
 r"""
-Configuration options which may be set on the command line or in config files.
+Configuration options may be set on the command line or in config files.
 
-The schema for each option is defined using the Opt class or its sub-classes,
-for example:
+The schema for each option is defined using the
+:class:`Opt` class or its sub-classes, for example:
 
 ::
 
@@ -38,13 +38,14 @@ for example:
 Option Types
 ------------
 
-Options can have arbitrary types, you just need to pass type constructor
-to Opt. Type constructor is a callable object that takes a string and returns
-value of particular type or raises ValueError if given string can't be
-converted to that type.
+Options can have arbitrary types via the ``type`` constructor to
+``Opt``. The type constructor is a callable object that takes a string and
+either returns a value of that particular type or raises ValueError if
+the value can not be converted.
 
-There are predefined types: strings, integers, floats, booleans, lists,
-'multi strings' and 'key/value pairs' (dictionary) ::
+There are predefined types in :class:`oslo_config.cfg` : strings,
+integers, floats, booleans, lists, 'multi strings' and 'key/value
+pairs' (dictionary) ::
 
     enabled_apis_opt = cfg.ListOpt('enabled_apis',
                                    default=['ec2', 'osapi_compute'],
@@ -597,8 +598,9 @@ class Opt(object):
       name:
         the name of the option, which may include hyphens
       type:
-        a callable object that takes string and returns
-        converted and validated value
+        a callable object that takes string and returns converted and
+        validated value.  Default types are available from
+        :class:`oslo_config.types`
       dest:
         the (hyphen-less) ConfigOpts property which contains the option value
       short:
@@ -612,7 +614,7 @@ class Opt(object):
       metavar:
         the name shown as the argument to a CLI option in --help output
       help:
-        an string explaining how the options value is used
+        a string explaining how the option's value is used
     """
     multi = False
 
@@ -918,7 +920,11 @@ class DeprecatedOpt(object):
 
 
 class StrOpt(Opt):
-    """Option with String type (for backward compatibility).
+    """Option with String type
+
+    Option with ``type`` :class:`oslo_config.types.Integer`
+
+    `Kept for backward-compatibility with options not using Opt directly`.
 
     :param choices: Optional sequence of valid values.
     """
@@ -985,7 +991,12 @@ class BoolOpt(Opt):
 
 class IntOpt(Opt):
 
-    """Opt with Integer type (for backward compatibility)."""
+    """Option with Integer type
+
+    Option with ``type`` :class:`oslo_config.types.Integer`
+
+    `Kept for backward-compatibility with options not using Opt directly`.
+    """
 
     def __init__(self, name, **kwargs):
         super(IntOpt, self).__init__(name, type=types.Integer(), **kwargs)
@@ -993,7 +1004,12 @@ class IntOpt(Opt):
 
 class FloatOpt(Opt):
 
-    """Opt with Float type (for backward compatibility)."""
+    """Option with Float type
+
+    Option with ``type`` :class:`oslo_config.types.Float`
+
+    `Kept for backward-communicability with options not using Opt directly`.
+    """
 
     def __init__(self, name, **kwargs):
         super(FloatOpt, self).__init__(name, type=types.Float(), **kwargs)
@@ -1001,7 +1017,12 @@ class FloatOpt(Opt):
 
 class ListOpt(Opt):
 
-    """Opt with List(String) type (for backward compatibility)."""
+    """Option with List(String) type
+
+    Option with ``type`` :class:`oslo_config.types.List`
+
+    `Kept for backward-compatibility with options not using Opt directly`.
+    """
 
     def __init__(self, name, **kwargs):
         super(ListOpt, self).__init__(name, type=types.List(), **kwargs)
@@ -1009,7 +1030,12 @@ class ListOpt(Opt):
 
 class DictOpt(Opt):
 
-    """Opt with Dict(String) type (for backward compatibility)."""
+    """Option with Dict(String) type
+
+    Option with ``type`` :class:`oslo_config.types.Dict`
+
+    `Kept for backward-compatibility with options not using Opt directly`.
+    """
 
     def __init__(self, name, **kwargs):
         super(DictOpt, self).__init__(name, type=types.Dict(), **kwargs)
@@ -1017,7 +1043,13 @@ class DictOpt(Opt):
 
 class IPOpt(Opt):
 
-    """Opt with IPAddress type (either IPv4, IPv6 or both)."""
+    """Opt with IPAddress type
+
+    Option with ``type`` :class:`oslo_config.types.IPAddress`
+
+    :param version: one of either ``4``, ``6``, or ``None`` to specify
+       either version.
+    """
 
     def __init__(self, name, version=None, **kwargs):
         super(IPOpt, self).__init__(name, type=types.IPAddress(version),
@@ -1030,6 +1062,19 @@ class MultiOpt(Opt):
 
     Multi opt values are typed opts which may be specified multiple times.
     The opt value is a list containing all the values specified.
+
+    :param name: Name of the config option
+    :param item_type: Type of items (see :class:`oslo_config.types`)
+
+    For example::
+
+       cfg.MultiOpt('foo',
+                    item_type=types.Integer(),
+                    default=None,
+                    help="Multiple foo option")
+
+    The command line ``--foo=1 --foo=2`` would result in ``cfg.CONF.foo``
+    containing ``[1,2]``
     """
     multi = True
 
@@ -1048,7 +1093,15 @@ class MultiOpt(Opt):
 
 class MultiStrOpt(MultiOpt):
 
-    """Multi opt with MultiString item type (for backward compatibility)."""
+    """MultiOpt with a MultiString ``item_type``.
+
+    MultiOpt with a default :class:`oslo_config.types.MultiString` item
+    type.
+
+    `Kept for backwards-compatibility for options that do not use
+    MultiOpt directly`.
+
+    """
 
     def __init__(self, name, **kwargs):
         super(MultiStrOpt, self).__init__(name,

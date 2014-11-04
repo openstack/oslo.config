@@ -11,6 +11,7 @@ Option Definitions
 .. autoclass:: FloatOpt
 .. autoclass:: ListOpt
 .. autoclass:: DictOpt
+.. autoclass:: MultiOpt
 .. autoclass:: MultiStrOpt
 .. autoclass:: IPOpt
 .. autoclass:: DeprecatedOpt

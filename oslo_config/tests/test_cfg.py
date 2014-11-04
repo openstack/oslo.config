@@ -28,6 +28,7 @@ from six import moves
 import testscenarios
 
 from oslo_config import cfg
+from oslo_config import types
 
 load_tests = testscenarios.load_tests_apply_scenarios
 
@@ -273,6 +274,10 @@ class CliOptsTestCase(BaseTestCase):
     IPv4Opt = functools.partial(cfg.IPOpt, version=4)
     IPv6Opt = functools.partial(cfg.IPOpt, version=6)
 
+    multi_int = functools.partial(cfg.MultiOpt, item_type=types.Integer())
+    multi_float = functools.partial(cfg.MultiOpt, item_type=types.Float())
+    multi_string = functools.partial(cfg.MultiOpt, item_type=types.String())
+
     scenarios = [
         ('str_default',
          dict(opt_class=cfg.StrOpt, default=None, cli_args=[], value=None,
@@ -480,6 +485,18 @@ class CliOptsTestCase(BaseTestCase):
          dict(opt_class=cfg.MultiStrOpt, default=None,
               cli_args=['--old-oof', 'blaa', '--old-oof', 'bar'],
               value=['blaa', 'bar'], deps=('oof', 'old'))),
+        ('multiopt_arg_int',
+         dict(opt_class=multi_int, default=None,
+              cli_args=['--foo', '1', '--foo', '2'],
+              value=[1, 2], deps=(None, None))),
+        ('multiopt_float_int',
+         dict(opt_class=multi_float, default=None,
+              cli_args=['--foo', '1.2', '--foo', '2.3'],
+              value=[1.2, 2.3], deps=(None, None))),
+        ('multiopt_string',
+         dict(opt_class=multi_string, default=None,
+              cli_args=['--foo', 'bar', '--foo', 'baz'],
+              value=["bar", "baz"], deps=(None, None))),
     ]
 
     def test_cli(self):
