@@ -82,7 +82,7 @@ class String(ConfigType):
 
 class MultiString(String):
 
-        BASE_TYPES = six.string_types + (list,)
+    BASE_TYPES = six.string_types + (list,)
 
 
 class Boolean(ConfigType):
