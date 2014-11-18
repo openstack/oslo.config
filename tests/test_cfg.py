@@ -622,6 +622,62 @@ class PositionalTestCase(BaseTestCase):
             cfg.StrOpt('foo', required=True, positional=True))
         self.assertRaises(cfg.RequiredOptError, self.conf, [])
 
+    def test_positional_opts_order(self):
+        self.conf.register_cli_opts((
+            cfg.StrOpt('command', positional=True),
+            cfg.StrOpt('arg1', positional=True),
+            cfg.StrOpt('arg2', positional=True))
+        )
+
+        self.conf(['command', 'arg1', 'arg2'])
+
+        self.assertEqual('command', self.conf.command)
+        self.assertEqual('arg1', self.conf.arg1)
+        self.assertEqual('arg2', self.conf.arg2)
+
+    def test_positional_opt_order(self):
+        self.conf.register_cli_opt(
+            cfg.StrOpt('command', positional=True))
+        self.conf.register_cli_opt(
+            cfg.StrOpt('arg1', positional=True))
+        self.conf.register_cli_opt(
+            cfg.StrOpt('arg2', positional=True))
+
+        self.conf(['command', 'arg1', 'arg2'])
+
+        self.assertEqual('command', self.conf.command)
+        self.assertEqual('arg1', self.conf.arg1)
+        self.assertEqual('arg2', self.conf.arg2)
+
+    def test_positional_opt_unregister(self):
+        command = cfg.StrOpt('command', positional=True)
+        arg1 = cfg.StrOpt('arg1', positional=True)
+        arg2 = cfg.StrOpt('arg2', positional=True)
+        self.conf.register_cli_opt(command)
+        self.conf.register_cli_opt(arg1)
+        self.conf.register_cli_opt(arg2)
+
+        self.conf(['command', 'arg1', 'arg2'])
+
+        self.assertEqual('command', self.conf.command)
+        self.assertEqual('arg1', self.conf.arg1)
+        self.assertEqual('arg2', self.conf.arg2)
+
+        self.conf.reset()
+
+        self.conf.unregister_opt(arg1)
+        self.conf.unregister_opt(arg2)
+
+        arg0 = cfg.StrOpt('arg0', positional=True)
+        self.conf.register_cli_opt(arg0)
+        self.conf.register_cli_opt(arg1)
+
+        self.conf(['command', 'arg0', 'arg1'])
+
+        self.assertEqual('command', self.conf.command)
+        self.assertEqual('arg0', self.conf.arg0)
+        self.assertEqual('arg1', self.conf.arg1)
+
 
 class ConfigFileOptsTestCase(BaseTestCase):
 
