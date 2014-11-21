@@ -3335,6 +3335,45 @@ class MultipleDeprecatedCliOptionsTestCase(BaseTestCase):
         self.conf(['--config-file', paths[0]])
         self.assertEqual(self.conf.blaa.foo, 'bar')
 
+    def test_conf_file_common_deprecated_group(self):
+        self.conf.register_group(cfg.OptGroup('foo'))
+        self.conf.register_group(cfg.OptGroup('bar'))
+        oldopts = [cfg.DeprecatedOpt('foo', group='DEFAULT')]
+        self.conf.register_opt(cfg.StrOpt('common_opt',
+                                          deprecated_opts=oldopts),
+                               group='bar')
+        self.conf.register_opt(cfg.StrOpt('common_opt',
+                                          deprecated_opts=oldopts),
+                               group='foo')
+
+        paths = self.create_tempfiles([('test',
+                                        '[DEFAULT]\n'
+                                        'foo = bla\n')])
+
+        self.conf(['--config-file', paths[0]])
+        self.assertEqual(self.conf.foo.common_opt, 'bla')
+        self.assertEqual(self.conf.bar.common_opt, 'bla')
+
+        paths = self.create_tempfiles([('test',
+                                        '[DEFAULT]\n'
+                                        'foo = bla\n'
+                                        '[bar]\n'
+                                        'common_opt = blabla\n')])
+
+        self.conf(['--config-file', paths[0]])
+        self.assertEqual(self.conf.foo.common_opt, 'bla')
+        self.assertEqual(self.conf.bar.common_opt, 'blabla')
+
+        paths = self.create_tempfiles([('test',
+                                        '[foo]\n'
+                                        'common_opt = bla\n'
+                                        '[bar]\n'
+                                        'common_opt = blabla\n')])
+
+        self.conf(['--config-file', paths[0]])
+        self.assertEqual(self.conf.foo.common_opt, 'bla')
+        self.assertEqual(self.conf.bar.common_opt, 'blabla')
+
 
 class ChoicesTestCase(BaseTestCase):
 
