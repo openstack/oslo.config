@@ -279,16 +279,14 @@ def generate(conf):
             if not opts:
                 continue
             namespaces = groups.setdefault(group or 'DEFAULT', [])
-            namespaces.append((namespace,
-                               dict((opt.dest, opt) for opt in opts)))
+            namespaces.append((namespace, opts))
 
     def _output_opts(f, group, namespaces):
         f.write('[%s]\n' % group)
-        for (namespace, opts_by_dest) in sorted(namespaces,
-                                                key=operator.itemgetter(0)):
+        for (namespace, opts) in sorted(namespaces,
+                                        key=operator.itemgetter(0)):
             f.write('\n#\n# From %s\n#\n' % namespace)
-            for opt in sorted(opts_by_dest.values(),
-                              key=operator.attrgetter('dest')):
+            for opt in opts:
                 f.write('\n')
                 f.format(opt)
 
