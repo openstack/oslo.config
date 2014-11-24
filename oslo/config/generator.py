@@ -160,6 +160,20 @@ class _OptFormatter(object):
         self.output_file = output_file or sys.stdout
         self.wrap_width = wrap_width
 
+    def _format_help(self, help_text):
+        """Format the help for a group or option to the output file.
+
+        :param help_text: The text of the help string
+        """
+        if self.wrap_width is not None and self.wrap_width > 0:
+            lines = [textwrap.fill(help_text,
+                                   self.wrap_width,
+                                   initial_indent='# ',
+                                   subsequent_indent='# ') + '\n']
+        else:
+            lines = ['# ' + help_text + '\n']
+        return lines
+
     def format(self, opt):
         """Format a description of an option to the output file.
 
@@ -171,13 +185,7 @@ class _OptFormatter(object):
         opt_type = self._TYPE_DESCRIPTIONS.get(type(opt), 'unknown type')
 
         help_text = u'%s(%s)' % (opt.help + ' ' if opt.help else '', opt_type)
-        if self.wrap_width is not None and self.wrap_width > 0:
-            lines = [textwrap.fill(help_text,
-                                   self.wrap_width,
-                                   initial_indent='# ',
-                                   subsequent_indent='# ') + '\n']
-        else:
-            lines = ['# ' + help_text + '\n']
+        lines = self._format_help(help_text)
 
         for d in opt.deprecated_opts:
             lines.append('# Deprecated group/name - [%s]/%s\n' %
