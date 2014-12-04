@@ -1570,8 +1570,17 @@ class _CachedArgumentParser(argparse.ArgumentParser):
         self._args_cache[container] = values
 
     def initialize_parser_arguments(self):
+        # NOTE(mfedosin): The code below looks a little bit weird, but
+        # it's done because we need to sort only optional opts and do
+        # not touch positional. For the reason optional opts go first in
+        # the values we only need to find an index of the first positional
+        # option and then sort the values slice.
         for container, values in six.iteritems(self._args_cache):
-            values.sort(key=lambda x: x['args'])
+            index = 0
+            for index, argument in enumerate(values):
+                if not argument['args'][0].startswith('-'):
+                    break
+            values[:index] = sorted(values[:index], key=lambda x: x['args'])
             for argument in values:
                 try:
                     container.add_argument(*argument['args'],
@@ -1613,6 +1622,7 @@ class ConfigOpts(collections.Mapping):
         self._namespace = None
         self.__cache = {}
         self._config_opts = []
+        self._cli_opts = collections.deque()
         self._validate_default_values = False
 
     def _pre_setup(self, project, prog, version, usage, default_config_files):
@@ -1781,6 +1791,14 @@ class ConfigOpts(collections.Mapping):
         for group in self._groups.values():
             group._clear()
 
+    def _add_cli_opt(self, opt, group):
+        if {'opt': opt, 'group': group} in self._cli_opts:
+            return
+        if opt.positional:
+            self._cli_opts.append({'opt': opt, 'group': group})
+        else:
+            self._cli_opts.appendleft({'opt': opt, 'group': group})
+
     @__clear_cache
     def register_opt(self, opt, group=None, cli=False):
         """Register an option schema.
@@ -1797,7 +1815,12 @@ class ConfigOpts(collections.Mapping):
         """
         if group is not None:
             group = self._get_group(group, autocreate=True)
+            if cli:
+                self._add_cli_opt(opt, group)
             return group._register_opt(opt, cli)
+
+        if cli:
+            self._add_cli_opt(opt, None)
 
         if _is_opt_registered(self._opts, opt):
             return False
@@ -1859,6 +1882,9 @@ class ConfigOpts(collections.Mapping):
         """
         if self._args is not None:
             raise ArgsAlreadyParsedError("reset before unregistering options")
+
+        if {'opt': opt, 'group': group} in self._cli_opts:
+            self._cli_opts.remove({'opt': opt, 'group': group})
 
         if group is not None:
             self._get_group(group)._unregister_opt(opt)
@@ -1975,9 +2001,8 @@ class ConfigOpts(collections.Mapping):
 
     def _all_cli_opts(self):
         """A generator function for iterating CLI opts."""
-        for info, group in self._all_opt_infos():
-            if info['cli']:
-                yield info['opt'], group
+        for item in self._cli_opts:
+            yield item['opt'], item['group']
 
     def _unset_defaults_and_overrides(self):
         """Unset any default or override on all options."""
@@ -2267,9 +2292,7 @@ class ConfigOpts(collections.Mapping):
 
         """
         self._args = args
-
-        for opt, group in sorted(self._all_cli_opts(),
-                                 key=lambda x: x[0].name):
+        for opt, group in self._all_cli_opts():
             opt._add_to_cli(self._oparser, group)
 
         return self._parse_config_files()
