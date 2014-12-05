@@ -2,9 +2,9 @@
 oslo-config-generator
 ---------------------
 
-.. automodule:: oslo.config.generator
+.. automodule:: oslo_config.generator
 
-.. currentmodule:: oslo.config.generator
+.. currentmodule:: oslo_config.generator
 
 .. autofunction:: main
 .. autofunction:: generate

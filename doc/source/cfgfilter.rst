@@ -2,4 +2,4 @@
 The cfgfilter Module
 --------------------
 
-.. automodule:: oslo.config.cfgfilter
+.. automodule:: oslo_config.cfgfilter

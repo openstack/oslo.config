@@ -14,8 +14,8 @@
 
 from oslotest import base as test_base
 
-from oslo.config import cfg
-from oslo.config import cfgfilter
+from oslo_config import cfg
+from oslo_config import cfgfilter
 
 
 class BaseTestCase(test_base.BaseTestCase):
@@ -242,3 +242,39 @@ class RegisterTestCase(BaseTestCase):
 
         self.assertEqual('bar', self.conf.foo)
         self.assertEqual('bar', self.fconf.foo)
+
+
+class ImportTestCase(BaseTestCase):
+
+    def setUp(self):
+        super(ImportTestCase, self).setUp(cfg.CONF)
+
+    def test_import_opt(self):
+        self.assertFalse(hasattr(self.conf, 'fblaa'))
+        self.conf.import_opt('fblaa', 'tests.testmods.fblaa_opt')
+        self.assertTrue(hasattr(self.conf, 'fblaa'))
+        self.assertFalse(hasattr(self.fconf, 'fblaa'))
+        self.fconf.import_opt('fblaa', 'tests.testmods.fblaa_opt')
+        self.assertTrue(hasattr(self.fconf, 'fblaa'))
+
+    def test_import_opt_in_group(self):
+        self.assertFalse(hasattr(self.conf, 'fbar'))
+        self.conf.import_opt('foo', 'tests.testmods.fbar_foo_opt',
+                             group='fbar')
+        self.assertTrue(hasattr(self.conf, 'fbar'))
+        self.assertTrue(hasattr(self.conf.fbar, 'foo'))
+        self.assertFalse(hasattr(self.fconf, 'fbar'))
+        self.fconf.import_opt('foo', 'tests.testmods.fbar_foo_opt',
+                              group='fbar')
+        self.assertTrue(hasattr(self.fconf, 'fbar'))
+        self.assertTrue(hasattr(self.fconf.fbar, 'foo'))
+
+    def test_import_group(self):
+        self.assertFalse(hasattr(self.conf, 'fbaar'))
+        self.conf.import_group('fbaar', 'tests.testmods.fbaar_baa_opt')
+        self.assertTrue(hasattr(self.conf, 'fbaar'))
+        self.assertTrue(hasattr(self.conf.fbaar, 'baa'))
+        self.assertFalse(hasattr(self.fconf, 'fbaar'))
+        self.fconf.import_group('fbaar', 'tests.testmods.fbaar_baa_opt')
+        self.assertTrue(hasattr(self.fconf, 'fbaar'))
+        self.assertTrue(hasattr(self.fconf.fbaar, 'baa'))

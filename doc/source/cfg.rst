@@ -2,4 +2,4 @@
 The cfg Module
 --------------
 
-.. automodule:: oslo.config.cfg
+.. automodule:: oslo_config.cfg

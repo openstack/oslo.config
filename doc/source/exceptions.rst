@@ -2,7 +2,7 @@
 Exceptions
 ----------
 
-.. currentmodule:: oslo.config.cfg
+.. currentmodule:: oslo_config.cfg
 
 .. autoexception:: Error
 .. autoexception:: ArgsAlreadyParsedError

@@ -27,7 +27,7 @@ import six
 from six import moves
 import testscenarios
 
-from oslo.config import cfg
+from oslo_config import cfg
 
 load_tests = testscenarios.load_tests_apply_scenarios
 
@@ -912,7 +912,7 @@ class ConfigFileOptsTestCase(BaseTestCase):
         self.assertTrue(hasattr(self.conf, 'foo'))
         self.assertEqual(self.conf.foo, 666)
 
-    @mock.patch('oslo_config.cfg.LOG')
+    @mock.patch.object(cfg, 'LOG')
     def test_conf_file_int_wrong_default(self, mock_log):
         cfg.IntOpt('foo', default='666')
         mock_log.debug.assert_call_count(1)
@@ -1044,7 +1044,7 @@ class ConfigFileOptsTestCase(BaseTestCase):
         self.assertTrue(hasattr(self.conf, 'foo'))
         self.assertEqual(self.conf.foo, ['bar'])
 
-    @mock.patch('oslo_config.cfg.LOG')
+    @mock.patch.object(cfg, 'LOG')
     def test_conf_file_list_default_wrong_type(self, mock_log):
         cfg.ListOpt('foo', default=25)
         mock_log.debug.assert_called_once_with(
@@ -2537,6 +2537,49 @@ class UnregisterOptTestCase(BaseTestCase):
         self.assertFalse(hasattr(self.conf.blaa, 'foo'))
 
 
+class ImportOptTestCase(BaseTestCase):
+
+    def test_import_opt(self):
+        self.assertFalse(hasattr(cfg.CONF, 'blaa'))
+        cfg.CONF.import_opt('blaa', 'tests.testmods.blaa_opt')
+        self.assertTrue(hasattr(cfg.CONF, 'blaa'))
+
+    def test_import_opt_in_group(self):
+        self.assertFalse(hasattr(cfg.CONF, 'bar'))
+        cfg.CONF.import_opt('foo', 'tests.testmods.bar_foo_opt', group='bar')
+        self.assertTrue(hasattr(cfg.CONF, 'bar'))
+        self.assertTrue(hasattr(cfg.CONF.bar, 'foo'))
+
+    def test_import_opt_import_errror(self):
+        self.assertRaises(ImportError, cfg.CONF.import_opt,
+                          'blaa', 'tests.testmods.blaablaa_opt')
+
+    def test_import_opt_no_such_opt(self):
+        self.assertRaises(cfg.NoSuchOptError, cfg.CONF.import_opt,
+                          'blaablaa', 'tests.testmods.blaa_opt')
+
+    def test_import_opt_no_such_group(self):
+        self.assertRaises(cfg.NoSuchGroupError, cfg.CONF.import_opt,
+                          'blaa', 'tests.testmods.blaa_opt', group='blaa')
+
+
+class ImportGroupTestCase(BaseTestCase):
+
+    def test_import_group(self):
+        self.assertFalse(hasattr(cfg.CONF, 'qux'))
+        cfg.CONF.import_group('qux', 'tests.testmods.baz_qux_opt')
+        self.assertTrue(hasattr(cfg.CONF, 'qux'))
+        self.assertTrue(hasattr(cfg.CONF.qux, 'baz'))
+
+    def test_import_group_import_error(self):
+        self.assertRaises(ImportError, cfg.CONF.import_group,
+                          'qux', 'tests.testmods.bazzz_quxxx_opt')
+
+    def test_import_group_no_such_group(self):
+        self.assertRaises(cfg.NoSuchGroupError, cfg.CONF.import_group,
+                          'quxxx', 'tests.testmods.baz_qux_opt')
+
+
 class RequiredOptsTestCase(BaseTestCase):
 
     def setUp(self):
@@ -2940,7 +2983,7 @@ class ConfigParserTestCase(BaseTestCase):
         # are propagated.
         filename = 'fake'
         namespace = mock.Mock()
-        with mock.patch('oslo.config.cfg.ConfigParser.parse') as parse:
+        with mock.patch('oslo_config.cfg.ConfigParser.parse') as parse:
             parse.side_effect = IOError(errno.EMFILE, filename,
                                         'Too many open files')
             self.assertRaises(IOError, cfg.ConfigParser._parse_file, filename,

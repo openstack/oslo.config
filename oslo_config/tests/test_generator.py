@@ -20,9 +20,9 @@ from oslotest import base
 from six import moves
 import testscenarios
 
-from oslo.config import cfg
-from oslo.config import fixture as config_fixture
-from oslo.config import generator
+from oslo_config import cfg
+from oslo_config import fixture as config_fixture
+from oslo_config import generator
 
 load_tests = testscenarios.load_tests_apply_scenarios
 
@@ -493,7 +493,7 @@ class GeneratorTestCase(base.BaseTestCase):
         return self._capture_stream('stdout')
 
     @mock.patch('stevedore.named.NamedExtensionManager')
-    @mock.patch('oslo_config.generator.LOG')
+    @mock.patch.object(generator, 'LOG')
     def test_generate(self, mock_log, named_mgr):
         generator.register_cli_opts(self.conf)
 

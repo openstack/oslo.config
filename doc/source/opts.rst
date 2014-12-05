@@ -2,7 +2,7 @@
 Option Definitions
 ------------------
 
-.. currentmodule:: oslo.config.cfg
+.. currentmodule:: oslo_config.cfg
 
 .. autoclass:: Opt
 .. autoclass:: StrOpt

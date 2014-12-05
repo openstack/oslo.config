@@ -14,3 +14,4 @@ dist/
 .testrepository/
 .project
 .pydevproject
+pbr-*.egg/

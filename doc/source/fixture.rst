@@ -2,7 +2,7 @@
 Test Fixture
 ------------
 
-.. currentmodule:: oslo.config.fixture
+.. currentmodule:: oslo_config.fixture
 
 .. autoclass:: Config
    :members:

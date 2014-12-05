@@ -2,7 +2,7 @@
 The ConfigOpts Class
 --------------------
 
-.. currentmodule:: oslo.config.cfg
+.. currentmodule:: oslo_config.cfg
 
 .. autoclass:: ConfigOpts
    :members:
