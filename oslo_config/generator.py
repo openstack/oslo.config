@@ -108,6 +108,8 @@ import operator
 import sys
 import textwrap
 
+import pkg_resources
+
 from oslo.config import cfg
 import stevedore.named  # noqa
 
@@ -301,10 +303,11 @@ def generate(conf):
 
 def main(args=None):
     """The main function of oslo-config-generator."""
+    version = pkg_resources.get_distribution('oslo.config').version
     logging.basicConfig(level=logging.WARN)
     conf = cfg.ConfigOpts()
     register_cli_opts(conf)
-    conf(args)
+    conf(args, version=version)
     generate(conf)
 
 
