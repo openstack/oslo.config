@@ -186,7 +186,11 @@ class _OptFormatter(object):
 
         opt_type = self._TYPE_DESCRIPTIONS.get(type(opt), 'unknown type')
 
-        help_text = u'%s(%s)' % (opt.help + ' ' if opt.help else '', opt_type)
+        if opt.help:
+            help_text = u'%s (%s)' % (opt.help,
+                                      opt_type)
+        else:
+            help_text = u'(%s)' % opt_type
         lines = self._format_help(help_text)
 
         for d in opt.deprecated_opts:
