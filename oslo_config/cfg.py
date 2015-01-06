@@ -1883,8 +1883,15 @@ class ConfigOpts(collections.Mapping):
         if self._args is not None:
             raise ArgsAlreadyParsedError("reset before unregistering options")
 
-        if {'opt': opt, 'group': group} in self._cli_opts:
-            self._cli_opts.remove({'opt': opt, 'group': group})
+        remitem = None
+        for item in self._cli_opts:
+            if (item['opt'].dest == opt.dest and
+                (group is None or
+                    self._get_group(group).name == item['group'].name)):
+                remitem = item
+                break
+        if remitem is not None:
+            self._cli_opts.remove(remitem)
 
         if group is not None:
             self._get_group(group)._unregister_opt(opt)

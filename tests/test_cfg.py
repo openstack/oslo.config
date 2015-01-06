@@ -653,20 +653,37 @@ class PositionalTestCase(BaseTestCase):
         command = cfg.StrOpt('command', positional=True)
         arg1 = cfg.StrOpt('arg1', positional=True)
         arg2 = cfg.StrOpt('arg2', positional=True)
+        cfg.CONF.register_group(cfg.OptGroup('blaa'))
         self.conf.register_cli_opt(command)
         self.conf.register_cli_opt(arg1)
-        self.conf.register_cli_opt(arg2)
+        self.conf.register_cli_opt(arg2, group='blaa')
+
+        self.assertEqual(3, len(self.conf._cli_opts))
+        self.assertEqual(1, len(self.conf._groups))
+
+        self.assertEqual('command', self.conf._cli_opts[0]['opt'].dest)
+        self.assertEqual('arg1', self.conf._cli_opts[1]['opt'].dest)
+        self.assertEqual('arg2', self.conf._cli_opts[2]['opt'].dest)
+        self.assertEqual('blaa', self.conf._cli_opts[2]['group'].name)
 
         self.conf(['command', 'arg1', 'arg2'])
 
-        self.assertEqual('command', self.conf.command)
-        self.assertEqual('arg1', self.conf.arg1)
-        self.assertEqual('arg2', self.conf.arg2)
-
         self.conf.reset()
 
-        self.conf.unregister_opt(arg1)
-        self.conf.unregister_opt(arg2)
+        new_arg1 = cfg.StrOpt('arg1', positional=True)
+        new_arg2 = cfg.StrOpt('arg2', positional=True)
+
+        self.conf.unregister_opt(new_arg1)
+        self.assertEqual(2, len(self.conf._cli_opts))
+
+        self.assertRaises(cfg.NoSuchGroupError,
+                          self.conf.unregister_opt,
+                          new_arg2,
+                          group='foo')
+        self.conf.unregister_opt(new_arg2, group='blaa')
+        self.assertEqual(1, len(self.conf._cli_opts))
+        self.assertEqual('command',
+                         self.conf._cli_opts[0]['opt'].dest)
 
         arg0 = cfg.StrOpt('arg0', positional=True)
         self.conf.register_cli_opt(arg0)
@@ -674,9 +691,11 @@ class PositionalTestCase(BaseTestCase):
 
         self.conf(['command', 'arg0', 'arg1'])
 
-        self.assertEqual('command', self.conf.command)
-        self.assertEqual('arg0', self.conf.arg0)
-        self.assertEqual('arg1', self.conf.arg1)
+        self.conf.reset()
+
+        self.assertEqual('command', self.conf._cli_opts[0]['opt'].dest)
+        self.assertEqual('arg0', self.conf._cli_opts[1]['opt'].dest)
+        self.assertEqual('arg1', self.conf._cli_opts[2]['opt'].dest)
 
 
 class ConfigFileOptsTestCase(BaseTestCase):
