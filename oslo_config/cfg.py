@@ -855,31 +855,47 @@ class DeprecatedOpt(object):
 
     Here's how you can use it::
 
-        oldopts = [cfg.DeprecatedOpt('oldfoo', group='oldgroup'),
-                   cfg.DeprecatedOpt('oldfoo2', group='oldgroup2')]
-        cfg.CONF.register_group(cfg.OptGroup('blaa'))
-        cfg.CONF.register_opt(cfg.StrOpt('foo', deprecated_opts=oldopts),
-                              group='blaa')
+        oldopts = [cfg.DeprecatedOpt('oldopt1', group='group1'),
+                   cfg.DeprecatedOpt('oldopt2', group='group2')]
+        cfg.CONF.register_group(cfg.OptGroup('group1'))
+        cfg.CONF.register_opt(cfg.StrOpt('newopt', deprecated_opts=oldopts),
+                              group='group1')
+
+    For options which have a single value (like in the example above),
+    if the new option is present ("[group1]/newopt" above), it will override
+    any deprecated options present ("[group1]/oldopt1" and "[group2]/oldopt2"
+    above).
+
+    If no group is specified for a DeprecatedOpt option (i.e. the group is
+    None), lookup will happen within the same group the new option is in.
+    For example, if no group was specified for the second option 'oldopt2' in
+    oldopts list:
+
+        oldopts = [cfg.DeprecatedOpt('oldopt1', group='group1'),
+                   cfg.DeprecatedOpt('oldopt2')]
+        cfg.CONF.register_group(cfg.OptGroup('group1'))
+        cfg.CONF.register_opt(cfg.StrOpt('newopt', deprecated_opts=oldopts),
+                              group='group1')
+
+    then lookup for that option will happen in group 'group1'.
+
+    If the new option is not present and multiple deprecated options are
+    present, the option corresponding to the first element of deprecated_opts
+    will be chosen.
 
     Multi-value options will return all new and deprecated
-    options.  For single options, if the new option is present
-    ("[blaa]/foo" above) it will override any deprecated options
-    present.  If the new option is not present and multiple
-    deprecated options are present, the option corresponding to
-    the first element of deprecated_opts will be chosen.
+    options. So if we have a multi-value option "[group1]/opt1" whose
+    deprecated option is "[group2]/opt2", and the conf file has both these
+    options specified like so::
 
-    If group is None, the DeprecatedOpt lookup will happen within the same
-    group the new option is in. For example::
+        [group1]
+        opt1=val10,val11
 
-        oldopts = [cfg.DeprecatedOpt('oldfoo'),
-                   cfg.DeprecatedOpt('oldfoo2', group='DEFAULT')]
+        [group2]
+        opt2=val21,val22
 
-        cfg.CONF.register_group(cfg.OptGroup('blaa'))
-        cfg.CONF.register_opt(cfg.StrOpt('foo', deprecated_opts=oldopts),
-                              group='blaa')
-
-    In the example above, `oldfoo` will be looked up in the `blaa` group and
-    `oldfoo2` in the `DEFAULT` group.
+    Then the value of "[group1]/opt1" will be ['val11', 'val12', 'val21',
+    'val22'].
     """
 
     def __init__(self, name, group=None):
