@@ -208,6 +208,7 @@ class IntegerTypeTests(TypeTestHelper, unittest.TestCase):
         t(123)
         t(300)
         t(456)
+        self.assertRaises(ValueError, t, 0)
         self.assertRaises(ValueError, t, 457)
 
 
