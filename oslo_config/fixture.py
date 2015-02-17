@@ -18,7 +18,7 @@
 import fixtures
 import six
 
-from oslo.config import cfg
+from oslo_config import cfg
 
 
 class Config(fixtures.Fixture):

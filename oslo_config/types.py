@@ -15,7 +15,7 @@
 """Type conversion and validation classes for configuration options.
 
 Use these classes as values for the `type` argument to
-:class:`oslo.config.cfg.Opt` and its subclasses.
+:class:`oslo_config.cfg.Opt` and its subclasses.
 
 """
 import netaddr
