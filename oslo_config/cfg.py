@@ -20,8 +20,8 @@ The schema for each option is defined using the
 
 ::
 
-    from oslo.config import cfg
-    from oslo.config import types
+    from oslo_config import cfg
+    from oslo_config import types
 
     PortType = types.Integer(1, 65535)
 
@@ -331,8 +331,8 @@ import sys
 import six
 from six import moves
 
-from oslo.config import iniparser
-from oslo.config import types
+from oslo_config import iniparser
+from oslo_config import types
 
 LOG = logging.getLogger(__name__)
 
