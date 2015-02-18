@@ -128,7 +128,7 @@ and --config-dir::
             self.register_cli_opts(opts)
 
 Option values are parsed from any supplied config files using
-oslo.config.iniparser. If none are specified, a default set is used
+oslo_config.iniparser. If none are specified, a default set is used
 for example glance-api.conf and glance-common.conf::
 
     glance-api.conf:
@@ -271,7 +271,7 @@ Global ConfigOpts
 This module also contains a global instance of the ConfigOpts class
 in order to support a common usage pattern in OpenStack::
 
-    from oslo.config import cfg
+    from oslo_config import cfg
 
     opts = [
         cfg.StrOpt('bind_host', default='0.0.0.0'),

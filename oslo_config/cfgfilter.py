@@ -77,8 +77,8 @@ which the API user supplies to the library. For example::
 
   from __future__ import print_function
 
-  from oslo.config.cfg import *
-  from oslo.config.cfgfilter import *
+  from oslo_config.cfg import *
+  from oslo_config.cfgfilter import *
 
   class Widget(object):
 
@@ -101,7 +101,7 @@ which the API user supplies to the library. For example::
 import collections
 import itertools
 
-from oslo.config import cfg
+from oslo_config import cfg
 
 
 class ConfigFilter(collections.Mapping):
