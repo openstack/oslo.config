@@ -144,7 +144,7 @@ class Integer(ConfigType):
             else:
                 value = int(value)
 
-        if value:
+        if value is not None:
             self._check_range(value)
 
         return value
