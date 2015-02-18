@@ -2439,6 +2439,16 @@ class ConfigOpts(collections.Mapping):
             self._namespace = namespace
             return True
 
+    def list_all_sections(self):
+        """List all sections from the configuration.
+
+        Returns an iterator over all section names found in the
+        configuration files, whether declared beforehand or not.
+        """
+        for sections in self._namespace._parser.parsed:
+            for section in sections:
+                yield section
+
     class GroupAttr(collections.Mapping):
 
         """Helper class.

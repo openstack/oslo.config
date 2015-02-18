@@ -3550,3 +3550,16 @@ class OptTestCase(base.BaseTestCase):
 
     def test_illegal_name(self):
         self.assertRaises(ValueError, cfg.BoolOpt, '_foo')
+
+
+class SectionsTestCase(base.BaseTestCase):
+    def test_list_all_sections(self):
+        paths = self.create_tempfiles([('test.ini',
+                                        '[DEFAULT]\n'
+                                        'foo = bar\n'
+                                        '[BLAA]\n'
+                                        'bar = foo\n')])
+        config = cfg.ConfigOpts()
+        config(args=[], default_config_files=[paths[0]])
+        sections = set(config.list_all_sections())
+        self.assertEqual(sections, set(['DEFAULT', 'BLAA']))
