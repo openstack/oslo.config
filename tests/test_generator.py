@@ -23,6 +23,7 @@ import testscenarios
 from oslo.config import cfg
 from oslo.config import fixture as config_fixture
 from oslo.config import generator
+from oslo.i18n import fixture as i18n_fixture
 
 load_tests = testscenarios.load_tests_apply_scenarios
 
@@ -31,6 +32,9 @@ class GeneratorTestCase(base.BaseTestCase):
 
     opts = {
         'foo': cfg.StrOpt('foo', help='foo option'),
+        'foo_i18n_help': cfg.StrOpt('foo_i18n_help',
+                                    help=i18n_fixture.Translation().lazy(
+                                        'this is a lazy message')),
         'bar': cfg.StrOpt('bar', help='bar option'),
         'foo-bar': cfg.StrOpt('foo-bar', help='foobar'),
         'no_help': cfg.StrOpt('no_help'),
@@ -206,6 +210,17 @@ class GeneratorTestCase(base.BaseTestCase):
 
 # foobar (string value)
 #foo_bar = <None>
+''')),
+        ('i18n_help',
+         dict(opts=[('test', [(None, [opts['foo_i18n_help']])])],
+              expected='''[DEFAULT]
+
+#
+# From test
+#
+
+# this is a lazy message (string value)
+#foo_i18n_help = <None>
 ''')),
         ('no_help',
          dict(opts=[('test', [(None, [opts['no_help']])])],
