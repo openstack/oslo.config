@@ -22,6 +22,7 @@ Contents
    namespaces
    styleguide
    generator
+   faq
    contributing
 
 Release Notes
