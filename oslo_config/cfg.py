@@ -1416,9 +1416,13 @@ class ConfigParser(iniparser.BaseParser):
 
 
 class MultiConfigParser(object):
+    _deprecated_opt_message = ('Option "%s" from group "%s" is deprecated. '
+                               'Use option "%s" from group "%s".')
+
     def __init__(self):
         self.parsed = []
         self._normalized = []
+        self._emitted_deprecations = set()
 
     def read(self, config_files):
         read_ok = []
@@ -1470,6 +1474,8 @@ class MultiConfigParser(object):
                 if section not in sections:
                     continue
                 if name in sections[section]:
+                    self._check_deprecated((section, name), names[0],
+                                           names[1:])
                     val = sections[section][name]
                     if multi:
                         rvalue = val + rvalue
@@ -1478,6 +1484,32 @@ class MultiConfigParser(object):
         if multi and rvalue != []:
             return rvalue
         raise KeyError
+
+    def _check_deprecated(self, name, current, deprecated):
+        """Check for usage of deprecated names.
+
+        :param name: A tuple of the form (group, name) representing the group
+                     and name where an opt value was found.
+        :param current: A tuple of the form (group, name) representing the
+                        current name for an option.
+        :param deprecated: A list of tuples with the same format as the name
+                    param which represent any deprecated names for an option.
+                    If the name param matches any entries in this list a
+                    deprecation warning will be logged.
+        """
+        # Opts in the DEFAULT group may come in with a group name of either
+        # 'DEFAULT' or None.  Force them all to 'DEFAULT' since that's a more
+        # user-friendly form.
+        deprecated_names = set((g or 'DEFAULT', n) for (g, n) in deprecated)
+        name = (name[0] or 'DEFAULT', name[1])
+        if name in deprecated_names and name not in self._emitted_deprecations:
+            self._emitted_deprecations.add(name)
+            current = (current[0] or 'DEFAULT', current[1])
+            # NOTE(bnemec): Not using versionutils for this to avoid a
+            # circular dependency between oslo.config and whatever library
+            # versionutils ends up in.
+            LOG.warning(self._deprecated_opt_message, name[1],
+                        name[0], current[1], current[0])
 
 
 class _Namespace(argparse.Namespace):

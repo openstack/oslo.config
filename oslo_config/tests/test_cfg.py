@@ -3563,3 +3563,100 @@ class SectionsTestCase(base.BaseTestCase):
         config(args=[], default_config_files=[paths[0]])
         sections = set(config.list_all_sections())
         self.assertEqual(sections, set(['DEFAULT', 'BLAA']))
+
+
+class DeprecationWarningTestBase(BaseTestCase):
+    def setUp(self):
+        super(DeprecationWarningTestBase, self).setUp()
+        self.log_fixture = self.useFixture(fixtures.FakeLogger())
+        self._parser_class = cfg.MultiConfigParser
+
+
+class DeprecationWarningTestScenarios(DeprecationWarningTestBase):
+    scenarios = [('default-deprecated', dict(deprecated=True,
+                                             group='DEFAULT')),
+                 ('default-not-deprecated', dict(deprecated=False,
+                                                 group='DEFAULT')),
+                 ('other-deprecated', dict(deprecated=True,
+                                           group='other')),
+                 ('other-not-deprecated', dict(deprecated=False,
+                                               group='other')),
+                 ]
+
+    def test_deprecated_logging(self):
+        self.conf.register_opt(cfg.StrOpt('foo', deprecated_name='bar'))
+        self.conf.register_group(cfg.OptGroup('other'))
+        self.conf.register_opt(cfg.StrOpt('foo', deprecated_name='bar'),
+                               group='other')
+        if self.deprecated:
+            content = 'bar=baz'
+        else:
+            content = 'foo=baz'
+        paths = self.create_tempfiles([('test',
+                                        '[' + self.group + ']\n' +
+                                        content + '\n')])
+
+        self.conf(['--config-file', paths[0]])
+        # Reference these twice to verify they only get logged once
+        if self.group == 'DEFAULT':
+            self.assertEqual('baz', self.conf.foo)
+            self.assertEqual('baz', self.conf.foo)
+        else:
+            self.assertEqual('baz', self.conf.other.foo)
+            self.assertEqual('baz', self.conf.other.foo)
+        if self.deprecated:
+            expected = (self._parser_class._deprecated_opt_message %
+                        ('bar', self.group, 'foo', self.group) + '\n')
+        else:
+            expected = ''
+        self.assertEqual(expected, self.log_fixture.output)
+
+
+class DeprecationWarningTests(DeprecationWarningTestBase):
+    def test_DeprecatedOpt(self):
+        default_deprecated = [cfg.DeprecatedOpt('bar')]
+        other_deprecated = [cfg.DeprecatedOpt('baz', group='other')]
+        self.conf.register_group(cfg.OptGroup('other'))
+        self.conf.register_opt(cfg.StrOpt('foo',
+                                          deprecated_opts=default_deprecated))
+        self.conf.register_opt(cfg.StrOpt('foo',
+                                          deprecated_opts=other_deprecated),
+                               group='other')
+        paths = self.create_tempfiles([('test',
+                                        '[DEFAULT]\n' +
+                                        'bar=baz\n' +
+                                        '[other]\n' +
+                                        'baz=baz\n')])
+        self.conf(['--config-file', paths[0]])
+        self.assertEqual('baz', self.conf.foo)
+        self.assertEqual('baz', self.conf.other.foo)
+        self.assertIn('Option "bar" from group "DEFAULT"',
+                      self.log_fixture.output)
+        self.assertIn('Option "baz" from group "other"',
+                      self.log_fixture.output)
+
+    def test_check_deprecated_default_none(self):
+        parser = self._parser_class()
+        deprecated_list = [(None, 'bar')]
+        parser._check_deprecated(('DEFAULT', 'bar'), (None, 'foo'),
+                                 deprecated_list)
+        self.assert_message_logged('bar', 'DEFAULT', 'foo', 'DEFAULT')
+        # Make sure check_deprecated didn't modify the list passed in
+        self.assertEqual([(None, 'bar')], deprecated_list)
+
+    def test_check_deprecated_none_default(self):
+        parser = self._parser_class()
+        deprecated_list = [('DEFAULT', 'bar')]
+        parser._check_deprecated((None, 'bar'), ('DEFAULT', 'foo'),
+                                 deprecated_list)
+        self.assert_message_logged('bar', 'DEFAULT', 'foo', 'DEFAULT')
+        # Make sure check_deprecated didn't modify the list passed in
+        self.assertEqual([('DEFAULT', 'bar')], deprecated_list)
+
+    def assert_message_logged(self, deprecated_name, deprecated_group,
+                              current_name, current_group):
+        expected = (self._parser_class._deprecated_opt_message %
+                    (deprecated_name, deprecated_group,
+                     current_name, current_group)
+                    )
+        self.assertEqual(expected + '\n', self.log_fixture.output)
