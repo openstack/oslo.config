@@ -257,10 +257,16 @@ def _list_opts(namespaces):
     :param namespaces: a list of namespaces registered under 'oslo.config.opts'
     :returns: a list of (namespace, [(group, [opt_1, opt_2])]) tuples
     """
-    mgr = stevedore.named.NamedExtensionManager('oslo.config.opts',
-                                                names=namespaces,
-                                                invoke_on_load=True)
+    mgr = stevedore.named.NamedExtensionManager(
+        'oslo.config.opts',
+        names=namespaces,
+        on_load_failure_callback=on_load_failure_callback,
+        invoke_on_load=True)
     return [(ep.name, ep.obj) for ep in mgr]
+
+
+def on_load_failure_callback(*args, **kwargs):
+    raise
 
 
 def generate(conf):

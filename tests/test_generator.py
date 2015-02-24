@@ -540,9 +540,11 @@ class GeneratorTestCase(base.BaseTestCase):
             content = open(output_file).read()
             self.assertEqual(self.expected, content)
 
-        named_mgr.assert_called_once_with('oslo.config.opts',
-                                          names=namespaces,
-                                          invoke_on_load=True)
+        named_mgr.assert_called_once_with(
+            'oslo.config.opts',
+            names=namespaces,
+            on_load_failure_callback=generator.on_load_failure_callback,
+            invoke_on_load=True)
 
         log_warning = getattr(self, 'log_warning', None)
         if log_warning is not None:

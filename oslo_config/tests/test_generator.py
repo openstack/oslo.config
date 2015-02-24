@@ -525,15 +525,43 @@ class GeneratorTestCase(base.BaseTestCase):
             content = open(output_file).read()
             self.assertEqual(self.expected, content)
 
-        named_mgr.assert_called_once_with('oslo.config.opts',
-                                          names=namespaces,
-                                          invoke_on_load=True)
+        named_mgr.assert_called_once_with(
+            'oslo.config.opts',
+            names=namespaces,
+            on_load_failure_callback=generator.on_load_failure_callback,
+            invoke_on_load=True)
 
         log_warning = getattr(self, 'log_warning', None)
         if log_warning is not None:
             mock_log.warning.assert_called_once_with(*log_warning)
         else:
             self.assertFalse(mock_log.warning.called)
+
+
+class GeneratorRaiseErrorTestCase(base.BaseTestCase):
+
+    def test_generator_raises_error(self):
+        """Verifies that errors from extension manager are not suppressed."""
+        class FakeException(Exception):
+            pass
+
+        class FakeEP(object):
+
+            def __init__(self):
+                self.name = 'callback_is_expected'
+                self.require = self.resolve
+                self.load = self.resolve
+
+            def resolve(self, *args, **kwargs):
+                raise FakeException()
+
+        fake_ep = FakeEP()
+        self.conf = cfg.ConfigOpts()
+        self.conf.register_opts(generator._generator_opts)
+        self.conf.set_default('namespace', fake_ep.name)
+        fake_eps = mock.Mock(return_value=[fake_ep])
+        with mock.patch('pkg_resources.iter_entry_points', fake_eps):
+            self.assertRaises(FakeException, generator.generate, self.conf)
 
 
 GeneratorTestCase.generate_scenarios()
