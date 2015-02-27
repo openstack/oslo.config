@@ -922,7 +922,7 @@ class DeprecatedOpt(object):
 class StrOpt(Opt):
     """Option with String type
 
-    Option with ``type`` :class:`oslo_config.types.Integer`
+    Option with ``type`` :class:`oslo_config.types.String`
 
     `Kept for backward-compatibility with options not using Opt directly`.
 
