@@ -622,7 +622,8 @@ class Opt(object):
                  default=None, positional=False, metavar=None, help=None,
                  secret=False, required=False,
                  deprecated_name=None, deprecated_group=None,
-                 deprecated_opts=None, sample_default=None):
+                 deprecated_opts=None, sample_default=None,
+                 deprecated_for_removal=False):
         """Construct an Opt object.
 
         The only required parameter is the option's name. However, it is
@@ -643,6 +644,8 @@ class Opt(object):
         :param deprecated_group: the group containing a deprecated alias
         :param deprecated_opts: array of DeprecatedOpt(s)
         :param sample_default: a default string for sample config files
+        :param deprecated_for_removal: indicates whether this opt is planned
+                                       for removal in a future release
         """
         if name.startswith('_'):
             raise ValueError('illegal name %s with prefix _' % (name,))
@@ -667,6 +670,8 @@ class Opt(object):
         self.help = help
         self.secret = secret
         self.required = required
+        self.deprecated_for_removal = deprecated_for_removal
+        self._logged_deprecation = False
         if deprecated_name is not None:
             deprecated_name = deprecated_name.replace('-', '_')
 
@@ -719,7 +724,16 @@ class Opt(object):
                 names.append((dgroup if dgroup else group_name,
                               dname if dname else self.dest))
 
-        return namespace._get_value(names, self.multi, self.positional)
+        value = namespace._get_value(names, self.multi, self.positional)
+        # The previous line will raise a KeyError if no value is set in the
+        # config file, so we'll only log deprecations for set options.
+        if self.deprecated_for_removal and not self._logged_deprecation:
+            self._logged_deprecation = True
+            pretty_group = group_name or 'DEFAULT'
+            LOG.warning('Option "%s" from group "%s" is deprecated for '
+                        'removal.  Its value may be silently ignored in the '
+                        'future.', self.dest, pretty_group)
+        return value
 
     def _add_to_cli(self, parser, group=None):
         """Makes the option available in the command line interface.
