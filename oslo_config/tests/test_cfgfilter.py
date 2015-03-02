@@ -278,3 +278,53 @@ class ImportTestCase(BaseTestCase):
         self.fconf.import_group('fbaar', 'tests.testmods.fbaar_baa_opt')
         self.assertTrue(hasattr(self.fconf, 'fbaar'))
         self.assertTrue(hasattr(self.fconf.fbaar, 'baa'))
+
+
+class ExposeTestCase(BaseTestCase):
+
+    def test_expose_opt(self):
+        self.assertFalse(hasattr(self.conf, 'foo'))
+        self.assertFalse(hasattr(self.fconf, 'foo'))
+
+        self.conf.register_opt(cfg.StrOpt('foo'))
+        self.conf.set_override('foo', 'bar')
+
+        self.assertTrue(hasattr(self.conf, 'foo'))
+        self.assertEqual(self.conf.foo, 'bar')
+        self.assertFalse(hasattr(self.fconf, 'foo'))
+
+        self.fconf.expose_opt('foo')
+        self.assertTrue(hasattr(self.conf, 'foo'))
+        self.assertTrue(hasattr(self.fconf, 'foo'))
+        self.assertEqual(self.fconf.foo, 'bar')
+
+    def test_expose_opt_with_group(self):
+        self.assertFalse(hasattr(self.conf, 'foo'))
+        self.assertFalse(hasattr(self.fconf, 'foo'))
+
+        self.conf.register_opt(cfg.StrOpt('foo'), group='group')
+        self.conf.set_override('foo', 'bar', group='group')
+
+        self.assertTrue(hasattr(self.conf.group, 'foo'))
+        self.assertEqual(self.conf.group.foo, 'bar')
+        self.assertFalse(hasattr(self.fconf, 'group'))
+
+        self.fconf.expose_opt('foo', group='group')
+        self.assertTrue(hasattr(self.conf.group, 'foo'))
+        self.assertTrue(hasattr(self.fconf.group, 'foo'))
+        self.assertEqual(self.fconf.group.foo, 'bar')
+
+    def test_expose_group(self):
+        self.conf.register_opts([cfg.StrOpt('foo'),
+                                 cfg.StrOpt('bar')], group='group')
+        self.conf.register_opts([cfg.StrOpt('foo'),
+                                 cfg.StrOpt('bar')], group='another')
+        self.conf.set_override('foo', 'a', group='group')
+        self.conf.set_override('bar', 'b', group='group')
+
+        self.fconf.expose_group('group')
+
+        self.assertEqual('a', self.fconf.group.foo)
+        self.assertEqual('b', self.fconf.group.bar)
+        self.assertFalse(hasattr(self.fconf, 'another'))
+        self.assertTrue(hasattr(self.conf, 'another'))

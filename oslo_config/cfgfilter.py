@@ -13,7 +13,7 @@
 #    under the License.
 
 r"""
-There are two use cases for the ConfigFilter class:
+There are three use cases for the ConfigFilter class:
 
 1. Help enforce that a given module does not access options registered
    by another module, without first declaring those cross-module
@@ -21,6 +21,8 @@ There are two use cases for the ConfigFilter class:
 
 2. Prevent private configuration opts from being visible to modules
    other than the one which registered it.
+
+3. Limit the options on a Cfg object that can be accessed.
 
 Cross-Module Option Dependencies
 --------------------------------
@@ -95,6 +97,31 @@ which the API user supplies to the library. For example::
   widget = Widget(conf)
   print(widget.foo)
   print(conf.foo)  # raises NoSuchOptError
+
+
+Limited Configuration Options
+-----------------------------
+
+It may be required that when passing a CONF object to other functions we want
+to filter that the receiving code is only able to access a restricted subset
+of the options that are available on the CONF object. This is essentially a
+more general case of the Private Configuration Options and Cross-Module Options
+whereby we expose an option that is already present on the underlying CONF
+object without providing any means to load it if not present.
+
+So given a CONF object with options defined::
+
+  CONF.register_opt(StrOpt('foo'))
+  CONF.register_opt(StrOpt('bar'))
+
+we can expose options such that only those options are present::
+
+  restricted_conf = CfgFilter(CONF)
+  restricted_conf.expose_opt('foo')
+
+  print(restricted_conf.foo)
+  print(restricted_conf.bar)  # raises NoSuchOptError
+
 
 """
 
@@ -272,6 +299,28 @@ class ConfigFilter(collections.Mapping):
             group = self.GroupAttr(self._conf, group_name)
             self._imported_groups[group_name] = group
             return group
+
+    def expose_opt(self, opt_name, group=None):
+        """Expose an option from the underlying conf object.
+
+        This allows an object that has already been imported or used from the
+        base conf object to be seen from the filter object.
+
+        :param opt_name: the name/dest of the opt
+        :param group: an option OptGroup object or group name
+        """
+        self._import_opt(opt_name, group)
+
+    def expose_group(self, group):
+        """Expose all option from a group in the underlying conf object.
+
+        This allows an object that has already been imported or used from the
+        base conf object to be seen from the filter object.
+
+        :param group: an option OptGroup object or group name
+        """
+        group = self._import_group(group)
+        group._all_opts = True
 
     class GroupAttr(collections.Mapping):
 
