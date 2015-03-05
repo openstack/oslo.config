@@ -52,6 +52,10 @@ class GeneratorTestCase(base.BaseTestCase):
                                      'cupidatat non proident, sunt in culpa '
                                      'qui officia deserunt mollit anim id est '
                                      'laborum.'),
+        'choices_opt': cfg.StrOpt('choices_opt',
+                                  default='a',
+                                  choices=('a', 'b', 'c'),
+                                  help='a string with choices'),
         'deprecated_opt': cfg.StrOpt('bar',
                                      deprecated_name='foobar',
                                      help='deprecated'),
@@ -295,6 +299,18 @@ class GeneratorTestCase(base.BaseTestCase):
 '(string value)'
 '''
 #long_help = <None>
+''')),
+        ('choices_opt',
+         dict(opts=[('test', [(None, [opts['choices_opt']])])],
+              expected='''[DEFAULT]
+
+#
+# From test
+#
+
+# a string with choices (string value)
+# Allowed values: a, b, c
+#choices_opt = a
 ''')),
         ('deprecated',
          dict(opts=[('test', [('foo', [opts['deprecated_opt']])])],
