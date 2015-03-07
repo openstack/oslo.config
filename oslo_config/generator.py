@@ -193,6 +193,10 @@ class _OptFormatter(object):
             help_text = u'(%s)' % opt_type
         lines = self._format_help(help_text)
 
+        if getattr(opt.type, 'choices', None):
+            choices_text = ', '.join(opt.type.choices)
+            lines.append('# Allowed values: %s\n' % choices_text)
+
         for d in opt.deprecated_opts:
             lines.append('# Deprecated group/name - [%s]/%s\n' %
                          (d.group or 'DEFAULT', d.name or opt.dest))
