@@ -177,6 +177,13 @@ class _OptFormatter(object):
             lines = ['# ' + help_text + '\n']
         return lines
 
+    def _get_choice_text(self, choice):
+        if choice is None:
+            return '<None>'
+        elif choice == '':
+            return "''"
+        return six.text_type(choice)
+
     def format(self, opt):
         """Format a description of an option to the output file.
 
@@ -195,8 +202,7 @@ class _OptFormatter(object):
         lines = self._format_help(help_text)
 
         if getattr(opt.type, 'choices', None):
-            choices_text = ', '.join([six.text_type(choice)
-                                      if choice else '<None>'
+            choices_text = ', '.join([self._get_choice_text(choice)
                                       for choice in opt.type.choices])
             lines.append('# Allowed values: %s\n' % choices_text)
 

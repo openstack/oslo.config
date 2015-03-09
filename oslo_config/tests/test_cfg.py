@@ -3479,6 +3479,29 @@ class ChoicesTestCase(BaseTestCase):
         self.assertTrue(hasattr(self.conf, 'foo'))
         self.assertEqual(self.conf.foo, 'bar1')
 
+    def test_conf_file_choice_empty_value(self):
+        self.conf.register_opt(cfg.StrOpt('foo',
+                               choices=['', 'bar1', 'bar2']))
+
+        paths = self.create_tempfiles([('test', '[DEFAULT]\n''foo = \n')])
+
+        self.conf(['--config-file', paths[0]])
+
+        self.assertTrue(hasattr(self.conf, 'foo'))
+        self.assertEqual(self.conf.foo, '')
+
+    def test_conf_file_choice_none_value(self):
+        self.conf.register_opt(cfg.StrOpt('foo',
+                               default=None,
+                               choices=[None, 'bar1', 'bar2']))
+
+        paths = self.create_tempfiles([('test', '[DEFAULT]\n''\n')])
+
+        self.conf(['--config-file', paths[0]])
+
+        self.assertTrue(hasattr(self.conf, 'foo'))
+        self.assertEqual(self.conf.foo, None)
+
     def test_conf_file_bad_choice_value(self):
         self.conf.register_opt(cfg.StrOpt('foo',
                                choices=['bar1', 'bar2']))
