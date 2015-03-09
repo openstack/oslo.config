@@ -54,7 +54,7 @@ class GeneratorTestCase(base.BaseTestCase):
                                      'laborum.'),
         'choices_opt': cfg.StrOpt('choices_opt',
                                   default='a',
-                                  choices=('a', 'b', 'c'),
+                                  choices=(None, 'a', 'b', 'c'),
                                   help='a string with choices'),
         'deprecated_opt': cfg.StrOpt('bar',
                                      deprecated_name='foobar',
@@ -309,7 +309,7 @@ class GeneratorTestCase(base.BaseTestCase):
 #
 
 # a string with choices (string value)
-# Allowed values: a, b, c
+# Allowed values: <None>, a, b, c
 #choices_opt = a
 ''')),
         ('deprecated',

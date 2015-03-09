@@ -109,6 +109,7 @@ import sys
 import textwrap
 
 import pkg_resources
+import six
 
 from oslo.config import cfg
 import stevedore.named  # noqa
@@ -194,7 +195,9 @@ class _OptFormatter(object):
         lines = self._format_help(help_text)
 
         if getattr(opt.type, 'choices', None):
-            choices_text = ', '.join(opt.type.choices)
+            choices_text = ', '.join([six.text_type(choice)
+                                      if choice else '<None>'
+                                      for choice in opt.type.choices])
             lines.append('# Allowed values: %s\n' % choices_text)
 
         for d in opt.deprecated_opts:
