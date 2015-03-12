@@ -111,7 +111,7 @@ import textwrap
 import pkg_resources
 import six
 
-from oslo.config import cfg
+from oslo_config import cfg
 import stevedore.named  # noqa
 
 LOG = logging.getLogger(__name__)
