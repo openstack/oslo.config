@@ -885,7 +885,7 @@ class DeprecatedOpt(object):
     If no group is specified for a DeprecatedOpt option (i.e. the group is
     None), lookup will happen within the same group the new option is in.
     For example, if no group was specified for the second option 'oldopt2' in
-    oldopts list:
+    oldopts list::
 
         oldopts = [cfg.DeprecatedOpt('oldopt1', group='group1'),
                    cfg.DeprecatedOpt('oldopt2')]
