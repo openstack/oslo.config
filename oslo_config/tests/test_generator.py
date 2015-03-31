@@ -55,6 +55,8 @@ class GeneratorTestCase(base.BaseTestCase):
         'deprecated_opt': cfg.StrOpt('bar',
                                      deprecated_name='foobar',
                                      help='deprecated'),
+        'deprecated_for_removal_opt': cfg.StrOpt(
+            'bar', deprecated_for_removal=True, help='deprecated for removal'),
         'deprecated_group': cfg.StrOpt('bar',
                                        deprecated_group='group1',
                                        deprecated_name='foobar',
@@ -310,6 +312,22 @@ class GeneratorTestCase(base.BaseTestCase):
 
 # deprecated (string value)
 # Deprecated group/name - [DEFAULT]/foobar
+#bar = <None>
+''')),
+        ('deprecated_for_removal',
+         dict(opts=[('test', [('foo', [opts['deprecated_for_removal_opt']])])],
+              expected='''[DEFAULT]
+
+
+[foo]
+
+#
+# From test
+#
+
+# deprecated for removal (string value)
+# This option is deprecated for removal.
+# Its value may be silently ignored in the future.
 #bar = <None>
 ''')),
         ('deprecated_group',

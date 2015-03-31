@@ -129,6 +129,11 @@ class _OptFormatter(object):
             lines.append('# Deprecated group/name - [%s]/%s\n' %
                          (d.group or 'DEFAULT', d.name or opt.dest))
 
+        if opt.deprecated_for_removal:
+            lines.append(
+                '# This option is deprecated for removal.\n'
+                '# Its value may be silently ignored in the future.\n')
+
         if isinstance(opt, cfg.MultiStrOpt):
             if opt.sample_default is not None:
                 defaults = opt.sample_default
