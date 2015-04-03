@@ -2894,7 +2894,7 @@ class FindFileTestCase(BaseTestCase):
 
 class OptDumpingTestCase(BaseTestCase):
 
-    class FakeLogger:
+    class FakeLogger(object):
 
         def __init__(self, test_case, expected_lvl):
             self.test_case = test_case
