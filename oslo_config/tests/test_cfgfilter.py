@@ -13,6 +13,7 @@
 #    under the License.
 
 from oslotest import base as test_base
+import testtools
 
 from oslo_config import cfg
 from oslo_config import cfgfilter
@@ -116,17 +117,31 @@ class RegisterTestCase(BaseTestCase):
         self.assertNotIn('foo', self.conf)
         self.assertNotIn('bar', self.conf)
 
-    def test_register_cli_opt(self):
+    def test_register_known_cli_opt(self):
+        self.conf.register_opt(cfg.StrOpt('foo'))
         self.fconf.register_cli_opt(cfg.StrOpt('foo'))
         self.assertIn('foo', self.fconf)
-        self.assertNotIn('foo', self.conf)
+        self.assertIn('foo', self.conf)
 
-    def test_register_cli_opts(self):
+    def test_register_unknown_cli_opt(self):
+        with testtools.ExpectedException(cfgfilter.CliOptRegisteredError):
+            self.fconf.register_cli_opt(cfg.StrOpt('foo'))
+
+    def test_register_known_cli_opts(self):
+        self.conf.register_cli_opts([cfg.StrOpt('foo'), cfg.StrOpt('bar')])
         self.fconf.register_cli_opts([cfg.StrOpt('foo'), cfg.StrOpt('bar')])
         self.assertIn('foo', self.fconf)
         self.assertIn('bar', self.fconf)
-        self.assertNotIn('foo', self.conf)
-        self.assertNotIn('bar', self.conf)
+        self.assertIn('foo', self.conf)
+        self.assertIn('bar', self.conf)
+
+    def test_register_unknown_cli_opts(self):
+        self.conf.register_cli_opt(cfg.StrOpt('foo'))
+        with testtools.ExpectedException(cfgfilter.CliOptRegisteredError):
+            self.fconf.register_cli_opts([
+                cfg.StrOpt('foo'),
+                cfg.StrOpt('bar')
+            ])
 
     def test_register_opts_grouped(self):
         self.fconf.register_opts([cfg.StrOpt('foo'), cfg.StrOpt('bar')],
@@ -135,17 +150,34 @@ class RegisterTestCase(BaseTestCase):
         self.assertIn('bar', self.fconf.blaa)
         self.assertNotIn('blaa', self.conf)
 
-    def test_register_cli_opt_grouped(self):
+    def test_register_known_cli_opt_grouped(self):
+        self.conf.register_cli_opt(cfg.StrOpt('foo'), group='blaa')
         self.fconf.register_cli_opt(cfg.StrOpt('foo'), group='blaa')
         self.assertIn('foo', self.fconf.blaa)
-        self.assertNotIn('blaa', self.conf)
+        self.assertIn('blaa', self.fconf)
+        self.assertIn('blaa', self.conf)
 
-    def test_register_cli_opts_grouped(self):
+    def test_register_unknown_cli_opt_grouped(self):
+        with testtools.ExpectedException(cfgfilter.CliOptRegisteredError):
+            self.fconf.register_cli_opt(cfg.StrOpt('foo'), group='blaa')
+
+    def test_register_known_cli_opts_grouped(self):
+        self.conf.register_cli_opts([cfg.StrOpt('foo'), cfg.StrOpt('bar')],
+                                    group='blaa')
         self.fconf.register_cli_opts([cfg.StrOpt('foo'), cfg.StrOpt('bar')],
                                      group='blaa')
         self.assertIn('foo', self.fconf.blaa)
         self.assertIn('bar', self.fconf.blaa)
-        self.assertNotIn('blaa', self.conf)
+        self.assertIn('blaa', self.fconf)
+        self.assertIn('blaa', self.conf)
+
+    def test_register_unknown_opts_grouped(self):
+        self.conf.register_cli_opts([cfg.StrOpt('bar')], group='blaa')
+        with testtools.ExpectedException(cfgfilter.CliOptRegisteredError):
+            self.fconf.register_cli_opts([
+                cfg.StrOpt('foo'),
+                cfg.StrOpt('bar')
+            ], group='blaa')
 
     def test_unknown_opt(self):
         self.assertNotIn('foo', self.fconf)
@@ -223,20 +255,18 @@ class RegisterTestCase(BaseTestCase):
         self.conf.register_cli_opts([cfg.StrOpt('foo'),
                                      cfg.StrOpt('fu')])
         self.fconf.register_cli_opts([cfg.StrOpt('foo'),
-                                      cfg.StrOpt('bu')])
+                                      cfg.StrOpt('fu')])
 
         self.assertIn('foo', self.conf)
         self.assertIn('fu', self.conf)
-        self.assertNotIn('bu', self.conf)
         self.assertEqual(2, len(self.conf))
         self.assertIsNone(self.conf.foo)
         self.assertIsNone(self.conf.fu)
         self.assertIn('foo', self.fconf)
-        self.assertIn('bu', self.fconf)
-        self.assertNotIn('fu', self.fconf)
+        self.assertIn('fu', self.fconf)
         self.assertEqual(2, len(self.fconf))
         self.assertIsNone(self.fconf.foo)
-        self.assertIsNone(self.fconf.bu)
+        self.assertIsNone(self.fconf.fu)
 
         self.conf.set_override('foo', 'bar')
 

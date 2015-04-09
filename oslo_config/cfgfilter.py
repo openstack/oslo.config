@@ -131,8 +131,19 @@ import itertools
 from oslo_config import cfg
 
 
-class ConfigFilter(collections.Mapping):
+class CliOptRegisteredError(cfg.Error):
+    """Raised when registering cli opt not in original ConfigOpts."""
 
+    def __str__(self):
+        ret = "Cannot register a cli option that was not present in the" \
+              " original ConfigOpts."
+
+        if self.msg:
+            ret += ": " + self.msg
+        return ret
+
+
+class ConfigFilter(collections.Mapping):
     """A helper class which wraps a ConfigOpts object.
 
     ConfigFilter enforces the explicit declaration of dependencies on external
@@ -235,11 +246,13 @@ class ConfigFilter(collections.Mapping):
         """
         if self._already_registered(self._conf, opt, group):
             # Raises DuplicateError if there is another opt with the same name
-            ret = self._conf.register_cli_opt(opt, group)
+            ret = self._conf.register_opt(
+                opt, group, cli=True, clear_cache=False)
             self._import_opt(opt.dest, group)
             return ret
         else:
-            return self._fconf.register_cli_opt(opt, group)
+            raise CliOptRegisteredError(
+                "Opt '{0}' cannot be registered.".format(opt.dest))
 
     def register_cli_opts(self, opts, group=None):
         """Register multiple CLI option schemas at once."""
