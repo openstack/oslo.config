@@ -116,3 +116,27 @@ class Config(fixtures.Fixture):
         """
         for opt in opts:
             self.register_cli_opt(opt, group=group)
+
+    def load_raw_values(self, group=None, **kwargs):
+        """Load raw values into the configuration without registering them.
+
+        This method adds a series of parameters into the current config
+        instance, as if they had been loaded by a ConfigParser. This method
+        does not require that you register the configuration options first,
+        however the values loaded will not be accessible until you do.
+        """
+
+        # Make sure the namespace exists for our tests.
+        if not self.conf._namespace:
+            self.conf.__call__(args=[])
+
+        # Default out the group name
+        group = 'DEFAULT' if not group else group
+
+        raw_config = dict()
+        raw_config[group] = dict()
+        for key, value in six.iteritems(kwargs):
+            # Parsed values are an array of raw strings.
+            raw_config[group][key] = [str(value)]
+
+        self.conf._namespace._add_parsed_config_file(raw_config, raw_config)
