@@ -85,3 +85,33 @@ class ConfigTestCase(base.BaseTestCase):
                          opt.default)
         self.config_fixture.cleanUp()
         self.assertRaises(cfg.NoSuchOptError, conf.get, 'new_test_opt')
+
+    def test_load_raw_values(self):
+        self.config_fixture.load_raw_values(first_test_opt='loaded_value_1',
+                                            second_test_opt='loaded_value_2')
+
+        # Must not be registered.
+        self.assertRaises(cfg.NoSuchOptError, conf.get, 'first_test_opt')
+        self.assertRaises(cfg.NoSuchOptError, conf.get, 'second_test_opt')
+
+        opt1 = cfg.StrOpt('first_test_opt', default='initial_value_1')
+        opt2 = cfg.StrOpt('second_test_opt', default='initial_value_2')
+
+        self.config_fixture.register_opt(opt1)
+        self.config_fixture.register_opt(opt2)
+
+        self.assertEqual(conf.first_test_opt, 'loaded_value_1')
+        self.assertEqual(conf.second_test_opt, 'loaded_value_2')
+
+        # Cleanup.
+        self.config_fixture.cleanUp()
+
+        # Must no longer be registered.
+        self.assertRaises(cfg.NoSuchOptError, conf.get, 'first_test_opt')
+        self.assertRaises(cfg.NoSuchOptError, conf.get, 'second_test_opt')
+
+        # Even when registered, must be default.
+        self.config_fixture.register_opt(opt1)
+        self.config_fixture.register_opt(opt2)
+        self.assertEqual(conf.first_test_opt, 'initial_value_1')
+        self.assertEqual(conf.second_test_opt, 'initial_value_2')
