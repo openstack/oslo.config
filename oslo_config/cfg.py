@@ -592,8 +592,28 @@ class Opt(object):
 
     """Base class for all configuration options.
 
-    An Opt object has no public methods, but has a number of public string
-    properties:
+    The only required parameter is the option's name. However, it is
+    common to also supply a default and help string for all options.
+
+    :param name: the option's name
+    :param type: the option's type. Must be a callable object that takes string
+                 and returns converted and validated value
+    :param dest: the name of the corresponding ConfigOpts property
+    :param short: a single character CLI option name
+    :param default: the default value of the option
+    :param positional: True if the option is a positional CLI argument
+    :param metavar: the option argument to show in --help
+    :param help: an explanation of how the option is used
+    :param secret: true iff the value should be obfuscated in log output
+    :param required: true iff a value must be supplied for this option
+    :param deprecated_name: deprecated name option.  Acts like an alias
+    :param deprecated_group: the group containing a deprecated alias
+    :param deprecated_opts: array of DeprecatedOpt(s)
+    :param sample_default: a default string for sample config files
+    :param deprecated_for_removal: indicates whether this opt is planned for
+                                   removal in a future release
+
+    An Opt object has no public methods, but has a number of public properties:
 
       name:
         the name of the option, which may include hyphens
@@ -624,29 +644,6 @@ class Opt(object):
                  deprecated_name=None, deprecated_group=None,
                  deprecated_opts=None, sample_default=None,
                  deprecated_for_removal=False):
-        """Construct an Opt object.
-
-        The only required parameter is the option's name. However, it is
-        common to also supply a default and help string for all options.
-
-        :param name: the option's name
-        :param type: the option's type. Must be a callable object that
-                     takes string and returns converted and validated value
-        :param dest: the name of the corresponding ConfigOpts property
-        :param short: a single character CLI option name
-        :param default: the default value of the option
-        :param positional: True if the option is a positional CLI argument
-        :param metavar: the option argument to show in --help
-        :param help: an explanation of how the option is used
-        :param secret: true iff the value should be obfuscated in log output
-        :param required: true iff a value must be supplied for this option
-        :param deprecated_name: deprecated name option.  Acts like an alias
-        :param deprecated_group: the group containing a deprecated alias
-        :param deprecated_opts: array of DeprecatedOpt(s)
-        :param sample_default: a default string for sample config files
-        :param deprecated_for_removal: indicates whether this opt is planned
-                                       for removal in a future release
-        """
         if name.startswith('_'):
             raise ValueError('illegal name %s with prefix _' % (name,))
         self.name = name
