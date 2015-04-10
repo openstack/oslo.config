@@ -115,3 +115,29 @@ class ConfigTestCase(base.BaseTestCase):
         self.config_fixture.register_opt(opt2)
         self.assertEqual(conf.first_test_opt, 'initial_value_1')
         self.assertEqual(conf.second_test_opt, 'initial_value_2')
+
+    def test_assert_default_files_cleanup(self):
+        """Assert that using the fixture forces a clean list."""
+        self.assertNotIn('default_config_files', conf)
+
+        config_files = ['./test_fixture.conf']
+        self.config_fixture.set_config_files(config_files)
+
+        self.assertEqual(conf.default_config_files, config_files)
+        self.config_fixture.cleanUp()
+
+        self.assertNotIn('default_config_files', conf)
+
+    def test_load_custom_files(self):
+        self.assertNotIn('default_config_files', conf)
+        config_files = ['./oslo_config/tests/test_fixture.conf']
+        self.config_fixture.set_config_files(config_files)
+
+        opt1 = cfg.StrOpt('first_test_opt', default='initial_value_1')
+        opt2 = cfg.StrOpt('second_test_opt', default='initial_value_2')
+
+        self.config_fixture.register_opt(opt1)
+        self.config_fixture.register_opt(opt2)
+
+        self.assertEqual('loaded_value_1', conf.get('first_test_opt'))
+        self.assertEqual('loaded_value_2', conf.get('second_test_opt'))

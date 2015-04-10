@@ -36,9 +36,17 @@ class Config(fixtures.Fixture):
         # NOTE(morganfainberg): unregister must be added to cleanup before
         # reset is because cleanup works in reverse order of registered items,
         # and a reset must occur before unregistering options can occur.
+        self.addCleanup(self._reset_default_config_files)
         self.addCleanup(self._unregister_config_opts)
         self.addCleanup(self.conf.reset)
         self._registered_config_opts = {}
+
+        # Grab an old copy of the default config files - if it exists - for
+        # subsequent cleanup.
+        if hasattr(self.conf, 'default_config_files'):
+            self._default_config_files = self.conf.default_config_files
+        else:
+            self._default_config_files = None
 
     def config(self, **kw):
         """Override configuration values.
@@ -60,6 +68,17 @@ class Config(fixtures.Fixture):
         for group in self._registered_config_opts:
             self.conf.unregister_opts(self._registered_config_opts[group],
                                       group=group)
+
+    def _reset_default_config_files(self):
+        if not hasattr(self.conf, 'default_config_files'):
+            return
+
+        if self._default_config_files:
+            self.conf.default_config_files = self._default_config_files
+        else:
+            # Delete, because we could conceivably begin with the property
+            # being unset.
+            self.conf.default_config_files = None
 
     def register_opt(self, opt, group=None):
         """Register a single option for the test run.
@@ -140,3 +159,21 @@ class Config(fixtures.Fixture):
             raw_config[group][key] = [str(value)]
 
         self.conf._namespace._add_parsed_config_file(raw_config, raw_config)
+
+    def set_config_files(self, config_files):
+        """Specify a list of config files to read.
+
+        This method allows you to predefine the list of configuration files
+        that are loaded by oslo_config. It will ensure that your tests do not
+        attempt to autodetect, and accidentally pick up config files from
+        locally installed services.
+        """
+        if not isinstance(config_files, list):
+            raise AttributeError("Please pass a list() to set_config_files()")
+
+        # Make sure the namespace exists for our tests.
+        if not self.conf._namespace:
+            self.conf.__call__(args=[])
+
+        self.conf.default_config_files = config_files
+        self.conf.reload_config_files()
