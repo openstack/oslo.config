@@ -143,6 +143,9 @@ Option values in config files and those on the command line are parsed
 in order. The same option can appear many times, in config files or on
 the command line. Later values always override earlier ones.
 
+The order of configuration files inside the same configuration directory is
+defined by the alphabetic sorting order of their file names.
+
 The parsing of CLI args and config files is initiated by invoking the config
 manager for example::
 
