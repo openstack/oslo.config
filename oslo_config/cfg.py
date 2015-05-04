@@ -1579,7 +1579,9 @@ class _Namespace(argparse.Namespace):
             except KeyError:
                 continue
             except ValueError as ve:
-                raise ConfigFileValueError(str(ve))
+                raise ConfigFileValueError(
+                    "Value for option %s is not valid: %s"
+                    % (opt.name, str(ve)))
 
             if group_name is None:
                 dest = opt.dest
@@ -2276,7 +2278,9 @@ class ConfigOpts(collections.Mapping):
             except KeyError:
                 pass
             except ValueError as ve:
-                raise ConfigFileValueError(str(ve))
+                raise ConfigFileValueError(
+                    "Value for option %s is not valid: %s"
+                    % (opt.name, str(ve)))
 
         if 'default' in info:
             return self._substitute(info['default'])
