@@ -2800,11 +2800,8 @@ class SadPathTestCase(BaseTestCase):
 
         self.conf([])
 
-        self.assertFalse(hasattr(self.conf, 'bar'))
-        self.assertRaises(
-            AttributeError, getattr, self.conf, 'bar')
-        self.assertRaises(
-            cfg.TemplateSubstitutionError, self.conf._get, 'bar')
+        self.assertTrue(hasattr(self.conf, 'bar'))
+        self.assertEqual("blaa", self.conf.bar)
 
     def test_set_default_unknown_attr(self):
         self.conf([])

@@ -240,12 +240,10 @@ Option values may reference other values using PEP 292 string substitution::
 
   Interpolation can be avoided by using `$$`.
 
-.. warning::
+.. note::
 
-  Interpolation using the values of options in groups is not yet
-  supported. The interpolated option must be in the DEFAULT group
-  (i.e., ``"$state_path"`` works but ``"$database.state_path"`` does
-  not).
+  You can use `.` to delimit option from other groups, e.g.
+  ${mygroup.myoption}.
 
 Special Handling Instructions
 -----------------------------
@@ -2320,12 +2318,15 @@ class ConfigOpts(collections.Mapping):
             # a bit more natural for users
             if '\$' in value:
                 value = value.replace('\$', '$$')
-            tmpl = string.Template(value)
+            tmpl = self.Template(value)
             ret = tmpl.safe_substitute(
                 self.StrSubWrapper(self, group=group, namespace=namespace))
             return ret
         else:
             return value
+
+    class Template(string.Template):
+        idpattern = r'[_a-z][\._a-z0-9]*'
 
     def _convert_value(self, value, opt):
         """Perform value type conversion.
@@ -2591,10 +2592,16 @@ class ConfigOpts(collections.Mapping):
 
             :param key: an opt name
             :returns: an opt value
-            :raises: TemplateSubstitutionError if attribute is a group
             """
             try:
-                value = self.conf._get(key, group=self.group,
+                group_name, option = key.split(".", 1)
+            except ValueError:
+                group = self.group
+                option = key
+            else:
+                group = OptGroup(name=group_name)
+            try:
+                value = self.conf._get(option, group=group,
                                        namespace=self.namespace)
             except NoSuchOptError:
                 value = self.conf._get(key, namespace=self.namespace)
