@@ -231,7 +231,13 @@ def generate(conf):
             namespaces.append((namespace, opts))
 
     def _output_opts(f, group, namespaces):
-        f.write('[%s]\n' % group)
+        if isinstance(group, cfg.OptGroup):
+            group_name = group.name
+        else:
+            group_name = group
+
+        f.write('[%s]\n' % group_name)
+
         for (namespace, opts) in sorted(namespaces,
                                         key=operator.itemgetter(0)):
             f.write('\n#\n# From %s\n#\n' % namespace)

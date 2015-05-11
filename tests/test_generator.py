@@ -103,6 +103,7 @@ class GeneratorTestCase(base.BaseTestCase):
                                                     default=['1', '2', '3'],
                                                     sample_default=['5', '6'],
                                                     help='multiple strings'),
+        'group_opt': cfg.OptGroup('group_opt', title='a group'),
     }
 
     content_scenarios = [
@@ -153,6 +154,21 @@ class GeneratorTestCase(base.BaseTestCase):
 # foo option (string value)
 #foo = <None>
 ''')),
+        ('group_opt',
+         dict(opts=[('test', [(opts['group_opt'], [opts['foo']])])],
+              expected='''[DEFAULT]
+
+
+[group_opt]
+
+#
+# From test
+#
+
+# foo option (string value)
+#foo = <None>
+''')),
+
         ('empty_group',
          dict(opts=[('test', [('group1', [])])],
               expected='''[DEFAULT]
