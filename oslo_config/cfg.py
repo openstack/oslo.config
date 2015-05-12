@@ -715,6 +715,7 @@ class Opt(object):
         :param group_name: a group name
         """
         names = [(group_name, self.dest)]
+        current_name = (group_name, self.name)
 
         for opt in self.deprecated_opts:
             dname, dgroup = opt.name, opt.group
@@ -722,7 +723,8 @@ class Opt(object):
                 names.append((dgroup if dgroup else group_name,
                               dname if dname else self.dest))
 
-        value = namespace._get_value(names, self.multi, self.positional)
+        value = namespace._get_value(names, self.multi, self.positional,
+                                     current_name)
         # The previous line will raise a KeyError if no value is set in the
         # config file, so we'll only log deprecations for set options.
         if self.deprecated_for_removal and not self._logged_deprecation:
@@ -1467,7 +1469,7 @@ class MultiConfigParser(object):
     def get(self, names, multi=False):
         return self._get(names, multi=multi)
 
-    def _get(self, names, multi=False, normalized=False):
+    def _get(self, names, multi=False, normalized=False, current_name=None):
         """Fetch a config file value from the parsed files.
 
         :param names: a list of (section, name) tuples
@@ -1486,7 +1488,8 @@ class MultiConfigParser(object):
                 if section not in sections:
                     continue
                 if name in sections[section]:
-                    self._check_deprecated((section, name), names[0],
+                    current_name = current_name or names[0]
+                    self._check_deprecated((section, name), current_name,
                                            names[1:])
                     val = sections[section][name]
                     if multi:
@@ -1641,7 +1644,7 @@ class _Namespace(argparse.Namespace):
 
         raise KeyError
 
-    def _get_value(self, names, multi, positional):
+    def _get_value(self, names, multi, positional, current_name):
         """Fetch a value from config files.
 
         Multiple names for a given configuration option may be supplied so
@@ -1658,7 +1661,8 @@ class _Namespace(argparse.Namespace):
             pass
 
         names = [(g if g is not None else 'DEFAULT', n) for g, n in names]
-        values = self._parser._get(names, multi=multi, normalized=True)
+        values = self._parser._get(names, multi=multi, normalized=True,
+                                   current_name=current_name)
         return values if multi else values[-1]
 
 

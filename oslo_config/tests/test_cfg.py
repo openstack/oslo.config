@@ -3731,3 +3731,19 @@ class DeprecationWarningTests(DeprecationWarningTestBase):
                     'removal.  Its value may be silently ignored in the '
                     'future.\n')
         self.assertEqual(expected, self.log_fixture.output)
+
+    def test_deprecated_with_dest(self):
+        self.conf.register_group(cfg.OptGroup('other'))
+        self.conf.register_opt(cfg.StrOpt('foo-bar', deprecated_name='bar',
+                                          dest='foo'),
+                               group='other')
+        content = 'bar=baz'
+        paths = self.create_tempfiles([('test',
+                                        '[other]\n' +
+                                        content + '\n')])
+
+        self.conf(['--config-file', paths[0]])
+        self.assertEqual('baz', self.conf.other.foo)
+        expected = (self._parser_class._deprecated_opt_message %
+                    ('bar', 'other', 'foo-bar', 'other') + '\n')
+        self.assertEqual(expected, self.log_fixture.output)
