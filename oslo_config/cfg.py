@@ -616,25 +616,42 @@ class Opt(object):
 
     An Opt object has no public methods, but has a number of public properties:
 
-      name:
+    .. py:attribute:: name
+
         the name of the option, which may include hyphens
-      type:
+
+    .. py:attribute:: type
+
         a callable object that takes string and returns converted and
         validated value.  Default types are available from
         :class:`oslo_config.types`
-      dest:
+
+    .. py:attribute:: dest
+
         the (hyphen-less) ConfigOpts property which contains the option value
-      short:
+
+    .. py:attribute:: short
+
         a single character CLI option name
-      default:
+
+    .. py:attribute:: default
+
         the default value of the option
-      sample_default:
+
+    .. py:attribute:: sample_default
+
         a sample default value string to include in sample config files
-      positional:
+
+    .. py:attribute:: positional
+
         True if the option is a positional CLI argument
-      metavar:
+
+    .. py:attribute:: metavar
+
         the name shown as the argument to a CLI option in --help output
-      help:
+
+    .. py:attribute:: help
+
         a string explaining how the option's value is used
     """
     multi = False
@@ -1289,11 +1306,16 @@ class OptGroup(object):
     An OptGroup object has no public methods, but has a number of public string
     properties:
 
-      name:
+    .. py:attribute:: name
+
         the name of the group
-      title:
+
+    .. py:attribute:: title
+
         the group title as displayed in --help
-      help:
+
+    .. py:attribute:: help
+
         the group description as displayed in --help
     """
 
