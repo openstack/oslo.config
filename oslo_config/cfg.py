@@ -605,8 +605,8 @@ class Opt(object):
     :param positional: True if the option is a positional CLI argument
     :param metavar: the option argument to show in --help
     :param help: an explanation of how the option is used
-    :param secret: true iff the value should be obfuscated in log output
-    :param required: true iff a value must be supplied for this option
+    :param secret: true if the value should be obfuscated in log output
+    :param required: true if a value must be supplied for this option
     :param deprecated_name: deprecated name option.  Acts like an alias
     :param deprecated_group: the group containing a deprecated alias
     :param deprecated_opts: array of DeprecatedOpt(s)
