@@ -1431,6 +1431,20 @@ class ConfigFileOptsTestCase(BaseTestCase):
         self.assertTrue(hasattr(self.conf, 'foo'))
         self.assertEqual(self.conf.foo, 'bar-%08x')
 
+    def test_conf_file_sorted_group(self):
+        # Create enough groups for the sorted problem to appear
+        for i in range(10):
+            group = cfg.OptGroup('group%s' % i, 'options')
+            self.conf.register_group(group)
+            self.conf.register_cli_opt(cfg.StrOpt('opt1'), group=group)
+
+        paths = self.create_tempfiles(
+            [('test', '[group1]\nopt1 = foo\n[group2]\nopt2 = bar\n')])
+
+        self.conf(['--config-file', paths[0]])
+
+        self.assertEqual(self.conf.group1.opt1, 'foo')
+
 
 class ConfigFileReloadTestCase(BaseTestCase):
 

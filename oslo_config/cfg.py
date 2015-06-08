@@ -1595,7 +1595,7 @@ class _Namespace(argparse.Namespace):
         namespace = _Namespace(self._conf)
         namespace._parser._add_parsed_config_file(sections, normalized)
 
-        for opt, group in sorted(self._conf._all_cli_opts()):
+        for opt, group in self._conf._all_cli_opts():
             group_name = group.name if group is not None else None
             try:
                 value = opt._get_from_namespace(namespace, group_name)
