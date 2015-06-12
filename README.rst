@@ -2,11 +2,11 @@
 Oslo Configuration Library
 ==========================
 
-.. image:: https://pypip.in/version/oslo.config/badge.svg
+.. image:: https://img.shields.io/pypi/v/oslo.config.svg
     :target: https://pypi.python.org/pypi/oslo.config/
     :alt: Latest Version
 
-.. image:: https://pypip.in/download/oslo.config/badge.svg?period=month
+.. image:: https://img.shields.io/pypi/dm/oslo.config.svg
     :target: https://pypi.python.org/pypi/oslo.config/
     :alt: Downloads
 
