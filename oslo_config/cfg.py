@@ -1718,10 +1718,13 @@ class _CachedArgumentParser(argparse.ArgumentParser):
         # option and then sort the values slice.
         for container, values in six.iteritems(self._args_cache):
             index = 0
+            has_positional = False
             for index, argument in enumerate(values):
                 if not argument['args'][0].startswith('-'):
+                    has_positional = True
                     break
-            values[:index] = sorted(values[:index], key=lambda x: x['args'])
+            size = index if has_positional else len(values)
+            values[:size] = sorted(values[:size], key=lambda x: x['args'])
             for argument in values:
                 try:
                     container.add_argument(*argument['args'],
