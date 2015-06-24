@@ -2057,7 +2057,7 @@ class ConfigOpts(collections.Mapping):
         self._get_group(group)
 
     @__clear_cache
-    def set_override(self, name, override, group=None):
+    def set_override(self, name, override, group=None, enforce_type=False):
         """Override an opt value.
 
         Override the command line, config file and default values of a
@@ -2066,10 +2066,16 @@ class ConfigOpts(collections.Mapping):
         :param name: the name/dest of the opt
         :param override: the override value
         :param group: an option OptGroup object or group name
+        :param enforce_type: a boolean whether to convert the override
+         value to the option's type
         :raises: NoSuchOptError, NoSuchGroupError
         """
         opt_info = self._get_opt_info(name, group)
-        opt_info['override'] = override
+        if enforce_type:
+            opt_info['override'] = self._convert_value(override,
+                                                       opt_info['opt'])
+        else:
+            opt_info['override'] = override
 
     @__clear_cache
     def set_default(self, name, default, group=None):
