@@ -30,7 +30,7 @@ The schema for each option is defined using the
                    default='0.0.0.0',
                    help='IP address to listen on.'),
         cfg.Opt('bind_port',
-                type=PortType(),
+                type=PortType,
                 default=9292,
                 help='Port number to listen on.')
     ]
