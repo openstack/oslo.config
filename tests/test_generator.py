@@ -23,7 +23,7 @@ import testscenarios
 from oslo.config import cfg
 from oslo.config import fixture as config_fixture
 from oslo.config import generator
-from oslo.i18n import fixture as i18n_fixture
+from oslo_i18n import fixture as i18n_fixture
 
 load_tests = testscenarios.load_tests_apply_scenarios
 
