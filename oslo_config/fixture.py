@@ -177,3 +177,27 @@ class Config(fixtures.Fixture):
 
         self.conf.default_config_files = config_files
         self.conf.reload_config_files()
+
+    def set_default(self, name, default, group=None):
+        """Set a default value for an option.
+
+        This method is not necessarily meant to be invoked
+        directly. It is here to allow the set_defaults() functions in
+        various Oslo libraries to work with a Config fixture instead
+        of a ConfigOpts instance.
+
+        Use it like::
+
+            class MyTest(testtools.TestCase):
+
+                def setUp(self):
+                    super(MyTest, self).setUp()
+                    self.conf = self.useFixture(fixture.Config())
+
+                def test_something(self):
+                    some_library.set_defaults(self.conf, name='value')
+                    some_library.do_something_exciting()
+
+        """
+        self.conf.set_default(name, default, group)
+        self.addCleanup(self.conf.clear_default, name, group)
