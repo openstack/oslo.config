@@ -1862,10 +1862,12 @@ class ConfigOpts(collections.Mapping):
 
         :param name: the opt name (or 'dest', more precisely)
         :returns: the option value (after string substitution) or a GroupAttr
-        :raises: NoSuchOptError
+        :raises: ValueError or NoSuchOptError
         """
         try:
             return self._get(name)
+        except ValueError:
+            raise
         except Exception:
             raise NoSuchOptError(name)
 
