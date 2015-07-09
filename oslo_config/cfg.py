@@ -1029,8 +1029,9 @@ class IntOpt(Opt):
     `Kept for backward-compatibility with options not using Opt directly`.
     """
 
-    def __init__(self, name, **kwargs):
-        super(IntOpt, self).__init__(name, type=types.Integer(), **kwargs)
+    def __init__(self, name, min=None, max=None, **kwargs):
+        super(IntOpt, self).__init__(name, type=types.Integer(min, max),
+                                     **kwargs)
 
 
 class FloatOpt(Opt):

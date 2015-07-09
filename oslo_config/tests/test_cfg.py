@@ -977,6 +977,19 @@ class ConfigFileOptsTestCase(BaseTestCase):
         self.assertTrue(hasattr(self.conf, 'foo'))
         self.assertEqual(self.conf.foo, 666)
 
+    def test_conf_file_int_min_max(self):
+        self.conf.register_opt(cfg.IntOpt('foo', min=1, max=5))
+
+        paths = self.create_tempfiles([('test',
+                                        '[DEFAULT]\n'
+                                        'foo = 10\n')])
+
+        self.conf(['--config-file', paths[0]])
+        self.assertRaises(cfg.ConfigFileValueError, self.conf._get, 'foo')
+
+    def test_conf_file_int_min_greater_max(self):
+        self.assertRaises(ValueError, cfg.IntOpt, 'foo', min=5, max=1)
+
     def test_conf_file_int_use_dname(self):
         self._do_dname_test_use(cfg.IntOpt, '66', 66)
 

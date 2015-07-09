@@ -79,6 +79,8 @@ class GeneratorTestCase(base.BaseTestCase):
                                 help='a boolean'),
         'int_opt': cfg.IntOpt('int_opt',
                               default=10,
+                              min=1,
+                              max=20,
                               help='an integer'),
         'float_opt': cfg.FloatOpt('float_opt',
                                   default=0.1,
@@ -400,6 +402,8 @@ class GeneratorTestCase(base.BaseTestCase):
 #
 
 # an integer (integer value)
+# Minimum value: 1
+# Maximum value: 20
 #int_opt = 10
 ''')),
         ('float_opt',
