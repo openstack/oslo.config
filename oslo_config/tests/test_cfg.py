@@ -946,7 +946,7 @@ class ConfigFileOptsTestCase(BaseTestCase):
     @mock.patch.object(cfg, 'LOG')
     def test_conf_file_int_wrong_default(self, mock_log):
         cfg.IntOpt('foo', default='666')
-        mock_log.debug.assert_call_count(1)
+        self.assertEqual(1, mock_log.debug.call_count)
 
     def test_conf_file_int_value(self):
         self.conf.register_opt(cfg.IntOpt('foo'))
@@ -1025,7 +1025,7 @@ class ConfigFileOptsTestCase(BaseTestCase):
     @mock.patch.object(cfg, 'LOG')
     def test_conf_file_float_default_wrong_type(self, mock_log):
         cfg.FloatOpt('foo', default='foobar6.66')
-        mock_log.debug.assert_call_count(1)
+        self.assertEqual(1, mock_log.debug.call_count)
 
     def test_conf_file_float_value(self):
         self.conf.register_opt(cfg.FloatOpt('foo'))
