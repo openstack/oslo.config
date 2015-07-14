@@ -12,7 +12,7 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
-
+import re
 import unittest
 
 from oslo_config import types
@@ -97,6 +97,34 @@ class StringTypeTests(TypeTestHelper, unittest.TestCase):
 
     def test_not_equal_to_other_class(self):
         self.assertFalse(types.String() == types.Integer())
+
+    def test_regex_matches(self):
+        self.type_instance = types.String(regex=re.compile("^[A-Z]"))
+        self.assertConvertedValue("Foo", "Foo")
+
+    def test_regex_matches_uncompiled(self):
+        self.type_instance = types.String(regex="^[A-Z]")
+        self.assertConvertedValue("Foo", "Foo")
+
+    def test_regex_fails(self):
+        self.type_instance = types.String(regex=re.compile("^[A-Z]"))
+        self.assertInvalid("foo")
+
+    def test_regex_and_choices_raises(self):
+        self.assertRaises(ValueError,
+                          types.String,
+                          regex=re.compile("^[A-Z]"),
+                          choices=["Foo", "Bar", "baz"])
+
+    def test_equal_with_same_regex(self):
+        t1 = types.String(regex=re.compile("^[A-Z]"))
+        t2 = types.String(regex=re.compile("^[A-Z]"))
+        self.assertTrue(t1 == t2)
+
+    def test_not_equal_with_different_regex(self):
+        t1 = types.String(regex=re.compile("^[A-Z]"))
+        t2 = types.String(regex=re.compile("^[a-z]"))
+        self.assertFalse(t1 == t2)
 
 
 class BooleanTypeTests(TypeTestHelper, unittest.TestCase):
