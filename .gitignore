@@ -1,6 +1,7 @@
 AUTHORS
 ChangeLog
 *~
+*.egg*
 *.swp
 *.pyc
 *.log
@@ -14,4 +15,3 @@ dist/
 .testrepository/
 .project
 .pydevproject
-pbr-*.egg/
