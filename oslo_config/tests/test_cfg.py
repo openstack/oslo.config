@@ -2599,43 +2599,45 @@ class ImportOptTestCase(BaseTestCase):
 
     def test_import_opt(self):
         self.assertFalse(hasattr(cfg.CONF, 'blaa'))
-        cfg.CONF.import_opt('blaa', 'tests.testmods.blaa_opt')
+        cfg.CONF.import_opt('blaa', 'oslo_config.tests.testmods.blaa_opt')
         self.assertTrue(hasattr(cfg.CONF, 'blaa'))
 
     def test_import_opt_in_group(self):
         self.assertFalse(hasattr(cfg.CONF, 'bar'))
-        cfg.CONF.import_opt('foo', 'tests.testmods.bar_foo_opt', group='bar')
+        cfg.CONF.import_opt('foo', 'oslo_config.tests.testmods.bar_foo_opt',
+                            group='bar')
         self.assertTrue(hasattr(cfg.CONF, 'bar'))
         self.assertTrue(hasattr(cfg.CONF.bar, 'foo'))
 
     def test_import_opt_import_errror(self):
         self.assertRaises(ImportError, cfg.CONF.import_opt,
-                          'blaa', 'tests.testmods.blaablaa_opt')
+                          'blaa', 'oslo_config.tests.testmods.blaablaa_opt')
 
     def test_import_opt_no_such_opt(self):
         self.assertRaises(cfg.NoSuchOptError, cfg.CONF.import_opt,
-                          'blaablaa', 'tests.testmods.blaa_opt')
+                          'blaablaa', 'oslo_config.tests.testmods.blaa_opt')
 
     def test_import_opt_no_such_group(self):
         self.assertRaises(cfg.NoSuchGroupError, cfg.CONF.import_opt,
-                          'blaa', 'tests.testmods.blaa_opt', group='blaa')
+                          'blaa', 'oslo_config.tests.testmods.blaa_opt',
+                          group='blaa')
 
 
 class ImportGroupTestCase(BaseTestCase):
 
     def test_import_group(self):
         self.assertFalse(hasattr(cfg.CONF, 'qux'))
-        cfg.CONF.import_group('qux', 'tests.testmods.baz_qux_opt')
+        cfg.CONF.import_group('qux', 'oslo_config.tests.testmods.baz_qux_opt')
         self.assertTrue(hasattr(cfg.CONF, 'qux'))
         self.assertTrue(hasattr(cfg.CONF.qux, 'baz'))
 
     def test_import_group_import_error(self):
         self.assertRaises(ImportError, cfg.CONF.import_group,
-                          'qux', 'tests.testmods.bazzz_quxxx_opt')
+                          'qux', 'oslo_config.tests.testmods.bazzz_quxxx_opt')
 
     def test_import_group_no_such_group(self):
         self.assertRaises(cfg.NoSuchGroupError, cfg.CONF.import_group,
-                          'quxxx', 'tests.testmods.baz_qux_opt')
+                          'quxxx', 'oslo_config.tests.testmods.baz_qux_opt')
 
 
 class RequiredOptsTestCase(BaseTestCase):

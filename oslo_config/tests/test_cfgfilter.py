@@ -281,31 +281,33 @@ class ImportTestCase(BaseTestCase):
 
     def test_import_opt(self):
         self.assertFalse(hasattr(self.conf, 'fblaa'))
-        self.conf.import_opt('fblaa', 'tests.testmods.fblaa_opt')
+        self.conf.import_opt('fblaa', 'oslo_config.tests.testmods.fblaa_opt')
         self.assertTrue(hasattr(self.conf, 'fblaa'))
         self.assertFalse(hasattr(self.fconf, 'fblaa'))
-        self.fconf.import_opt('fblaa', 'tests.testmods.fblaa_opt')
+        self.fconf.import_opt('fblaa', 'oslo_config.tests.testmods.fblaa_opt')
         self.assertTrue(hasattr(self.fconf, 'fblaa'))
 
     def test_import_opt_in_group(self):
         self.assertFalse(hasattr(self.conf, 'fbar'))
-        self.conf.import_opt('foo', 'tests.testmods.fbar_foo_opt',
+        self.conf.import_opt('foo', 'oslo_config.tests.testmods.fbar_foo_opt',
                              group='fbar')
         self.assertTrue(hasattr(self.conf, 'fbar'))
         self.assertTrue(hasattr(self.conf.fbar, 'foo'))
         self.assertFalse(hasattr(self.fconf, 'fbar'))
-        self.fconf.import_opt('foo', 'tests.testmods.fbar_foo_opt',
+        self.fconf.import_opt('foo', 'oslo_config.tests.testmods.fbar_foo_opt',
                               group='fbar')
         self.assertTrue(hasattr(self.fconf, 'fbar'))
         self.assertTrue(hasattr(self.fconf.fbar, 'foo'))
 
     def test_import_group(self):
         self.assertFalse(hasattr(self.conf, 'fbaar'))
-        self.conf.import_group('fbaar', 'tests.testmods.fbaar_baa_opt')
+        self.conf.import_group('fbaar',
+                               'oslo_config.tests.testmods.fbaar_baa_opt')
         self.assertTrue(hasattr(self.conf, 'fbaar'))
         self.assertTrue(hasattr(self.conf.fbaar, 'baa'))
         self.assertFalse(hasattr(self.fconf, 'fbaar'))
-        self.fconf.import_group('fbaar', 'tests.testmods.fbaar_baa_opt')
+        self.fconf.import_group('fbaar',
+                                'oslo_config.tests.testmods.fbaar_baa_opt')
         self.assertTrue(hasattr(self.fconf, 'fbaar'))
         self.assertTrue(hasattr(self.fconf.fbaar, 'baa'))
 
