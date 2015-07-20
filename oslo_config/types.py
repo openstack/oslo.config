@@ -18,6 +18,8 @@ Use these classes as values for the `type` argument to
 :class:`oslo_config.cfg.Opt` and its subclasses.
 
 """
+import re
+
 import netaddr
 import six
 
@@ -36,20 +38,28 @@ class String(ConfigType):
 
     String values do not get transformed and are returned as str objects.
 
-    :param choices: Optional sequence of valid values.
+    :param choices: Optional sequence of valid values. Mutually
+                    exclusive with 'regex'.
     :param quotes: If True and string is enclosed with single or double
                    quotes, will strip those quotes. Will signal error if
                    string have quote at the beginning and no quote at
                    the end. Turned off by default. Useful if used with
                    container types like List.
+    :param regex: Optional regular expression (string or compiled
+                  regex) that the value must match on an unanchored
+                  search. Mutually exclusive with 'choices'.
     """
 
     BASE_TYPES = six.string_types
 
-    def __init__(self, choices=None, quotes=False):
+    def __init__(self, choices=None, quotes=False, regex=None):
         super(String, self).__init__()
+        if choices and regex:
+            raise ValueError("'choices' and 'regex' cannot both be specified")
+
         self.choices = choices
         self.quotes = quotes
+        self.regex = re.compile(regex) if regex is not None else None
 
     def __call__(self, value):
         value = str(value)
@@ -58,6 +68,10 @@ class String(ConfigType):
                 if value[-1] != value[0]:
                     raise ValueError('Non-closed quote: %s' % value)
                 value = value[1:-1]
+
+        if self.regex and not self.regex.search(value):
+            raise ValueError("Value %r doesn't match regex %r" %
+                             (value, self.regex.pattern))
 
         if self.choices is None or value in self.choices:
             return value
@@ -68,15 +82,21 @@ class String(ConfigType):
                 repr(value)))
 
     def __repr__(self):
+        details = []
         if self.choices:
-            return 'String(choices=%s)' % repr(self.choices)
+            details.append("choices=%r" % self.choices)
+        if self.regex:
+            details.append("regex=%r" % self.regex.pattern)
+        if details:
+            return "String(%s)" % ",".join(details)
         return 'String'
 
     def __eq__(self, other):
         return (
             (self.__class__ == other.__class__) and
             (self.choices == other.choices) and
-            (self.quotes == other.quotes)
+            (self.quotes == other.quotes) and
+            (self.regex == other.regex)
         )
 
 
