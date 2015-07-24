@@ -88,10 +88,16 @@ class _OptFormatter(object):
         :param help_text: The text of the help string
         """
         if self.wrap_width is not None and self.wrap_width > 0:
-            lines = [textwrap.fill(help_text,
-                                   self.wrap_width,
-                                   initial_indent='# ',
-                                   subsequent_indent='# ') + '\n']
+            wrapped = ""
+            for line in help_text.splitlines():
+                text = "\n".join(textwrap.wrap(line, self.wrap_width,
+                                               initial_indent='# ',
+                                               subsequent_indent='# ',
+                                               break_long_words=False,
+                                               replace_whitespace=False))
+                wrapped += "#" if text == "" else text
+                wrapped += "\n"
+            lines = [wrapped]
         else:
             lines = ['# ' + help_text + '\n']
         return lines

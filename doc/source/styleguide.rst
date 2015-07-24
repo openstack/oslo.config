@@ -69,3 +69,16 @@ Format
                       'can improve data throughput, such as when high '
                       'network bandwidth is available and you use '
                       'compressed image formats like qcow2.')
+
+2. It is possible to preformat the multi-line strings to increase readability.
+   Line break characters ``\n`` will be kept as they are used in the help text.
+   Example::
+
+     cfg.IntOpt('sync_power_state_interval',
+                default=600,
+                help='Interval to sync power states between the database and '
+                     'the hypervisor.\n'
+                     '\n'
+                     '-1: disables the sync \n'
+                     ' 0: run at the default rate.\n'
+                     '>0: the interval in seconds')
