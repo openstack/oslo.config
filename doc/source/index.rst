@@ -24,6 +24,7 @@ Contents
    generator
    faq
    contributing
+   sphinxconfiggen
 
 Indices and tables
 ==================
