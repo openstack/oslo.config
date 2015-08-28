@@ -153,7 +153,7 @@ class Integer(ConfigType):
         super(Integer, self).__init__()
         self.min = min
         self.max = max
-        if min and max and max < min:
+        if min is not None and max is not None and max < min:
             raise ValueError('Max value is less than min value')
 
     def __call__(self, value):
@@ -170,17 +170,17 @@ class Integer(ConfigType):
         return value
 
     def _check_range(self, value):
-        if self.min and value < self.min:
+        if self.min is not None and value < self.min:
             raise ValueError('Should be greater than or equal to %d' %
                              self.min)
-        if self.max and value > self.max:
+        if self.max is not None and value > self.max:
             raise ValueError('Should be less than or equal to %d' % self.max)
 
     def __repr__(self):
         props = []
-        if self.min:
+        if self.min is not None:
             props.append('min=%d' % self.min)
-        if self.max:
+        if self.max is not None:
             props.append('max=%d' % self.max)
 
         if props:

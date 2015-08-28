@@ -209,6 +209,8 @@ class IntegerTypeTests(TypeTestHelper, unittest.TestCase):
     def test_repr_with_min_and_max(self):
         t = types.Integer(min=123, max=456)
         self.assertEqual('Integer(min=123, max=456)', repr(t))
+        t = types.Integer(min=0, max=0)
+        self.assertEqual('Integer(min=0, max=0)', repr(t))
 
     def test_equal(self):
         self.assertTrue(types.Integer() == types.Integer())
@@ -230,6 +232,20 @@ class IntegerTypeTests(TypeTestHelper, unittest.TestCase):
     def test_not_equal_to_other_class(self):
         self.assertFalse(types.Integer() == types.String())
 
+    def test_min_greater_max(self):
+        self.assertRaises(ValueError,
+                          types.Integer,
+                          min=100, max=50)
+        self.assertRaises(ValueError,
+                          types.Integer,
+                          min=-50, max=-100)
+        self.assertRaises(ValueError,
+                          types.Integer,
+                          min=0, max=-50)
+        self.assertRaises(ValueError,
+                          types.Integer,
+                          min=50, max=0)
+
     def test_with_max_and_min(self):
         t = types.Integer(min=123, max=456)
         self.assertRaises(ValueError, t, 122)
@@ -238,6 +254,26 @@ class IntegerTypeTests(TypeTestHelper, unittest.TestCase):
         t(456)
         self.assertRaises(ValueError, t, 0)
         self.assertRaises(ValueError, t, 457)
+
+    def test_with_min_zero(self):
+        t = types.Integer(min=0, max=456)
+        self.assertRaises(ValueError, t, -1)
+        t(0)
+        t(123)
+        t(300)
+        t(456)
+        self.assertRaises(ValueError, t, -201)
+        self.assertRaises(ValueError, t, 457)
+
+    def test_with_max_zero(self):
+        t = types.Integer(min=-456, max=0)
+        self.assertRaises(ValueError, t, 1)
+        t(0)
+        t(-123)
+        t(-300)
+        t(-456)
+        self.assertRaises(ValueError, t, 201)
+        self.assertRaises(ValueError, t, -457)
 
 
 class FloatTypeTests(TypeTestHelper, unittest.TestCase):
