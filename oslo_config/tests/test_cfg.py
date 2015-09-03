@@ -2302,6 +2302,30 @@ class ConfigDirTestCase(BaseTestCase):
         self.assertTrue(hasattr(self.conf.snafu, 'bell'))
         self.assertEqual(self.conf.snafu.bell, 'whistle-02')
 
+    def test_config_dir_multistr(self):
+        # Demonstrate that values for multistr options found in
+        # different sources are combined.
+        self.conf.register_cli_opt(cfg.MultiStrOpt('foo'))
+
+        dir = tempfile.mkdtemp()
+        self.tempdirs.append(dir)
+
+        paths = self.create_tempfiles([(os.path.join(dir, '00-test'),
+                                        '[DEFAULT]\n'
+                                        'foo = bar-00\n'),
+                                       (os.path.join(dir, '02-test'),
+                                        '[DEFAULT]\n'
+                                        'foo = bar-02\n'),
+                                       (os.path.join(dir, '01-test'),
+                                        '[DEFAULT]\n'
+                                        'foo = bar-01\n')])
+
+        self.conf(['--foo', 'bar',
+                   '--config-dir', os.path.dirname(paths[0])])
+
+        self.assertTrue(hasattr(self.conf, 'foo'))
+        self.assertEqual(['bar', 'bar-00', 'bar-01', 'bar-02'], self.conf.foo)
+
     def test_config_dir_file_precedence(self):
         snafu_group = cfg.OptGroup('snafu')
         self.conf.register_group(snafu_group)
