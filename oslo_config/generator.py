@@ -79,8 +79,8 @@ def _format_defaults(opt):
             default_str = opt.default
         elif isinstance(opt, cfg.BoolOpt):
             default_str = str(opt.default).lower()
-        elif (isinstance(opt, cfg.IntOpt) or
-              isinstance(opt, cfg.FloatOpt)):
+        elif isinstance(opt, (cfg.IntOpt, cfg.FloatOpt,
+                              cfg.PortOpt)):
             default_str = str(opt.default)
         elif isinstance(opt, cfg.ListOpt):
             default_str = ','.join(opt.default)
@@ -104,18 +104,6 @@ def _format_defaults(opt):
 class _OptFormatter(object):
 
     """Format configuration option descriptions to a file."""
-
-    _TYPE_DESCRIPTIONS = {
-        cfg.StrOpt: 'string value',
-        cfg.BoolOpt: 'boolean value',
-        cfg.IntOpt: 'integer value',
-        cfg.FloatOpt: 'floating point value',
-        cfg.ListOpt: 'list value',
-        cfg.DictOpt: 'dict value',
-        cfg.IPOpt: 'ip address value',
-        cfg.PortOpt: 'port value',
-        cfg.MultiStrOpt: 'multi valued',
-    }
 
     def __init__(self, output_file=None, wrap_width=70):
         """Construct an OptFormatter object.
@@ -176,7 +164,8 @@ class _OptFormatter(object):
         if not opt.help:
             LOG.warning('"%s" is missing a help string', opt.dest)
 
-        opt_type = self._TYPE_DESCRIPTIONS.get(type(opt), 'unknown type')
+        option_type = getattr(opt, 'type', None)
+        opt_type = getattr(option_type, 'type_name', 'unknown value')
 
         if opt.help:
             help_text = u'%s (%s)' % (opt.help,

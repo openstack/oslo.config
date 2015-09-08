@@ -23,6 +23,7 @@ import testscenarios
 from oslo_config import cfg
 from oslo_config import fixture as config_fixture
 from oslo_config import generator
+from oslo_config import types
 
 load_tests = testscenarios.load_tests_apply_scenarios
 
@@ -90,7 +91,8 @@ class GeneratorTestCase(base.BaseTestCase):
         # Unknown Opt default must be a string
         'unknown_type': cfg.Opt('unknown_opt',
                                 default='123',
-                                help='unknown'),
+                                help='unknown',
+                                type=types.String(type_name='unknown type')),
         'str_opt': cfg.StrOpt('str_opt',
                               default='foo bar',
                               help='a string'),
@@ -135,6 +137,11 @@ class GeneratorTestCase(base.BaseTestCase):
                                                     default=['1', '2', '3'],
                                                     sample_default=['5', '6'],
                                                     help='multiple strings'),
+        'custom_type_name': cfg.Opt('custom_opt_type',
+                                    type=types.Integer(type_name='port'
+                                                       ' number'),
+                                    default=5511,
+                                    help='this is a port'),
     }
 
     content_scenarios = [
@@ -588,6 +595,19 @@ class GeneratorTestCase(base.BaseTestCase):
 # multiple strings (multi valued)
 #multi_opt = 5
 #multi_opt = 6
+''')),
+        ('custom_type_name',
+         dict(opts=[('test', [(None, [opts['custom_type_name']])])],
+              log_warning=('Unknown option type: %s',
+                           repr(opts['custom_type_name'])),
+              expected='''[DEFAULT]
+
+#
+# From test
+#
+
+# this is a port (port number)
+#custom_opt_type = 5511
 ''')),
     ]
 

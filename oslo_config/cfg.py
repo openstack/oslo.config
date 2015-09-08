@@ -1152,7 +1152,7 @@ class IPOpt(Opt):
                                     **kwargs)
 
 
-class PortOpt(IntOpt):
+class PortOpt(Opt):
 
     """Option for a TCP/IP port number.  Ports can range from 1 to 65535.
 
@@ -1162,7 +1162,8 @@ class PortOpt(IntOpt):
     """
 
     def __init__(self, name, **kwargs):
-        super(PortOpt, self).__init__(name, min=1, max=65535, **kwargs)
+        type = types.Integer(min=1, max=65535, type_name='port value')
+        super(PortOpt, self).__init__(name, type=type, **kwargs)
 
 
 class MultiOpt(Opt):

@@ -26,7 +26,8 @@ import six
 
 
 class ConfigType(object):
-    pass
+    def __init__(self, type_name='unknown type'):
+        self.type_name = type_name
 
 
 class String(ConfigType):
@@ -52,6 +53,7 @@ class String(ConfigType):
                         a maximum length of an option value must be less than
                         or equal to this parameter. Otherwise no length check
                         will be done.
+    :param type_name: Type name to be used in the sample config file.
 
     .. versionchanged:: 2.1
        Added *regex* parameter.
@@ -61,11 +63,13 @@ class String(ConfigType):
 
     .. versionchanged:: 2.7
        Added *max_length* parameter.
+       Added *type_name* parameter.
     """
 
     def __init__(self, choices=None, quotes=False, regex=None,
-                 ignore_case=False, max_length=None):
-        super(String, self).__init__()
+                 ignore_case=False, max_length=None,
+                 type_name='string value'):
+        super(String, self).__init__(type_name=type_name)
         if choices and regex:
             raise ValueError("'choices' and 'regex' cannot both be specified")
 
@@ -139,7 +143,8 @@ class String(ConfigType):
 
 
 class MultiString(String):
-    pass
+    def __init__(self, type_name='multi valued'):
+        super(MultiString, self).__init__(type_name=type_name)
 
 
 class Boolean(ConfigType):
@@ -148,9 +153,18 @@ class Boolean(ConfigType):
 
     Values are case insensitive and can be set using
     1/0, yes/no, true/false or on/off.
+
+    :param type_name: Type name to be used in the sample config file.
+
+    .. versionchanged:: 2.7
+
+       Added *type_name* parameter.
     """
     TRUE_VALUES = ['true', '1', 'on', 'yes']
     FALSE_VALUES = ['false', '0', 'off', 'no']
+
+    def __init__(self, type_name='boolean value'):
+        super(Boolean, self).__init__(type_name=type_name)
 
     def __call__(self, value):
         if isinstance(value, bool):
@@ -180,13 +194,17 @@ class Integer(ConfigType):
 
     :param min: Optional check that value is greater than or equal to min
     :param max: Optional check that value is less than or equal to max
+    :param type_name: Type name to be used in the sample config file.
 
     .. versionchanged:: 2.4
        The class now honors zero for *min* and *max* parameters.
+
+    .. versionchanged:: 2.7
+       Added *type_name* parameter.
     """
 
-    def __init__(self, min=None, max=None):
-        super(Integer, self).__init__()
+    def __init__(self, min=None, max=None, type_name='integer value'):
+        super(Integer, self).__init__(type_name=type_name)
         self.min = min
         self.max = max
         if min is not None and max is not None and max < min:
@@ -233,7 +251,17 @@ class Integer(ConfigType):
 
 class Float(ConfigType):
 
-    """Float type."""
+    """Float type.
+
+    :param type_name: Type name to be used in the sample config file.
+
+    .. versionchanged:: 2.7
+
+       Added *type_name* parameter.
+    """
+
+    def __init__(self, type_name='floating point value'):
+        super(Float, self).__init__(type_name=type_name)
 
     def __call__(self, value):
         if isinstance(value, float):
@@ -262,10 +290,15 @@ class List(ConfigType):
 
     :param item_type: type of list items
     :param bounds: if True, value should be inside "[" and "]" pair
+    :param type_name: Type name to be used in the sample config file.
+
+    .. versionchanged:: 2.7
+
+       Added *type_name* parameter.
     """
 
-    def __init__(self, item_type=None, bounds=False):
-        super(List, self).__init__()
+    def __init__(self, item_type=None, bounds=False, type_name='list value'):
+        super(List, self).__init__(type_name=type_name)
 
         if item_type is None:
             item_type = String()
@@ -333,10 +366,15 @@ class Dict(ConfigType):
 
     :param value_type: type of values in dictionary
     :param bounds: if True, value should be inside "{" and "}" pair
+    :param type_name: Type name to be used in the sample config file.
+
+    .. versionchanged:: 2.7
+
+       Added *type_name* parameter.
     """
 
-    def __init__(self, value_type=None, bounds=False):
-        super(Dict, self).__init__()
+    def __init__(self, value_type=None, bounds=False, type_name='dict value'):
+        super(Dict, self).__init__(type_name=type_name)
 
         if value_type is None:
             value_type = String()
@@ -418,11 +456,15 @@ class IPAddress(ConfigType):
     versions are checked
 
     :param version: defines which version should be explicitly checked (4 or 6)
+    :param type_name: Type name to be used in the sample config file.
 
+    .. versionchanged:: 2.7
+
+       Added *type_name* parameter.
     """
 
-    def __init__(self, version=None):
-        super(IPAddress, self).__init__()
+    def __init__(self, version=None, type_name='ip address value'):
+        super(IPAddress, self).__init__(type_name=type_name)
         version_checkers = {
             None: self._check_both_versions,
             4: self._check_ipv4,
