@@ -673,6 +673,10 @@ class Opt(object):
     .. py:attribute:: help
 
         a string explaining how the option's value is used
+
+    .. versionchanged:: 2.6
+
+       An exception is now raised if the default value has the wrong type.
     """
     multi = False
 
@@ -728,14 +732,14 @@ class Opt(object):
                 and not self._default_is_ref()
                 and hasattr(self.type, 'is_base_type')
                 and not self.type.is_base_type(self.default)):
-            # NOTE(tcammann) Change this to raise error after K relase
             expected_types = ", ".join(
                 [t.__name__ for t in self.type.BASE_TYPES])
-            LOG.debug(('Expected default value of type(s) %(extypes)s but got '
-                       '%(default)r of type %(deftypes)s'),
-                      {'extypes': expected_types,
-                       'default': self.default,
-                       'deftypes': type(self.default).__name__})
+            raise TypeError(('Expected default value of type(s) '
+                             '%(extypes)s but got %(default)r of '
+                             'type %(deftypes)s') %
+                            {'extypes': expected_types,
+                             'default': self.default,
+                             'deftypes': type(self.default).__name__})
 
     def __ne__(self, another):
         return vars(self) != vars(another)
