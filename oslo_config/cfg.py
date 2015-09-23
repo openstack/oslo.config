@@ -485,7 +485,7 @@ class ConfigFileParseError(Error):
         return 'Failed to parse %s: %s' % (self.config_file, self.msg)
 
 
-class ConfigFileValueError(Error):
+class ConfigFileValueError(Error, ValueError):
     """Raised if a config file value does not match its opt type."""
     pass
 
