@@ -1860,7 +1860,6 @@ class ConfigOpts(collections.Mapping):
         :param usage: a usage string (%prog will be expanded)
         :param default_config_files: config files to use by default
         :param validate_default_values: whether to validate the default values
-        :returns: the list of arguments left over after parsing options
         :raises: SystemExit, ConfigFilesNotFoundError, ConfigFileParseError,
                  ConfigFilesPermissionDeniedError,
                  RequiredOptError, DuplicateOptError
