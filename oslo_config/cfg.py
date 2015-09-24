@@ -266,6 +266,24 @@ log files::
         ...
      ]
 
+Dictionary Options
+------------------
+
+If you need end users to specify a dictionary of key/value pairs, then you can
+use the DictOpt::
+
+    opts = [
+        cfg.DictOpt('foo',
+                    default={}))
+    ]
+
+The end users can then specify the option foo in their configuration file
+as shown below::
+
+    [DEFAULT]
+    foo = k1:v1,k2:v2
+
+
 Global ConfigOpts
 -----------------
 
