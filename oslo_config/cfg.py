@@ -274,11 +274,13 @@ use the DictOpt::
 
     opts = [
         cfg.DictOpt('foo',
-                    default={}))
+                    default={})
     ]
 
 The end users can then specify the option foo in their configuration file
-as shown below::
+as shown below:
+
+.. code-block:: ini
 
     [DEFAULT]
     foo = k1:v1,k2:v2
