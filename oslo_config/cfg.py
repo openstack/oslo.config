@@ -1268,6 +1268,19 @@ class HostnameOpt(Opt):
                                           **kwargs)
 
 
+class URIOpt(Opt):
+
+    """Opt with URI type
+
+    Option with ``type`` :class:`oslo_config.types.URI`
+
+    .. versionadded:: 3.12
+    """
+
+    def __init__(self, name, **kwargs):
+        super(URIOpt, self).__init__(name, type=types.URI(), **kwargs)
+
+
 class MultiOpt(Opt):
 
     """Multi-value option.

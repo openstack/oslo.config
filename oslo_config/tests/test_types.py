@@ -637,3 +637,15 @@ class HostnameTypeTests(TypeTestHelper, unittest.TestCase):
         self.assertEqual(255, len(test_str))
         self.assertInvalid(test_str)
         self.assertConvertedEqual(test_str[:-2])
+
+
+class URITypeTests(TypeTestHelper, unittest.TestCase):
+    type = types.URI()
+
+    def test_uri(self):
+        self.assertConvertedValue('http://example.com', 'http://example.com')
+        self.assertInvalid('invalid')  # it doesn't include a scheme
+        self.assertInvalid('http://')  # it doesn't include an authority
+
+    def test_repr(self):
+        self.assertEqual('URI', repr(types.URI()))
