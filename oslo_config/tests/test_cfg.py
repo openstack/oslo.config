@@ -1127,6 +1127,29 @@ class ConfigFileOptsTestCase(BaseTestCase):
         self.assertTrue(hasattr(self.conf, 'foo'))
         self.assertEqual(self.conf.foo, ['b', 'a', 'r'])
 
+    def test_conf_file_list_item_type(self):
+        self.conf.register_cli_opt(cfg.ListOpt('foo',
+                                               item_type=types.Integer()))
+
+        paths = self.create_tempfiles([('1',
+                                        '[DEFAULT]\n'
+                                        'foo = 1,2\n')])
+
+        self.conf(['--config-file', paths[0]])
+
+        self.assertTrue(hasattr(self.conf, 'foo'))
+        self.assertEqual([1, 2], self.conf.foo)
+
+    @mock.patch.object(cfg, 'LOG')
+    def test_conf_file_list_item_wrong_type(self, mock_log):
+        cfg.ListOpt('foo', default="bar", item_type=types.Integer())
+        self.assertEqual(1, mock_log.debug.call_count)
+
+    @mock.patch.object(cfg, 'LOG')
+    def test_conf_file_list_bounds(self, mock_log):
+        cfg.ListOpt('foo', default="1,2", bounds=True)
+        self.assertEqual(1, mock_log.debug.call_count)
+
     def test_conf_file_list_use_dname(self):
         self._do_dname_test_use(cfg.ListOpt, 'a,b,c', ['a', 'b', 'c'])
 

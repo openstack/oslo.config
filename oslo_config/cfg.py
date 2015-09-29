@@ -1076,8 +1076,11 @@ class ListOpt(Opt):
     `Kept for backward-compatibility with options not using Opt directly`.
     """
 
-    def __init__(self, name, **kwargs):
-        super(ListOpt, self).__init__(name, type=types.List(), **kwargs)
+    def __init__(self, name, item_type=None, bounds=None, **kwargs):
+        super(ListOpt, self).__init__(name,
+                                      type=types.List(item_type=item_type,
+                                                      bounds=bounds),
+                                      **kwargs)
 
 
 class DictOpt(Opt):
