@@ -112,6 +112,7 @@ class _OptFormatter(object):
         cfg.ListOpt: 'list value',
         cfg.DictOpt: 'dict value',
         cfg.IPOpt: 'ip address value',
+        cfg.PortOpt: 'port value',
         cfg.MultiStrOpt: 'multi valued',
     }
 

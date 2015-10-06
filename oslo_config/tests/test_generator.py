@@ -107,6 +107,9 @@ class GeneratorTestCase(base.BaseTestCase):
         'ip_opt': cfg.IPOpt('ip_opt',
                             default='127.0.0.1',
                             help='an ip address'),
+        'port_opt': cfg.PortOpt('port_opt',
+                                default=80,
+                                help='a port'),
         'multi_opt': cfg.MultiStrOpt('multi_opt',
                                      default=['1', '2', '3'],
                                      help='multiple strings'),
@@ -485,6 +488,19 @@ class GeneratorTestCase(base.BaseTestCase):
 
 # an ip address (ip address value)
 #ip_opt = 127.0.0.1
+''')),
+        ('port_opt',
+         dict(opts=[('test', [(None, [opts['port_opt']])])],
+              expected='''[DEFAULT]
+
+#
+# From test
+#
+
+# a port (port value)
+# Minimum value: 1
+# Maximum value: 65535
+#port_opt = 80
 ''')),
         ('multi_opt',
          dict(opts=[('test', [(None, [opts['multi_opt']])])],

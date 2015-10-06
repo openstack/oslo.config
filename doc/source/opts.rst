@@ -14,6 +14,7 @@ Option Definitions
 .. autoclass:: MultiOpt
 .. autoclass:: MultiStrOpt
 .. autoclass:: IPOpt
+.. autoclass:: PortOpt
 .. autoclass:: DeprecatedOpt
 .. autoclass:: SubCommandOpt
 .. autoclass:: OptGroup

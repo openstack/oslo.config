@@ -1111,6 +1111,19 @@ class IPOpt(Opt):
                                     **kwargs)
 
 
+class PortOpt(IntOpt):
+
+    """Option for a TCP/IP port number.  Ports can range from 1 to 65535.
+
+    Option with ``type`` :class:`oslo_config.types.Integer`
+
+    .. versionadded:: 2.6
+    """
+
+    def __init__(self, name, **kwargs):
+        super(PortOpt, self).__init__(name, min=1, max=65535, **kwargs)
+
+
 class MultiOpt(Opt):
 
     """Multi-value option.

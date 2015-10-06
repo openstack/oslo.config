@@ -476,6 +476,24 @@ class CliOptsTestCase(BaseTestCase):
          dict(opt_class=cfg.DictOpt, default=None,
               cli_args=['--old-oof', 'key1:blaa', '--old-oof', 'key2:bar'],
               value={'key2': 'bar'}, deps=('oof', 'old'))),
+        ('port_default',
+         dict(opt_class=cfg.PortOpt, default=80,
+              cli_args=[], value=80, deps=(None, None))),
+        ('port_arg',
+         dict(opt_class=cfg.PortOpt, default=None,
+              cli_args=['--foo=80'], value=80, deps=(None, None))),
+        ('port_arg_deprecated_name',
+         dict(opt_class=cfg.PortOpt, default=None,
+              cli_args=['--oldfoo=80'], value=80, deps=('oldfoo', None))),
+        ('port_arg_deprecated_group',
+         dict(opt_class=cfg.PortOpt, default=None,
+              cli_args=['--old-foo=80'], value=80, deps=(None, 'old'))),
+        ('port_arg_deprecated_group_default',
+         dict(opt_class=cfg.PortOpt, default=None,
+              cli_args=['--foo=80'], value=80, deps=(None, 'DEFAULT'))),
+        ('port_arg_deprecated_group_and_name',
+         dict(opt_class=cfg.PortOpt, default=None,
+              cli_args=['--old-oof=80'], value=80, deps=('oof', 'old'))),
         ('multistr_default',
          dict(opt_class=cfg.MultiStrOpt, default=['bar'], cli_args=[],
               value=['bar'], deps=(None, None))),
@@ -631,6 +649,15 @@ class PositionalTestCase(BaseTestCase):
 
     def test_positional_ip_arg(self):
         self._do_pos_test(cfg.IPOpt, None, ['127.0.0.1'], '127.0.0.1')
+
+    def test_positional_port_none_default(self):
+        self._do_pos_test(cfg.PortOpt, None, [], None)
+
+    def test_positional_port_default(self):
+        self._do_pos_test(cfg.PortOpt, 80, [], 80)
+
+    def test_positional_port_arg(self):
+        self._do_pos_test(cfg.PortOpt, None, ['443'], 443)
 
     def test_positional_multistr_none_default(self):
         self._do_pos_test(cfg.MultiStrOpt, None, [], None)
@@ -1396,6 +1423,16 @@ class ConfigFileOptsTestCase(BaseTestCase):
                                               {'k1': 'd',
                                                'k2': 'e',
                                                'k3': 'f'})
+
+    def test_conf_file_port_outside_range(self):
+        self.conf.register_opt(cfg.PortOpt('foo'))
+
+        paths = self.create_tempfiles([('test',
+                                        '[DEFAULT]\n'
+                                        'foo = 65536\n')])
+
+        self.conf(['--config-file', paths[0]])
+        self.assertRaises(cfg.ConfigFileValueError, self.conf._get, 'foo')
 
     def test_conf_file_multistr_default(self):
         self.conf.register_opt(cfg.MultiStrOpt('foo', default=['bar']))
