@@ -126,6 +126,31 @@ class StringTypeTests(TypeTestHelper, unittest.TestCase):
         t2 = types.String(regex=re.compile("^[a-z]"))
         self.assertFalse(t1 == t2)
 
+    def test_ignore_case(self):
+        self.type_instance = types.String(choices=['foo', 'bar'],
+                                          ignore_case=True)
+        self.assertConvertedValue('Foo', 'Foo')
+        self.assertConvertedValue('bAr', 'bAr')
+
+    def test_ignore_case_raises(self):
+        self.type_instance = types.String(choices=['foo', 'bar'],
+                                          ignore_case=False)
+        self.assertRaises(ValueError, self.assertConvertedValue, 'Foo', 'Foo')
+
+    def test_regex_and_ignore_case(self):
+        self.type_instance = types.String(regex=re.compile("^[A-Z]"),
+                                          ignore_case=True)
+        self.assertConvertedValue("foo", "foo")
+
+    def test_regex_and_ignore_case_str(self):
+        self.type_instance = types.String(regex="^[A-Z]", ignore_case=True)
+        self.assertConvertedValue("foo", "foo")
+
+    def test_regex_preserve_flags(self):
+        self.type_instance = types.String(regex=re.compile("^[A-Z]", re.I),
+                                          ignore_case=False)
+        self.assertConvertedValue("foo", "foo")
+
 
 class BooleanTypeTests(TypeTestHelper, unittest.TestCase):
     type = types.Boolean()
