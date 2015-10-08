@@ -833,6 +833,15 @@ class ConfigFileOptsTestCase(BaseTestCase):
     def test_conf_file_str_ignore_dgroup_and_dname(self):
         self._do_dgroup_and_dname_test_ignore(cfg.StrOpt, 'value2', 'value2')
 
+    def test_conf_file_str_value_with_good_choice_value(self):
+        self.conf.register_opt(cfg.StrOpt('foo', choices=['bar', 'baz']))
+
+        paths = self.create_tempfiles([('test', '[DEFAULT]\n''foo = bar\n')])
+
+        self.conf(['--config-file', paths[0]])
+        self.assertTrue(hasattr(self.conf, 'foo'))
+        self.assertEqual(self.conf.foo, 'bar')
+
     def test_conf_file_bool_default(self):
         self.conf.register_opt(cfg.BoolOpt('foo', default=False))
 
@@ -1242,7 +1251,7 @@ class ConfigFileOptsTestCase(BaseTestCase):
         self.conf(['--config-file', paths[0]])
 
         self.assertRaises(cfg.ConfigFileValueError, self.conf._get, 'foo')
-        self.assertRaises(AttributeError, getattr, self.conf, 'foo')
+        self.assertRaises(ValueError, getattr, self.conf, 'foo')
 
     def test_conf_file_dict_value_duplicate_key(self):
         self.conf.register_opt(cfg.DictOpt('foo'))
@@ -1254,7 +1263,7 @@ class ConfigFileOptsTestCase(BaseTestCase):
         self.conf(['--config-file', paths[0]])
 
         self.assertRaises(cfg.ConfigFileValueError, self.conf._get, 'foo')
-        self.assertRaises(AttributeError, getattr, self.conf, 'foo')
+        self.assertRaises(ValueError, getattr, self.conf, 'foo')
 
     def test_conf_file_dict_values_override_deprecated(self):
         self.conf.register_cli_opt(cfg.DictOpt('foo',
@@ -2926,7 +2935,7 @@ class SadPathTestCase(BaseTestCase):
 
         self.conf(['--config-file', paths[0]])
 
-        self.assertRaises(AttributeError, getattr, self.conf, 'foo')
+        self.assertRaises(ValueError, getattr, self.conf, 'foo')
         self.assertRaises(cfg.ConfigFileValueError, self.conf._get, 'foo')
 
     def test_conf_file_bad_bool(self):
@@ -3639,7 +3648,7 @@ class ChoicesTestCase(BaseTestCase):
         self.conf(['--config-file', paths[0]])
 
         self.assertRaises(cfg.ConfigFileValueError, self.conf._get, 'foo')
-        self.assertRaises(AttributeError, getattr, self.conf, 'foo')
+        self.assertRaises(ValueError, getattr, self.conf, 'foo')
 
     def test_conf_file_choice_value_override(self):
         self.conf.register_cli_opt(cfg.StrOpt('foo',
