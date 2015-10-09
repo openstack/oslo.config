@@ -48,18 +48,36 @@ class String(ConfigType):
     :param regex: Optional regular expression (string or compiled
                   regex) that the value must match on an unanchored
                   search. Mutually exclusive with 'choices'.
+    :param ignore_case:  If True case differences (uppercase vs. lowercase)
+                         between 'choices' or 'regex' will be ignored;
+                         defaults to False.
     """
 
     BASE_TYPES = six.string_types
 
-    def __init__(self, choices=None, quotes=False, regex=None):
+    def __init__(self, choices=None, quotes=False, regex=None,
+                 ignore_case=False):
         super(String, self).__init__()
         if choices and regex:
             raise ValueError("'choices' and 'regex' cannot both be specified")
 
-        self.choices = choices
+        self.ignore_case = ignore_case
         self.quotes = quotes
-        self.regex = re.compile(regex) if regex is not None else None
+
+        self.choices = choices
+        self.lower_case_choices = None
+        if self.choices is not None and self.ignore_case:
+            self.lower_case_choices = [c.lower() for c in choices]
+
+        self.regex = regex
+        if self.regex is not None:
+            re_flags = re.IGNORECASE if self.ignore_case else 0
+
+            # Check if regex is a string or an already compiled regex
+            if isinstance(regex, six.string_types):
+                self.regex = re.compile(regex, re_flags)
+            else:
+                self.regex = re.compile(regex.pattern, re_flags | regex.flags)
 
     def __call__(self, value):
         value = str(value)
@@ -73,7 +91,14 @@ class String(ConfigType):
             raise ValueError("Value %r doesn't match regex %r" %
                              (value, self.regex.pattern))
 
-        if self.choices is None or value in self.choices:
+        if self.choices is None:
+            return value
+
+        # Check for case insensitive
+        processed_value, choices = ((value.lower(), self.lower_case_choices)
+                                    if self.ignore_case else
+                                    (value, self.choices))
+        if processed_value in choices:
             return value
 
         raise ValueError(
