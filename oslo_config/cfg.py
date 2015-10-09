@@ -991,7 +991,7 @@ class BoolOpt(Opt):
     """Boolean options.
 
     Bool opts are set to True or False on the command line using --optname or
-    --noopttname respectively.
+    --nooptname respectively.
 
     In config files, boolean values are cast with Boolean type.
     """
