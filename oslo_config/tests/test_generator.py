@@ -104,6 +104,9 @@ class GeneratorTestCase(base.BaseTestCase):
         'dict_opt': cfg.DictOpt('dict_opt',
                                 default={'1': 'yes', '2': 'no'},
                                 help='a dict'),
+        'ip_opt': cfg.IPOpt('ip_opt',
+                            default='127.0.0.1',
+                            help='an ip address'),
         'multi_opt': cfg.MultiStrOpt('multi_opt',
                                      default=['1', '2', '3'],
                                      help='multiple strings'),
@@ -471,6 +474,17 @@ class GeneratorTestCase(base.BaseTestCase):
 
 # a dict (dict value)
 #dict_opt = 1:yes,2:no
+''')),
+        ('ip_opt',
+         dict(opts=[('test', [(None, [opts['ip_opt']])])],
+              expected='''[DEFAULT]
+
+#
+# From test
+#
+
+# an ip address (ip address value)
+#ip_opt = 127.0.0.1
 ''')),
         ('multi_opt',
          dict(opts=[('test', [(None, [opts['multi_opt']])])],

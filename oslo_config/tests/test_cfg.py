@@ -623,6 +623,15 @@ class PositionalTestCase(BaseTestCase):
                           ['key1:blaa,key2:bar'],
                           {'key1': 'blaa', 'key2': 'bar'})
 
+    def test_positional_ip_none_default(self):
+        self._do_pos_test(cfg.IPOpt, None, [], None)
+
+    def test_positional_ip_default(self):
+        self._do_pos_test(cfg.IPOpt, '127.0.0.1', [], '127.0.0.1')
+
+    def test_positional_ip_arg(self):
+        self._do_pos_test(cfg.IPOpt, None, ['127.0.0.1'], '127.0.0.1')
+
     def test_positional_multistr_none_default(self):
         self._do_pos_test(cfg.MultiStrOpt, None, [], None)
 

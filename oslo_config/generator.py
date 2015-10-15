@@ -73,7 +73,8 @@ def _format_defaults(opt):
             default_str = str(opt.sample_default)
         elif opt.default is None:
             default_str = '<None>'
-        elif isinstance(opt, cfg.StrOpt):
+        elif (isinstance(opt, cfg.StrOpt) or
+              isinstance(opt, cfg.IPOpt)):
             default_str = opt.default
         elif isinstance(opt, cfg.BoolOpt):
             default_str = str(opt.default).lower()
@@ -110,6 +111,7 @@ class _OptFormatter(object):
         cfg.FloatOpt: 'floating point value',
         cfg.ListOpt: 'list value',
         cfg.DictOpt: 'dict value',
+        cfg.IPOpt: 'ip address value',
         cfg.MultiStrOpt: 'multi valued',
     }
 
