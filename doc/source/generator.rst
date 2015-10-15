@@ -16,6 +16,8 @@ namespaces::
 
   $> oslo-config-generator --namespace myapp --namespace oslo.messaging > myapp.conf
 
+.. versionadded:: 1.4
+
 Defining Option Discovery Entry Points
 --------------------------------------
 

@@ -17,6 +17,7 @@
 Use these classes as values for the `type` argument to
 :class:`oslo_config.cfg.Opt` and its subclasses.
 
+.. versionadded:: 1.3
 """
 import re
 
@@ -51,6 +52,12 @@ class String(ConfigType):
     :param ignore_case:  If True case differences (uppercase vs. lowercase)
                          between 'choices' or 'regex' will be ignored;
                          defaults to False.
+
+    .. versionchanged:: 2.1
+       Added *regex* parameter.
+
+    .. versionchanged:: 2.5
+       Added *ignore_case* parameter.
     """
 
     BASE_TYPES = six.string_types
@@ -170,6 +177,9 @@ class Integer(ConfigType):
 
     :param min: Optional check that value is greater than or equal to min
     :param max: Optional check that value is less than or equal to max
+
+    .. versionchanged:: 2.4
+       The class now honors zero for *min* and *max* parameters.
     """
 
     BASE_TYPES = six.integer_types
