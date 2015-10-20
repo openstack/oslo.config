@@ -674,7 +674,7 @@ class Opt(object):
 
         a string explaining how the option's value is used
 
-    .. versionchanged:: 2.6
+    .. versionchanged:: 2.7
 
        An exception is now raised if the default value has the wrong type.
     """
