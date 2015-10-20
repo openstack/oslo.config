@@ -19,8 +19,10 @@ Use these classes as values for the `type` argument to
 
 .. versionadded:: 1.3
 """
+import operator
 import re
 
+import abc
 import netaddr
 import six
 
@@ -28,6 +30,29 @@ import six
 class ConfigType(object):
     def __init__(self, type_name='unknown type'):
         self.type_name = type_name
+
+    NONE_DEFAULT = '<None>'
+
+    def format_defaults(self, default, sample_default=None):
+        """Return a list of formatted default values.
+
+        """
+        if sample_default is not None:
+            default_str = sample_default
+        elif default is None:
+            default_str = self.NONE_DEFAULT
+        else:
+            default_str = self._formatter(default)
+        return [default_str]
+
+    def quote_trailing_and_leading_space(self, str_val):
+        if str_val.strip() != str_val:
+            return '"%s"' % str_val
+        return str_val
+
+    @abc.abstractmethod
+    def _formatter(self, value):
+        pass
 
 
 class String(ConfigType):
@@ -141,10 +166,30 @@ class String(ConfigType):
             (self.regex == other.regex)
         )
 
+    def _formatter(self, value):
+        return self.quote_trailing_and_leading_space(value)
+
 
 class MultiString(String):
     def __init__(self, type_name='multi valued'):
         super(MultiString, self).__init__(type_name=type_name)
+
+    NONE_DEFAULT = ['']
+
+    def format_defaults(self, default, sample_default=None):
+        """Return a list of formatted default values.
+
+        """
+        if sample_default is not None:
+            default_list = self._formatter(sample_default)
+        elif not default:
+            default_list = self.NONE_DEFAULT
+        else:
+            default_list = self._formatter(default)
+        return default_list
+
+    def _formatter(self, value):
+        return [self.quote_trailing_and_leading_space(v) for v in value]
 
 
 class Boolean(ConfigType):
@@ -183,6 +228,9 @@ class Boolean(ConfigType):
 
     def __eq__(self, other):
         return self.__class__ == other.__class__
+
+    def _formatter(self, value):
+        return str(value).lower()
 
 
 class Integer(ConfigType):
@@ -248,6 +296,9 @@ class Integer(ConfigType):
             (self.max == other.max)
         )
 
+    def _formatter(self, value):
+        return str(value)
+
 
 class Float(ConfigType):
 
@@ -274,6 +325,9 @@ class Float(ConfigType):
 
     def __eq__(self, other):
         return self.__class__ == other.__class__
+
+    def _formatter(self, value):
+        return str(value)
 
 
 class List(ConfigType):
@@ -353,6 +407,9 @@ class List(ConfigType):
             (self.__class__ == other.__class__) and
             (self.item_type == other.item_type)
         )
+
+    def _formatter(self, value):
+        return ','.join(value)
 
 
 class Dict(ConfigType):
@@ -447,6 +504,11 @@ class Dict(ConfigType):
             (self.value_type == other.value_type)
         )
 
+    def _formatter(self, value):
+        sorted_items = sorted(value.items(),
+                              key=operator.itemgetter(0))
+        return ','.join(['%s:%s' % i for i in sorted_items])
+
 
 class IPAddress(ConfigType):
 
@@ -500,3 +562,6 @@ class IPAddress(ConfigType):
         if not (netaddr.valid_ipv4(address, netaddr.core.INET_PTON) or
                 netaddr.valid_ipv6(address, netaddr.core.INET_PTON)):
             raise ValueError("%s is not IPv4 or IPv6 address" % address)
+
+    def _formatter(self, value):
+        return value
