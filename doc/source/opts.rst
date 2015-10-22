@@ -15,6 +15,7 @@ Option Definitions
 .. autoclass:: MultiStrOpt
 .. autoclass:: IPOpt
 .. autoclass:: PortOpt
+.. autoclass:: HostnameOpt
 .. autoclass:: DeprecatedOpt
 .. autoclass:: SubCommandOpt
 .. autoclass:: OptGroup

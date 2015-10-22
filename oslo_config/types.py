@@ -603,3 +603,52 @@ class IPAddress(ConfigType):
 
     def _formatter(self, value):
         return value
+
+
+class Hostname(ConfigType):
+    """Hostname type.
+
+    A hostname refers to a valid DNS or hostname. It must not be longer than
+    253 characters, have a segment greater than 63 characters, nor start or
+    end with a hyphen.
+
+    :param type_name: Type name to be used in the sample config file.
+
+    """
+
+    def __init__(self, type_name='hostname value'):
+        super(Hostname, self).__init__(type_name=type_name)
+
+    def __call__(self, value):
+        """Check hostname is valid.
+
+        Ensures that each segment
+        - Contains at least one character and a maximum of 63 characters
+        - Consists only of allowed characters: letters (A-Z and a-z),
+          digits (0-9), and hyphen (-)
+        - Does not begin or end with a hyphen
+        - maximum total length of 253 characters
+
+        For more details , please see: http://tools.ietf.org/html/rfc1035
+        """
+
+        if len(value) == 0:
+            raise ValueError("Cannot have an empty hostname")
+        if len(value) > 253:
+            raise ValueError("hostname is greater than 253 characters: %s"
+                             % value)
+        if value.endswith("."):
+            value = value[:-1]
+        allowed = re.compile("(?!-)[A-Z0-9-]{1,63}(?<!-)$", re.IGNORECASE)
+        if any((not allowed.match(x)) for x in value.split(".")):
+            raise ValueError("%s is an invalid hostname" % value)
+        return value
+
+    def __repr__(self):
+        return 'Hostname'
+
+    def __eq__(self, other):
+        return self.__class__ == other.__class__
+
+    def _formatter(self, value):
+        return value

@@ -142,6 +142,9 @@ class GeneratorTestCase(base.BaseTestCase):
         'port_opt': cfg.PortOpt('port_opt',
                                 default=80,
                                 help='a port'),
+        'hostname_opt': cfg.HostnameOpt('hostname_opt',
+                                        default='compute01.nova.site1',
+                                        help='a hostname'),
         'multi_opt': cfg.MultiStrOpt('multi_opt',
                                      default=['1', '2', '3'],
                                      help='multiple strings'),
@@ -604,6 +607,17 @@ class GeneratorTestCase(base.BaseTestCase):
 # Minimum value: 0
 # Maximum value: 65535
 #port_opt = 80
+''')),
+        ('hostname_opt',
+         dict(opts=[('test', [(None, [opts['hostname_opt']])])],
+              expected='''[DEFAULT]
+
+#
+# From test
+#
+
+# a hostname (hostname value)
+#hostname_opt = compute01.nova.site1
 ''')),
         ('multi_opt',
          dict(opts=[('test', [(None, [opts['multi_opt']])])],

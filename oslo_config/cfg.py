@@ -58,6 +58,7 @@ Type                                  Option
 :class:`oslo_config.types.List`       :class:`oslo_config.cfg.ListOpt`
 :class:`oslo_config.types.Dict`       :class:`oslo_config.cfg.DictOpt`
 :class:`oslo_config.types.IPAddress`  :class:`oslo_config.cfg.IPOpt`
+:class:`oslo_config.types.Hostname`   :class:`oslo_config.cfg.HostnameOpt`
 ====================================  ======
 
 For :class:`oslo_config.cfg.MultiOpt` the `item_type` parameter defines
@@ -1249,6 +1250,20 @@ class PortOpt(Opt):
             type = types.Integer(min=self.PORT_MIN, max=self.PORT_MAX,
                                  type_name='port value')
         super(PortOpt, self).__init__(name, type=type, **kwargs)
+
+
+class HostnameOpt(Opt):
+
+    """Option for a hostname.  Only accepts valid hostnames.
+
+    Option with ``type`` :class:`oslo_config.types.Hostname`
+
+    .. versionadded:: 3.8
+    """
+
+    def __init__(self, name, **kwargs):
+        super(HostnameOpt, self).__init__(name, type=types.Hostname(),
+                                          **kwargs)
 
 
 class MultiOpt(Opt):
