@@ -16,9 +16,9 @@ Examples::
     cfg.StrOpt('bind_host',
                default='0.0.0.0',
                help='IP address to listen on.'),
-    cfg.IntOpt('bind_port',
-               default=9292,
-               help='Port number to listen on.')
+    cfg.PortOpt('bind_port',
+                default=9292,
+                help='Port number to listen on.')
 
 
 Style Guide

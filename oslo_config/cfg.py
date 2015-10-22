@@ -166,9 +166,9 @@ Options can be registered as belonging to a group::
     rabbit_host_opt = cfg.StrOpt('host',
                                  default='localhost',
                                  help='IP/hostname to listen on.'),
-    rabbit_port_opt = cfg.IntOpt('port',
-                                 default=5672,
-                                 help='Port number to listen on.')
+    rabbit_port_opt = cfg.PortOpt('port',
+                                  default=5672,
+                                  help='Port number to listen on.')
 
     def register_rabbit_opts(conf):
         conf.register_group(rabbit_group)
@@ -296,7 +296,7 @@ in order to support a common usage pattern in OpenStack::
 
     opts = [
         cfg.StrOpt('bind_host', default='0.0.0.0'),
-        cfg.IntOpt('bind_port', default=9292),
+        cfg.PortOpt('bind_port', default=9292),
     ]
 
     CONF = cfg.CONF
