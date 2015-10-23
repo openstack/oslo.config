@@ -982,11 +982,32 @@ class StrOpt(Opt):
     `Kept for backward-compatibility with options not using Opt directly`.
 
     :param choices: Optional sequence of valid values.
+    :param quotes: If True and string is enclosed with single or double
+                   quotes, will strip those quotes.
+    :param regex: Optional regular expression (string or compiled
+                  regex) that the value must match on an unanchored
+                  search.
+    :param ignore_case: If True case differences (uppercase vs. lowercase)
+                        between 'choices' or 'regex' will be ignored.
+
+    .. versionchanged:: 2.7
+       Added *quotes* parameter
+
+    .. versionchanged:: 2.7
+       Added *regex* parameter
+
+    .. versionchanged:: 2.7
+       Added *ignore_case* parameter
     """
 
-    def __init__(self, name, choices=None, **kwargs):
+    def __init__(self, name, choices=None, quotes=None,
+                 regex=None, ignore_case=None, **kwargs):
         super(StrOpt, self).__init__(name,
-                                     type=types.String(choices=choices),
+                                     type=types.String(
+                                         choices=choices,
+                                         quotes=quotes,
+                                         regex=regex,
+                                         ignore_case=ignore_case),
                                      **kwargs)
 
 
