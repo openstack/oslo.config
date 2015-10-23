@@ -988,8 +988,10 @@ class ConfigFileOptsTestCase(BaseTestCase):
         self.assertTrue(hasattr(self.conf, 'foo'))
         self.assertEqual(self.conf.foo, 666)
 
-    def test_conf_file_int_wrong_default_type(self):
-        self.assertRaises(TypeError, cfg.IntOpt, 'foo', default='666')
+    def test_conf_file_int_string_default_type(self):
+        self.conf.register_opt(cfg.IntOpt('foo', default='666'))
+        self.conf([])
+        self.assertEqual(self.conf.foo, 666)
 
     def test_conf_file_int_value(self):
         self.conf.register_opt(cfg.IntOpt('foo'))
@@ -1066,7 +1068,7 @@ class ConfigFileOptsTestCase(BaseTestCase):
         self.assertEqual(self.conf.foo, 6.66)
 
     def test_conf_file_float_default_wrong_type(self):
-        self.assertRaises(TypeError, cfg.FloatOpt, 'foo',
+        self.assertRaises(cfg.DefaultValueError, cfg.FloatOpt, 'foo',
                           default='foobar6.66')
 
     def test_conf_file_float_value(self):
@@ -1131,13 +1133,8 @@ class ConfigFileOptsTestCase(BaseTestCase):
         self.assertEqual(self.conf.foo, ['bar'])
 
     def test_conf_file_list_default_wrong_type(self):
-        expected_str = ('Expected default value of type\(s\) %(extypes)s '
-                        'but got %(default)r of type %(deftypes)s' %
-                        {'extypes': 'list',
-                         'default': 25,
-                         'deftypes': 'int'})
-        self.assertRaisesRegexp(TypeError, expected_str, cfg.ListOpt,
-                                'foo', default=25)
+        self.assertRaises(cfg.DefaultValueError, cfg.ListOpt, 'foo',
+                          default=25)
 
     def test_conf_file_list_value(self):
         self.conf.register_opt(cfg.ListOpt('foo'))
@@ -1182,12 +1179,16 @@ class ConfigFileOptsTestCase(BaseTestCase):
         self.assertEqual([1, 2], self.conf.foo)
 
     def test_conf_file_list_item_wrong_type(self):
-        self.assertRaises(TypeError, cfg.ListOpt, 'foo', default="bar",
-                          item_type=types.Integer())
+        self.assertRaises(cfg.DefaultValueError, cfg.ListOpt, 'foo',
+                          default="bar", item_type=types.Integer())
 
     def test_conf_file_list_bounds(self):
-        self.assertRaises(TypeError, cfg.ListOpt, 'foo', default="1,2",
-                          bounds=True)
+        self.conf.register_cli_opt(cfg.ListOpt('foo',
+                                               item_type=types.Integer(),
+                                               default="[1,2]",
+                                               bounds=True))
+        self.conf([])
+        self.assertEqual(self.conf.foo, [1, 2])
 
     def test_conf_file_list_use_dname(self):
         self._do_dname_test_use(cfg.ListOpt, 'a,b,c', ['a', 'b', 'c'])
@@ -3709,14 +3710,8 @@ class ChoicesTestCase(BaseTestCase):
         self.assertEqual(self.conf.foo, 'baaar')
 
     def test_conf_file_choice_bad_default(self):
-        self.conf.register_cli_opt(cfg.StrOpt('foo',
-                                              choices=['baar', 'baaar'],
-                                              default='foobaz'))
-        self.conf([])
-        self.assertRaises(AttributeError,
-                          getattr,
-                          self.conf,
-                          'foobaz')
+        self.assertRaises(cfg.DefaultValueError, cfg.StrOpt, 'foo',
+                          choices=['baar', 'baaar'], default='foobaz')
 
 
 class PrintHelpTestCase(base.BaseTestCase):

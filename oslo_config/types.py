@@ -25,11 +25,7 @@ import six
 
 
 class ConfigType(object):
-
-    BASE_TYPES = (None,)
-
-    def is_base_type(self, other):
-        return isinstance(other, self.BASE_TYPES)
+    pass
 
 
 class String(ConfigType):
@@ -52,8 +48,6 @@ class String(ConfigType):
                          between 'choices' or 'regex' will be ignored;
                          defaults to False.
     """
-
-    BASE_TYPES = six.string_types
 
     def __init__(self, choices=None, quotes=False, regex=None,
                  ignore_case=False):
@@ -126,8 +120,7 @@ class String(ConfigType):
 
 
 class MultiString(String):
-
-    BASE_TYPES = six.string_types + (list,)
+    pass
 
 
 class Boolean(ConfigType):
@@ -139,8 +132,6 @@ class Boolean(ConfigType):
     """
     TRUE_VALUES = ['true', '1', 'on', 'yes']
     FALSE_VALUES = ['false', '0', 'off', 'no']
-
-    BASE_TYPES = (bool,)
 
     def __call__(self, value):
         if isinstance(value, bool):
@@ -171,8 +162,6 @@ class Integer(ConfigType):
     :param min: Optional check that value is greater than or equal to min
     :param max: Optional check that value is less than or equal to max
     """
-
-    BASE_TYPES = six.integer_types
 
     def __init__(self, min=None, max=None):
         super(Integer, self).__init__()
@@ -224,9 +213,6 @@ class Float(ConfigType):
 
     """Float type."""
 
-    # allow float to be set from int
-    BASE_TYPES = six.integer_types + (float,)
-
     def __call__(self, value):
         if isinstance(value, float):
             return value
@@ -255,8 +241,6 @@ class List(ConfigType):
     :param item_type: type of list items
     :param bounds: if True, value should be inside "[" and "]" pair
     """
-
-    BASE_TYPES = (list,)
 
     def __init__(self, item_type=None, bounds=False):
         super(List, self).__init__()
@@ -328,8 +312,6 @@ class Dict(ConfigType):
     :param value_type: type of values in dictionary
     :param bounds: if True, value should be inside "{" and "}" pair
     """
-
-    BASE_TYPES = (dict,)
 
     def __init__(self, value_type=None, bounds=False):
         super(Dict, self).__init__()
@@ -416,8 +398,6 @@ class IPAddress(ConfigType):
     :param version: defines which version should be explicitly checked (4 or 6)
 
     """
-
-    BASE_TYPES = six.string_types
 
     def __init__(self, version=None):
         super(IPAddress, self).__init__()
