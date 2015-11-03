@@ -3719,6 +3719,144 @@ class ChoicesTestCase(BaseTestCase):
                           'foobaz')
 
 
+class RegexTestCase(BaseTestCase):
+
+    def test_regex_good(self):
+        self.conf.register_cli_opt(cfg.StrOpt('foo',
+                                              regex='foo|bar'))
+        self.conf(['--foo', 'bar'])
+        self.assertEqual(self.conf.foo, 'bar')
+        self.conf(['--foo', 'foo'])
+        self.assertEqual(self.conf.foo, 'foo')
+        self.conf(['--foo', 'foobar'])
+        self.assertEqual(self.conf.foo, 'foobar')
+
+    def test_regex_bad(self):
+        self.conf.register_cli_opt(cfg.StrOpt('foo',
+                                              regex='bar'))
+        self.assertRaises(SystemExit, self.conf, ['--foo', 'foo'])
+
+    def test_conf_file_regex_value(self):
+        self.conf.register_opt(cfg.StrOpt('foo',
+                                          regex='bar'))
+
+        paths = self.create_tempfiles([('test', '[DEFAULT]\n''foo = bar\n')])
+
+        self.conf(['--config-file', paths[0]])
+        self.assertTrue(hasattr(self.conf, 'foo'))
+        self.assertEqual(self.conf.foo, 'bar')
+
+    def test_conf_file_regex_bad_value(self):
+        self.conf.register_opt(cfg.StrOpt('foo',
+                                          regex='bar'))
+
+        paths = self.create_tempfiles([('test', '[DEFAULT]\n''foo = other\n')])
+
+        self.conf(['--config-file', paths[0]])
+        self.assertRaisesRegex(cfg.ConfigFileValueError, "doesn't match regex",
+                               self.conf._get, 'foo')
+        self.assertRaisesRegex(ValueError, "doesn't match regex",
+                               getattr, self.conf, 'foo')
+
+    def test_regex_with_choice(self):
+        self.assertRaises(ValueError, cfg.StrOpt,
+                          'foo', choices=['bar1'], regex='bar2')
+
+
+class QuotesTestCase(BaseTestCase):
+
+    def test_quotes_good(self):
+        self.conf.register_cli_opt(cfg.StrOpt('foo',
+                                              quotes=True))
+        self.conf(['--foo', '"foobar1"'])
+        self.assertEqual(self.conf.foo, 'foobar1')
+        self.conf(['--foo', "'foobar2'"])
+        self.assertEqual(self.conf.foo, 'foobar2')
+        self.conf(['--foo', 'foobar3'])
+        self.assertEqual(self.conf.foo, 'foobar3')
+        self.conf(['--foo', 'foobar4"'])
+        self.assertEqual(self.conf.foo, 'foobar4"')
+
+    def test_quotes_bad(self):
+        self.conf.register_cli_opt(cfg.StrOpt('foo',
+                                              quotes=True))
+        self.assertRaises(SystemExit, self.conf, ['--foo', '"foobar\''])
+        self.assertRaises(SystemExit, self.conf, ['--foo', '\'foobar"'])
+        self.assertRaises(SystemExit, self.conf, ['--foo', '"foobar'])
+        self.assertRaises(SystemExit, self.conf, ['--foo', "'foobar"])
+
+    def test_conf_file_quotes_good_value(self):
+        self.conf.register_opt(cfg.StrOpt('foo',
+                                          quotes=True))
+
+        paths = self.create_tempfiles([('test', '[DEFAULT]\n''foo = "bar"\n')])
+
+        self.conf(['--config-file', paths[0]])
+        self.assertTrue(hasattr(self.conf, 'foo'))
+        self.assertEqual(self.conf.foo, 'bar')
+
+    def test_conf_file_quotes_bad_value(self):
+        self.conf.register_opt(cfg.StrOpt('foo',
+                                          quotes=True))
+
+        paths = self.create_tempfiles([('test', '[DEFAULT]\n''foo = "bar\n')])
+
+        self.conf(['--config-file', paths[0]])
+        self.assertRaisesRegex(cfg.ConfigFileValueError, 'Non-closed quote:',
+                               self.conf._get, 'foo')
+        self.assertRaisesRegex(ValueError, 'Non-closed quote:',
+                               getattr, self.conf, 'foo')
+
+
+class IgnoreCaseTestCase(BaseTestCase):
+
+    def test_ignore_case_with_choices(self):
+        self.conf.register_cli_opt(cfg.StrOpt('foo',
+                                              ignore_case=True,
+                                              choices=['bar1',
+                                                       'bar2',
+                                                       'BAR3']))
+        self.conf(['--foo', 'bAr1'])
+        self.assertEqual(self.conf.foo, 'bAr1')
+        self.conf(['--foo', 'BaR2'])
+        self.assertEqual(self.conf.foo, 'BaR2')
+        self.conf(['--foo', 'baR3'])
+        self.assertEqual(self.conf.foo, 'baR3')
+
+    def test_ignore_case_with_regex(self):
+        self.conf.register_cli_opt(cfg.StrOpt('foo',
+                                              ignore_case=True,
+                                              regex='fOO|bar'))
+        self.conf(['--foo', 'foo'])
+        self.assertEqual(self.conf.foo, 'foo')
+        self.conf(['--foo', 'Bar'])
+        self.assertEqual(self.conf.foo, 'Bar')
+        self.conf(['--foo', 'FOObar'])
+        self.assertEqual(self.conf.foo, 'FOObar')
+
+    def test_conf_file_ignore_case_with_choices(self):
+        self.conf.register_opt(cfg.StrOpt('foo',
+                                          ignore_case=True,
+                                          choices=['bar1', 'bar2', 'BAR3']))
+
+        paths = self.create_tempfiles([('test', '[DEFAULT]\n''foo = bAr2\n')])
+
+        self.conf(['--config-file', paths[0]])
+        self.assertTrue(hasattr(self.conf, 'foo'))
+        self.assertEqual(self.conf.foo, 'bAr2')
+
+    def test_conf_file_ignore_case_with_regex(self):
+        self.conf.register_opt(cfg.StrOpt('foo',
+                                          ignore_case=True,
+                                          regex='bAr'))
+
+        paths = self.create_tempfiles([('test', '[DEFAULT]\n''foo = BaR\n')])
+
+        self.conf(['--config-file', paths[0]])
+        self.assertTrue(hasattr(self.conf, 'foo'))
+        self.assertEqual(self.conf.foo, 'BaR')
+
+
 class PrintHelpTestCase(base.BaseTestCase):
 
     def test_print_help_without_init(self):
