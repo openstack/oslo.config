@@ -678,6 +678,15 @@ class Opt(object):
 
         a string explaining how the option's value is used
 
+    .. versionchanged:: 1.2
+       Added *deprecated_opts* parameter.
+
+    .. versionchanged:: 1.4
+       Added *sample_default* parameter.
+
+    .. versionchanged:: 1.9
+       Added *deprecated_for_removal* parameter.
+
     .. versionchanged:: 2.7
 
        An exception is now raised if the default value has the wrong type.
@@ -954,6 +963,8 @@ class DeprecatedOpt(object):
 
     Then the value of "[group1]/opt1" will be ['val11', 'val12', 'val21',
     'val22'].
+
+    .. versionadded:: 1.2
     """
 
     def __init__(self, name, group=None):
@@ -1073,6 +1084,10 @@ class IntOpt(Opt):
     Option with ``type`` :class:`oslo_config.types.Integer`
 
     `Kept for backward-compatibility with options not using Opt directly`.
+
+    .. versionchanged:: 1.15
+
+       Added *min* and *max* parameters.
     """
 
     def __init__(self, name, min=None, max=None, **kwargs):
@@ -1100,6 +1115,9 @@ class ListOpt(Opt):
     Option with ``type`` :class:`oslo_config.types.List`
 
     `Kept for backward-compatibility with options not using Opt directly`.
+
+    .. versionchanged:: 2.5
+       Added *item_type* and *bounds* parameters.
     """
 
     def __init__(self, name, item_type=None, bounds=None, **kwargs):
@@ -1116,6 +1134,8 @@ class DictOpt(Opt):
     Option with ``type`` :class:`oslo_config.types.Dict`
 
     `Kept for backward-compatibility with options not using Opt directly`.
+
+    .. versionadded:: 1.2
     """
 
     def __init__(self, name, **kwargs):
@@ -1130,6 +1150,8 @@ class IPOpt(Opt):
 
     :param version: one of either ``4``, ``6``, or ``None`` to specify
        either version.
+
+    .. versionadded:: 1.4
     """
 
     def __init__(self, name, version=None, **kwargs):
@@ -1169,6 +1191,8 @@ class MultiOpt(Opt):
 
     The command line ``--foo=1 --foo=2`` would result in ``cfg.CONF.foo``
     containing ``[1,2]``
+
+    .. versionadded:: 1.3
     """
     multi = True
 
@@ -1271,6 +1295,8 @@ class _ConfigFileOpt(Opt):
     This allows us to properly handle the precedence of --config-file
     options over previous command line arguments, but not over subsequent
     arguments.
+
+    .. versionadded:: 1.2
     """
 
     class ConfigFileAction(argparse.Action):
@@ -1317,6 +1343,8 @@ class _ConfigDirOpt(Opt):
     _Namespace object. This allows us to properly handle the precedence of
     --config-dir options over previous command line arguments, but not
     over subsequent arguments.
+
+    .. versionadded:: 1.2
     """
 
     class ConfigDirAction(argparse.Action):

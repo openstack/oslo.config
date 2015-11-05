@@ -24,6 +24,8 @@ There are three use cases for the ConfigFilter class:
 
 3. Limit the options on a Cfg object that can be accessed.
 
+.. versionadded:: 1.4
+
 Cross-Module Option Dependencies
 --------------------------------
 
@@ -121,8 +123,6 @@ we can expose options such that only those options are present::
 
   print(restricted_conf.foo)
   print(restricted_conf.bar)  # raises NoSuchOptError
-
-
 """
 
 import collections
@@ -132,7 +132,10 @@ from oslo_config import cfg
 
 
 class CliOptRegisteredError(cfg.Error):
-    """Raised when registering cli opt not in original ConfigOpts."""
+    """Raised when registering cli opt not in original ConfigOpts.
+
+    .. versionadded:: 1.12
+    """
 
     def __str__(self):
         ret = "Cannot register a cli option that was not present in the" \

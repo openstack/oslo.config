@@ -20,6 +20,7 @@
 Tool for generating a sample configuration file. See
 ../doc/source/generator.rst for details.
 
+.. versionadded:: 1.4
 """
 
 import logging
