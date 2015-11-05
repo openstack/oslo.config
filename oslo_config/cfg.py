@@ -490,6 +490,10 @@ class ConfigFileValueError(Error, ValueError):
     pass
 
 
+class DefaultValueError(Error, ValueError):
+    """Raised if a default config type does not fit the opt type."""
+
+
 def _fixpath(p):
     """Apply tilde expansion and absolutization to a path."""
     return os.path.abspath(os.path.expanduser(p))
@@ -718,7 +722,7 @@ class Opt(object):
         if deprecated_name is not None or deprecated_group is not None:
             self.deprecated_opts.append(DeprecatedOpt(deprecated_name,
                                                       group=deprecated_group))
-        self._assert_default_is_of_opt_type()
+        self._check_default()
 
     def _default_is_ref(self):
         """Check if default is a reference to another var."""
@@ -727,19 +731,16 @@ class Opt(object):
             return '$' in tmpl
         return False
 
-    def _assert_default_is_of_opt_type(self):
+    def _check_default(self):
         if (self.default is not None
-                and not self._default_is_ref()
-                and hasattr(self.type, 'is_base_type')
-                and not self.type.is_base_type(self.default)):
-            expected_types = ", ".join(
-                [t.__name__ for t in self.type.BASE_TYPES])
-            raise TypeError(('Expected default value of type(s) '
-                             '%(extypes)s but got %(default)r of '
-                             'type %(deftypes)s') %
-                            {'extypes': expected_types,
-                             'default': self.default,
-                             'deftypes': type(self.default).__name__})
+                and not self._default_is_ref()):
+            try:
+                self.type(self.default)
+            except Exception:
+                raise DefaultValueError("Error processing default value "
+                                        "%(default)s for Opt type of %(opt)s."
+                                        % {'default': self.default,
+                                           'opt': self.type})
 
     def __ne__(self, another):
         return vars(self) != vars(another)
