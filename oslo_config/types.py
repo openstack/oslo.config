@@ -48,22 +48,30 @@ class String(ConfigType):
     :param ignore_case:  If True case differences (uppercase vs. lowercase)
                          between 'choices' or 'regex' will be ignored;
                          defaults to False.
+    :param max_length:  Optional integer. If a positive value is specified,
+                        a maximum length of an option value must be less than
+                        or equal to this parameter. Otherwise no length check
+                        will be done.
 
     .. versionchanged:: 2.1
        Added *regex* parameter.
 
     .. versionchanged:: 2.5
        Added *ignore_case* parameter.
+
+    .. versionchanged:: 2.7
+       Added *max_length* parameter.
     """
 
     def __init__(self, choices=None, quotes=False, regex=None,
-                 ignore_case=False):
+                 ignore_case=False, max_length=None):
         super(String, self).__init__()
         if choices and regex:
             raise ValueError("'choices' and 'regex' cannot both be specified")
 
         self.ignore_case = ignore_case
         self.quotes = quotes
+        self.max_length = max_length or 0
 
         self.choices = choices
         self.lower_case_choices = None
@@ -87,6 +95,10 @@ class String(ConfigType):
                 if value[-1] != value[0]:
                     raise ValueError('Non-closed quote: %s' % value)
                 value = value[1:-1]
+
+        if self.max_length > 0 and len(value) > self.max_length:
+            raise ValueError("Value '%s' exceeds maximum length %d" %
+                             (value, self.max_length))
 
         if self.regex and not self.regex.search(value):
             raise ValueError("Value %r doesn't match regex %r" %

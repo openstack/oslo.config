@@ -151,6 +151,11 @@ class StringTypeTests(TypeTestHelper, unittest.TestCase):
                                           ignore_case=False)
         self.assertConvertedValue("foo", "foo")
 
+    def test_max_length(self):
+        self.type_instance = types.String(max_length=5)
+        self.assertInvalid('123456')
+        self.assertConvertedValue('12345', '12345')
+
 
 class BooleanTypeTests(TypeTestHelper, unittest.TestCase):
     type = types.Boolean()
