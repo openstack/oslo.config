@@ -2641,6 +2641,22 @@ class OverridesTestCase(BaseTestCase):
         self.conf.clear_override('foo')
         self.assertIsNone(self.conf.foo)
 
+    def test_enforce_type_int_override_with_None(self):
+        self.conf.register_opt(cfg.IntOpt('foo'))
+        self.conf.set_override('foo', None, enforce_type=True)
+        self.conf([])
+        self.assertIsNone(self.conf.foo)
+        self.conf.clear_override('foo')
+        self.assertIsNone(self.conf.foo)
+
+    def test_enforce_type_str_override_with_None(self):
+        self.conf.register_opt(cfg.StrOpt('foo'))
+        self.conf.set_override('foo', None, enforce_type=True)
+        self.conf([])
+        self.assertIsNone(self.conf.foo)
+        self.conf.clear_override('foo')
+        self.assertIsNone(self.conf.foo)
+
 
 class ResetAndClearTestCase(BaseTestCase):
 
