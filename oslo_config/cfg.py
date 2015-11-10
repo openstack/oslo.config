@@ -991,8 +991,6 @@ class StrOpt(Opt):
 
     Option with ``type`` :class:`oslo_config.types.String`
 
-    `Kept for backward-compatibility with options not using Opt directly`.
-
     :param choices: Optional sequence of valid values.
     :param quotes: If True and string is enclosed with single or double
                    quotes, will strip those quotes.
@@ -1083,8 +1081,6 @@ class IntOpt(Opt):
 
     Option with ``type`` :class:`oslo_config.types.Integer`
 
-    `Kept for backward-compatibility with options not using Opt directly`.
-
     .. versionchanged:: 1.15
 
        Added *min* and *max* parameters.
@@ -1100,8 +1096,6 @@ class FloatOpt(Opt):
     """Option with Float type
 
     Option with ``type`` :class:`oslo_config.types.Float`
-
-    `Kept for backward-communicability with options not using Opt directly`.
     """
 
     def __init__(self, name, **kwargs):
@@ -1113,8 +1107,6 @@ class ListOpt(Opt):
     """Option with List(String) type
 
     Option with ``type`` :class:`oslo_config.types.List`
-
-    `Kept for backward-compatibility with options not using Opt directly`.
 
     .. versionchanged:: 2.5
        Added *item_type* and *bounds* parameters.
@@ -1132,8 +1124,6 @@ class DictOpt(Opt):
     """Option with Dict(String) type
 
     Option with ``type`` :class:`oslo_config.types.Dict`
-
-    `Kept for backward-compatibility with options not using Opt directly`.
 
     .. versionadded:: 1.2
     """
@@ -1215,10 +1205,6 @@ class MultiStrOpt(MultiOpt):
 
     MultiOpt with a default :class:`oslo_config.types.MultiString` item
     type.
-
-    `Kept for backwards-compatibility for options that do not use
-    MultiOpt directly`.
-
     """
 
     def __init__(self, name, **kwargs):
