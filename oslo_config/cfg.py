@@ -999,6 +999,8 @@ class StrOpt(Opt):
                   search.
     :param ignore_case: If True case differences (uppercase vs. lowercase)
                         between 'choices' or 'regex' will be ignored.
+    :param max_length: If positive integer, the value must be less than or
+                       equal to this parameter.
 
     .. versionchanged:: 2.7
        Added *quotes* parameter
@@ -1008,16 +1010,20 @@ class StrOpt(Opt):
 
     .. versionchanged:: 2.7
        Added *ignore_case* parameter
+
+    .. versionchanged:: 2.7
+       Added *max_length* parameter
     """
 
     def __init__(self, name, choices=None, quotes=None,
-                 regex=None, ignore_case=None, **kwargs):
+                 regex=None, ignore_case=None, max_length=None, **kwargs):
         super(StrOpt, self).__init__(name,
                                      type=types.String(
                                          choices=choices,
                                          quotes=quotes,
                                          regex=regex,
-                                         ignore_case=ignore_case),
+                                         ignore_case=ignore_case,
+                                         max_length=max_length),
                                      **kwargs)
 
 

@@ -3852,6 +3852,18 @@ class IgnoreCaseTestCase(BaseTestCase):
         self.assertEqual(self.conf.foo, 'BaR')
 
 
+class StrOptMaxLengthTestCase(BaseTestCase):
+
+    def test_stropt_max_length_good(self):
+        self.conf.register_cli_opt(cfg.StrOpt('foo', max_length=5))
+        self.conf(['--foo', '12345'])
+        self.assertEqual(self.conf.foo, '12345')
+
+    def test_stropt_max_length_bad(self):
+        self.conf.register_cli_opt(cfg.StrOpt('foo', max_length=5))
+        self.assertRaises(SystemExit, self.conf, ['--foo', '123456'])
+
+
 class PrintHelpTestCase(base.BaseTestCase):
 
     def test_print_help_without_init(self):
