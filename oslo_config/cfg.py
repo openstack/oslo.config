@@ -44,8 +44,8 @@ either returns a value of that particular type or raises ValueError if
 the value can not be converted.
 
 There are predefined types in :class:`oslo_config.cfg` : strings,
-integers, floats, booleans, lists, 'multi strings' and 'key/value
-pairs' (dictionary) ::
+integers, floats, booleans, IP address, port, sub-command, lists,
+'multi strings' and 'key/value pairs' (dictionary) ::
 
     enabled_apis_opt = cfg.ListOpt('enabled_apis',
                                    default=['ec2', 'osapi_compute'],
@@ -140,8 +140,9 @@ for example glance-api.conf and glance-common.conf::
       bind_host = 0.0.0.0
 
 Option values in config files and those on the command line are parsed
-in order. The same option can appear many times, in config files or on
-the command line. Later values always override earlier ones.
+in order. The same option (includes deprecated option name and current
+option name) can appear many times, in config files or on the command line.
+Later values always override earlier ones.
 
 The order of configuration files inside the same configuration directory is
 defined by the alphabetic sorting order of their file names.
