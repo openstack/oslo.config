@@ -281,7 +281,7 @@ def generate(conf):
 
     def _get_group_name(item):
         group = item[0]
-        # The key of that dictionary could be an OptGroup. Otherwise the
+        # The keys of the groups dictionary could be an OptGroup. Otherwise the
         # help text of an OptGroup wouldn't be part of the generated sample
         # file. It could also be just a plain group name without any further
         # attributes. That's the reason why we have to distinct this here.
