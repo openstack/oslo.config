@@ -2348,15 +2348,14 @@ class ConfigOpts(collections.Mapping):
             key = (group.name, name)
         else:
             key = (group, name)
-        try:
-            if namespace is not None:
-                raise KeyError
-
-            return self.__cache[key]
-        except KeyError:
-            value = self._do_get(name, group, namespace)
-            self.__cache[key] = value
-            return value
+        if namespace is None:
+            try:
+                return self.__cache[key]
+            except KeyError:
+                pass
+        value = self._do_get(name, group, namespace)
+        self.__cache[key] = value
+        return value
 
     def _do_get(self, name, group=None, namespace=None):
         """Look up an option value.
