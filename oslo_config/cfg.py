@@ -393,11 +393,8 @@ class NoSuchOptError(Error, AttributeError):
         self.group = group
 
     def __str__(self):
-        if self.group is None:
-            return "no such option: %s" % self.opt_name
-        else:
-            return "no such option in group %s: %s" % (self.group.name,
-                                                       self.opt_name)
+        group_name = 'DEFAULT' if self.group is None else self.group.name
+        return "no such option in group %s: %s" % (group_name, self.opt_name)
 
 
 class NoSuchGroupError(Error):

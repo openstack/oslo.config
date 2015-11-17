@@ -45,7 +45,7 @@ class ExceptionsTestCase(base.BaseTestCase):
 
     def test_no_such_opt_error(self):
         msg = str(cfg.NoSuchOptError('foo'))
-        self.assertEqual(msg, 'no such option: foo')
+        self.assertEqual(msg, 'no such option in group DEFAULT: foo')
 
     def test_no_such_opt_error_with_group(self):
         msg = str(cfg.NoSuchOptError('foo', cfg.OptGroup('bar')))
