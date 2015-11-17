@@ -29,6 +29,19 @@ load_tests = testscenarios.load_tests_apply_scenarios
 
 class GeneratorTestCase(base.BaseTestCase):
 
+    groups = {
+        'group1': cfg.OptGroup(name='group1',
+                               help='Lorem ipsum dolor sit amet, consectetur '
+                                    'adipisicing elit, sed do eiusmod tempor '
+                                    'incididunt ut labore et dolore magna '
+                                    'aliqua. Ut enim ad minim veniam, quis '
+                                    'nostrud exercitation ullamco laboris '
+                                    'nisi ut aliquip ex ea commodo '
+                                    'consequat. Duis aute irure dolor in.'),
+        'group2': cfg.OptGroup(name='group2', title='Group 2'),
+        'foo': cfg.OptGroup(name='foo', title='Foo Title', help='foo help'),
+    }
+
     opts = {
         'foo': cfg.StrOpt('foo', help='foo option'),
         'bar': cfg.StrOpt('bar', help='bar option'),
@@ -159,11 +172,15 @@ class GeneratorTestCase(base.BaseTestCase):
 #foo = <None>
 ''')),
         ('group',
-         dict(opts=[('test', [('group1', [opts['foo']])])],
+         dict(opts=[('test', [(groups['group1'], [opts['foo']])])],
               expected='''[DEFAULT]
 
 
 [group1]
+# Lorem ipsum dolor sit amet, consectetur adipisicing elit, sed do
+# eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim
+# ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut
+# aliquip ex ea commodo consequat. Duis aute irure dolor in.
 
 #
 # From test
@@ -173,16 +190,20 @@ class GeneratorTestCase(base.BaseTestCase):
 #foo = <None>
 ''')),
         ('empty_group',
-         dict(opts=[('test', [('group1', [])])],
+         dict(opts=[('test', [(groups['group1'], [])])],
               expected='''[DEFAULT]
 ''')),
         ('multiple_groups',
-         dict(opts=[('test', [('group1', [opts['foo']]),
-                              ('group2', [opts['bar']])])],
+         dict(opts=[('test', [(groups['group1'], [opts['foo']]),
+                              (groups['group2'], [opts['bar']])])],
               expected='''[DEFAULT]
 
 
 [group1]
+# Lorem ipsum dolor sit amet, consectetur adipisicing elit, sed do
+# eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim
+# ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut
+# aliquip ex ea commodo consequat. Duis aute irure dolor in.
 
 #
 # From test
@@ -202,12 +223,16 @@ class GeneratorTestCase(base.BaseTestCase):
 #bar = <None>
 ''')),
         ('group_in_multiple_namespaces',
-         dict(opts=[('test', [('group1', [opts['foo']])]),
-                    ('other', [('group1', [opts['bar']])])],
+         dict(opts=[('test', [(groups['group1'], [opts['foo']])]),
+                    ('other', [(groups['group1'], [opts['bar']])])],
               expected='''[DEFAULT]
 
 
 [group1]
+# Lorem ipsum dolor sit amet, consectetur adipisicing elit, sed do
+# eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim
+# ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut
+# aliquip ex ea commodo consequat. Duis aute irure dolor in.
 
 #
 # From other
@@ -341,11 +366,12 @@ class GeneratorTestCase(base.BaseTestCase):
 #choices_opt = a
 ''')),
         ('deprecated',
-         dict(opts=[('test', [('foo', [opts['deprecated_opt']])])],
+         dict(opts=[('test', [(groups['foo'], [opts['deprecated_opt']])])],
               expected='''[DEFAULT]
 
 
 [foo]
+# foo help
 
 #
 # From test
@@ -356,11 +382,13 @@ class GeneratorTestCase(base.BaseTestCase):
 #bar = <None>
 ''')),
         ('deprecated_for_removal',
-         dict(opts=[('test', [('foo', [opts['deprecated_for_removal_opt']])])],
+         dict(opts=[('test', [(groups['foo'],
+                              [opts['deprecated_for_removal_opt']])])],
               expected='''[DEFAULT]
 
 
 [foo]
+# foo help
 
 #
 # From test
@@ -372,11 +400,12 @@ class GeneratorTestCase(base.BaseTestCase):
 #bar = <None>
 ''')),
         ('deprecated_group',
-         dict(opts=[('test', [('foo', [opts['deprecated_group']])])],
+         dict(opts=[('test', [(groups['foo'], [opts['deprecated_group']])])],
               expected='''[DEFAULT]
 
 
 [foo]
+# foo help
 
 #
 # From test
@@ -600,6 +629,9 @@ class GeneratorTestCase(base.BaseTestCase):
 
         namespaces = [i[0] for i in self.opts]
         self.config(namespace=namespaces)
+
+        for group in self.groups.values():
+            self.conf.register_group(group)
 
         wrap_width = getattr(self, 'wrap_width', None)
         if wrap_width is not None:
