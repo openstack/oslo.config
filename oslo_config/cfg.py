@@ -1761,12 +1761,10 @@ class _Namespace(argparse.Namespace):
         try:
             return self._get_cli_value(names, positional)
         except KeyError:
-            pass
-
-        names = [(g if g is not None else 'DEFAULT', n) for g, n in names]
-        values = self._parser._get(names, multi=multi, normalized=True,
-                                   current_name=current_name)
-        return values if multi else values[-1]
+            names = [(g if g is not None else 'DEFAULT', n) for g, n in names]
+            values = self._parser._get(names, multi=multi, normalized=True,
+                                       current_name=current_name)
+            return values if multi else values[-1]
 
 
 class _CachedArgumentParser(argparse.ArgumentParser):
@@ -2349,7 +2347,7 @@ class ConfigOpts(collections.Mapping):
         if namespace is None:
             try:
                 return self.__cache[key]
-            except KeyError:
+            except KeyError:  # nosec: Valid control flow instruction
                 pass
         value = self._do_get(name, group, namespace)
         self.__cache[key] = value
@@ -2389,7 +2387,7 @@ class ConfigOpts(collections.Mapping):
             group_name = group.name if group else None
             try:
                 return convert(opt._get_from_namespace(namespace, group_name))
-            except KeyError:
+            except KeyError:  # nosec: Valid control flow instruction
                 pass
             except ValueError as ve:
                 raise ConfigFileValueError(
