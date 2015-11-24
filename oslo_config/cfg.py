@@ -610,6 +610,7 @@ def _normalize_group_name(group_name):
     return group_name.lower()
 
 
+@functools.total_ordering
 class Opt(object):
 
     """Base class for all configuration options.
@@ -914,10 +915,6 @@ class Opt(object):
 
     def __lt__(self, another):
         return hash(self) < hash(another)
-
-# NOTE(jd) Not available for py2.6
-if six.PY3:
-    Opt = functools.total_ordering(Opt)
 
 
 class DeprecatedOpt(object):
