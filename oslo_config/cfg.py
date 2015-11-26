@@ -38,10 +38,10 @@ The schema for each option is defined using the
 Option Types
 ------------
 
-Options can have arbitrary types via the ``type`` constructor to
-``Opt``. The type constructor is a callable object that takes a string and
-either returns a value of that particular type or raises ValueError if
-the value can not be converted.
+Options can have arbitrary types via the ``type`` constructor to :class:`Opt`.
+The type constructor is a callable object that takes a string and either
+returns a value of that particular type or raises ValueError if the value can
+not be converted.
 
 There are predefined types in :class:`oslo_config.cfg` : strings,
 integers, floats, booleans, lists, 'multi strings' and 'key/value
@@ -992,6 +992,7 @@ class StrOpt(Opt):
 
     Option with ``type`` :class:`oslo_config.types.String`
 
+    :param name: the option's name
     :param choices: Optional sequence of valid values.
     :param quotes: If True and string is enclosed with single or double
                    quotes, will strip those quotes.
@@ -1002,6 +1003,7 @@ class StrOpt(Opt):
                         between 'choices' or 'regex' will be ignored.
     :param max_length: If positive integer, the value must be less than or
                        equal to this parameter.
+    :param **kwargs: arbitrary keyword arguments passed to :class:`Opt`
 
     .. versionchanged:: 2.7
        Added *quotes* parameter
@@ -1036,6 +1038,9 @@ class BoolOpt(Opt):
     --nooptname respectively.
 
     In config files, boolean values are cast with Boolean type.
+
+    :param name: the option's name
+    :param **kwargs: arbitrary keyword arguments passed to :class:`Opt`
     """
 
     def __init__(self, name, **kwargs):
@@ -1088,6 +1093,11 @@ class IntOpt(Opt):
 
     Option with ``type`` :class:`oslo_config.types.Integer`
 
+    :param name: the option's name
+    :param min: minimum value the integer can take
+    :param max: maximum value the integer can take
+    :param **kwargs: arbitrary keyword arguments passed to :class:`Opt`
+
     .. versionchanged:: 1.15
 
        Added *min* and *max* parameters.
@@ -1103,6 +1113,9 @@ class FloatOpt(Opt):
     """Option with Float type
 
     Option with ``type`` :class:`oslo_config.types.Float`
+
+    :param name: the option's name
+    :param **kwargs: arbitrary keyword arguments passed to :class:`Opt`
     """
 
     def __init__(self, name, **kwargs):
@@ -1114,6 +1127,11 @@ class ListOpt(Opt):
     """Option with List(String) type
 
     Option with ``type`` :class:`oslo_config.types.List`
+
+    :param name: the option's name
+    :param item_type: type of items (see :class:`oslo_config.types`)
+    :param bounds: if True the value should be inside "[" and "]" pair
+    :param **kwargs: arbitrary keyword arguments passed to :class:`Opt`
 
     .. versionchanged:: 2.5
        Added *item_type* and *bounds* parameters.
@@ -1132,6 +1150,9 @@ class DictOpt(Opt):
 
     Option with ``type`` :class:`oslo_config.types.Dict`
 
+    :param name: the option's name
+    :param **kwargs: arbitrary keyword arguments passed to :class:`Opt`
+
     .. versionadded:: 1.2
     """
 
@@ -1145,8 +1166,10 @@ class IPOpt(Opt):
 
     Option with ``type`` :class:`oslo_config.types.IPAddress`
 
+    :param name: the option's name
     :param version: one of either ``4``, ``6``, or ``None`` to specify
        either version.
+    :param **kwargs: arbitrary keyword arguments passed to :class:`Opt`
 
     .. versionadded:: 1.4
     """
@@ -1161,6 +1184,11 @@ class PortOpt(Opt):
     """Option for a TCP/IP port number.  Ports can range from 1 to 65535.
 
     Option with ``type`` :class:`oslo_config.types.Integer`
+
+    :param name: the option's name
+    :param min: minimum port number the option can take
+    :param max: maximum port number the option can take
+    :param **kwargs: arbitrary keyword arguments passed to :class:`Opt`
 
     .. versionadded:: 2.6
     """
@@ -1177,8 +1205,9 @@ class MultiOpt(Opt):
     Multi opt values are typed opts which may be specified multiple times.
     The opt value is a list containing all the values specified.
 
-    :param name: Name of the config option
+    :param name: the option's name
     :param item_type: Type of items (see :class:`oslo_config.types`)
+    :param **kwargs: arbitrary keyword arguments passed to :class:`Opt`
 
     For example::
 
@@ -1213,6 +1242,9 @@ class MultiStrOpt(MultiOpt):
 
     MultiOpt with a default :class:`oslo_config.types.MultiString` item
     type.
+
+    :param name: the option's name
+    :param **kwargs: arbitrary keyword arguments passed to :class:`MultiOpt`
     """
 
     def __init__(self, name, **kwargs):
@@ -1235,6 +1267,13 @@ class SubCommandOpt(Opt):
     The opt value is SubCommandAttr object with the name of the chosen
     sub-parser stored in the 'name' attribute and the values of other
     sub-parser arguments available as additional attributes.
+
+    :param name: the option's name
+    :param dest: the name of the corresponding ConfigOpts property
+    :param handler: callable which is supplied subparsers object when invoked
+    :param title: title of the sub-commands group in help output
+    :param description: description of the group in help output
+    :param help: a help string giving an overview of available sub-commands
     """
 
     def __init__(self, name, dest=None, handler=None,
@@ -1246,12 +1285,6 @@ class SubCommandOpt(Opt):
         an subparsers object when invoked. The add_parser() method on
         this subparsers object can be used to register parsers for
         sub-commands.
-
-        :param name: the option's name
-        :param dest: the name of the corresponding ConfigOpts property
-        :param title: title of the sub-commands group in help output
-        :param description: description of the group in help output
-        :param help: a help string giving an overview of available sub-commands
         """
         super(SubCommandOpt, self).__init__(name, type=types.String(),
                                             dest=dest, help=help)
@@ -1402,15 +1435,14 @@ class OptGroup(object):
     .. py:attribute:: help
 
         the group description as displayed in --help
+
+    :param name: the group name
+    :param title: the group title for --help
+    :param help: the group description for --help
     """
 
     def __init__(self, name, title=None, help=None):
-        """Constructs an OptGroup object.
-
-        :param name: the group name
-        :param title: the group title for --help
-        :param help: the group description for --help
-        """
+        """Constructs an OptGroup object."""
         self.name = name
         self.title = "%s options" % name if title is None else title
         self.help = help
