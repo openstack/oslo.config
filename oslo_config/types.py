@@ -192,23 +192,37 @@ class Integer(ConfigType):
     Converts value to an integer optionally doing range checking.
     If value is whitespace or empty string will return None.
 
-    :param min: Optional check that value is greater than or equal to min
-    :param max: Optional check that value is less than or equal to max
+    :param min: Optional check that value is greater than or equal to min.
+                Mutually exclusive with 'choices'.
+    :param max: Optional check that value is less than or equal to max.
+                Mutually exclusive with 'choices'.
     :param type_name: Type name to be used in the sample config file.
+    :param choices: Optional sequence of valid values. Mutually exclusive
+                    with 'min/max'.
 
     .. versionchanged:: 2.4
        The class now honors zero for *min* and *max* parameters.
 
     .. versionchanged:: 2.7
        Added *type_name* parameter.
+
+    .. versionchanged:: 3.2
+       Added *choices* parameter.
     """
 
-    def __init__(self, min=None, max=None, type_name='integer value'):
+    def __init__(self, min=None, max=None, type_name='integer value',
+                 choices=None):
         super(Integer, self).__init__(type_name=type_name)
+        if choices is not None:
+            if min is not None or max is not None:
+                raise ValueError("'choices' and 'min/max' cannot both be "
+                                 "specified")
+        else:
+            if min is not None and max is not None and max < min:
+                raise ValueError('Max value is less than min value')
         self.min = min
         self.max = max
-        if min is not None and max is not None and max < min:
-            raise ValueError('Max value is less than min value')
+        self.choices = choices
 
     def __call__(self, value):
         if not isinstance(value, int):
@@ -219,9 +233,19 @@ class Integer(ConfigType):
                 value = int(value)
 
         if value is not None:
-            self._check_range(value)
+            if self.choices is not None:
+                self._check_choices(value)
+            else:
+                self._check_range(value)
 
         return value
+
+    def _check_choices(self, value):
+        if value in self.choices:
+            return
+        else:
+            raise ValueError('Valid values are %r, but found %d' % (
+                             self.choices, value))
 
     def _check_range(self, value):
         if self.min is not None and value < self.min:
@@ -232,10 +256,13 @@ class Integer(ConfigType):
 
     def __repr__(self):
         props = []
-        if self.min is not None:
-            props.append('min=%d' % self.min)
-        if self.max is not None:
-            props.append('max=%d' % self.max)
+        if self.choices is not None:
+            props.append("choices=%r" % (self.choices,))
+        else:
+            if self.min is not None:
+                props.append('min=%d' % self.min)
+            if self.max is not None:
+                props.append('max=%d' % self.max)
 
         if props:
             return 'Integer(%s)' % ', '.join(props)
@@ -245,7 +272,10 @@ class Integer(ConfigType):
         return (
             (self.__class__ == other.__class__) and
             (self.min == other.min) and
-            (self.max == other.max)
+            (self.max == other.max) and
+            (set(self.choices) == set(other.choices) if
+             self.choices and other.choices else
+             self.choices == other.choices)
         )
 
 
