@@ -636,7 +636,6 @@ class Opt(object):
     :param sample_default: a default string for sample config files
     :param deprecated_for_removal: indicates whether this opt is planned for
                                    removal in a future release
-    :param mutable: True if this option may be reloaded
 
     An Opt object has no public methods, but has a number of public properties:
 
@@ -690,10 +689,6 @@ class Opt(object):
     .. versionchanged:: 2.7
 
        An exception is now raised if the default value has the wrong type.
-
-    .. versionchanged:: 2.8
-
-       Added *mutable* parameter.
     """
     multi = False
 
@@ -702,7 +697,7 @@ class Opt(object):
                  secret=False, required=False,
                  deprecated_name=None, deprecated_group=None,
                  deprecated_opts=None, sample_default=None,
-                 deprecated_for_removal=False, mutable=False):
+                 deprecated_for_removal=False):
         if name.startswith('_'):
             raise ValueError('illegal name %s with prefix _' % (name,))
         self.name = name
@@ -736,8 +731,6 @@ class Opt(object):
             self.deprecated_opts.append(DeprecatedOpt(deprecated_name,
                                                       group=deprecated_group))
         self._check_default()
-
-        self.mutable = mutable
 
     def _default_is_ref(self):
         """Check if default is a reference to another var."""
@@ -1803,13 +1796,6 @@ class _Namespace(argparse.Namespace):
                                        current_name=current_name)
             return values if multi else values[-1]
 
-    def _set_value(self, section, name, value, cli=False):
-        if cli:
-            name = name if section is None else section + '_' + name
-            setattr(self, name, value)
-        else:
-            self._parser.set(section, name, value)
-
 
 class _CachedArgumentParser(argparse.ArgumentParser):
 
@@ -1876,24 +1862,6 @@ class ConfigOpts(collections.Mapping):
     ConfigOpts is a configuration option manager with APIs for registering
     option schemas, grouping options, parsing option values and retrieving
     the values of options.
-
-    .. py:attribute:: limit_mutation
-
-        When reload_config_files is called, if this is False (default), all
-        options will be updated but the mutation_hook will NOT be called. This
-        was the behaviour before the 'mutable' flag was implemented.
-
-        If it is True, only options with 'mutable' set will be updated and the
-        hook will be called.
-
-    .. py:attribute:: mutation_hook
-
-        When reload_config_files is called, this hook (if set, and
-        limit_mutation is also set) will be called just before the options are
-        stored. Two arguments will be passed: the first is this conf object.
-        The second will be a dict of the mutating options, looking like:
-
-            {('groupname', 'optname'): {'value': <value>, 'cli': Boolean}, ...}
     """
 
     def __init__(self):
@@ -1909,8 +1877,6 @@ class ConfigOpts(collections.Mapping):
         self._config_opts = []
         self._cli_opts = collections.deque()
         self._validate_default_values = False
-        self.limit_mutation = False
-        self.mutation_hook = None
 
     def _pre_setup(self, project, prog, version, usage, default_config_files):
         """Initialize a ConfigCliParser object for option parsing."""
@@ -2665,36 +2631,9 @@ class ConfigOpts(collections.Mapping):
             LOG.warn("Caught Error while reloading configure files: %s",
                      err)
             return False
-        if self.limit_mutation:
-            self._mutate(namespace)
         else:
             self._namespace = namespace
-        return True
-
-    def _mutate(self, namespace):
-        """Update mutable opts from the given namespace."""
-        fresh = {}
-        for info, group in self._all_opt_infos():
-            opt = info['opt']
-            if opt.name in ['config-dir', 'config-file']:
-                continue
-            groupname = group.name if group else None
-            old = opt._get_from_namespace(self._namespace, groupname)
-            new = opt._get_from_namespace(namespace, groupname)
-            if old == new:
-                continue
-            if opt.mutable:
-                fresh[(groupname, opt.name)] = (
-                    {'value': new, 'cli': info['cli']})
-            else:
-                LOG.warn("Ignoring change to immutable option: %s"
-                         % opt.name)
-        if fresh and self.mutation_hook:
-            # Old options are still available from CONF during this call.
-            self.mutation_hook(self, copy.deepcopy(fresh))
-        for key, item in fresh.items():
-            self._namespace._set_value(
-                key[0], key[1], item['value'], item['cli'])
+            return True
 
     def list_all_sections(self):
         """List all sections from the configuration.
