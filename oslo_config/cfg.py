@@ -2240,11 +2240,12 @@ class ConfigOpts(collections.Mapping):
         :param override: the override value
         :param group: an option OptGroup object or group name
         :param enforce_type: a boolean whether to convert the override
-         value to the option's type
+         value to the option's type, None is *not* converted even
+         if enforce_type is True.
         :raises: NoSuchOptError, NoSuchGroupError
         """
         opt_info = self._get_opt_info(name, group)
-        if enforce_type:
+        if enforce_type and override is not None:
             opt_info['override'] = self._convert_value(override,
                                                        opt_info['opt'])
         else:
