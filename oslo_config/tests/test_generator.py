@@ -424,8 +424,6 @@ class GeneratorTestCase(base.BaseTestCase):
 ''')),
         ('unknown_type',
          dict(opts=[('test', [(None, [opts['unknown_type']])])],
-              log_warning=('Unknown option type: %s',
-                           repr(opts['unknown_type'])),
               expected='''[DEFAULT]
 
 #
@@ -598,8 +596,6 @@ class GeneratorTestCase(base.BaseTestCase):
 ''')),
         ('custom_type_name',
          dict(opts=[('test', [(None, [opts['custom_type_name']])])],
-              log_warning=('Unknown option type: %s',
-                           repr(opts['custom_type_name'])),
               expected='''[DEFAULT]
 
 #

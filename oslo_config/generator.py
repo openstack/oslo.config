@@ -60,47 +60,6 @@ def register_cli_opts(conf):
     conf.register_cli_opts(_generator_opts)
 
 
-def _format_defaults(opt):
-    "Return a list of formatted default values."
-    if isinstance(opt, cfg.MultiStrOpt):
-        if opt.sample_default is not None:
-            defaults = opt.sample_default
-        elif not opt.default:
-            defaults = ['']
-        else:
-            defaults = opt.default
-    else:
-        if opt.sample_default is not None:
-            default_str = str(opt.sample_default)
-        elif opt.default is None:
-            default_str = '<None>'
-        elif (isinstance(opt, cfg.StrOpt) or
-              isinstance(opt, cfg.IPOpt)):
-            default_str = opt.default
-        elif isinstance(opt, cfg.BoolOpt):
-            default_str = str(opt.default).lower()
-        elif isinstance(opt, (cfg.IntOpt, cfg.FloatOpt,
-                              cfg.PortOpt)):
-            default_str = str(opt.default)
-        elif isinstance(opt, cfg.ListOpt):
-            default_str = ','.join(opt.default)
-        elif isinstance(opt, cfg.DictOpt):
-            sorted_items = sorted(opt.default.items(),
-                                  key=operator.itemgetter(0))
-            default_str = ','.join(['%s:%s' % i for i in sorted_items])
-        else:
-            LOG.warning('Unknown option type: %s', repr(opt))
-            default_str = str(opt.default)
-        defaults = [default_str]
-
-    results = []
-    for default_str in defaults:
-        if default_str.strip() != default_str:
-            default_str = '"%s"' % default_str
-        results.append(default_str)
-    return results
-
-
 class _OptFormatter(object):
 
     """Format configuration option descriptions to a file."""
@@ -194,7 +153,7 @@ class _OptFormatter(object):
                 '# This option is deprecated for removal.\n'
                 '# Its value may be silently ignored in the future.\n')
 
-        defaults = _format_defaults(opt)
+        defaults = opt.type.format_defaults(opt.default, opt.sample_default)
         for default_str in defaults:
             if default_str:
                 default_str = ' ' + default_str
