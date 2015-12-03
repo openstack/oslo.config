@@ -137,6 +137,9 @@ class GeneratorTestCase(base.BaseTestCase):
                                                     default=['1', '2', '3'],
                                                     sample_default=['5', '6'],
                                                     help='multiple strings'),
+        'custom_type': cfg.Opt('custom_type',
+                               help='custom help',
+                               type=type('string')),
         'custom_type_name': cfg.Opt('custom_opt_type',
                                     type=types.Integer(type_name='port'
                                                        ' number'),
@@ -604,6 +607,17 @@ class GeneratorTestCase(base.BaseTestCase):
 
 # this is a port (port number)
 #custom_opt_type = 5511
+''')),
+        ('custom_type',
+         dict(opts=[('test', [(None, [opts['custom_type']])])],
+              expected='''[DEFAULT]
+
+#
+# From test
+#
+
+# custom help (unknown value)
+#custom_type = <None>
 ''')),
     ]
 
