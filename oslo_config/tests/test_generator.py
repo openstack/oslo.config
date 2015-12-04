@@ -137,6 +137,9 @@ class GeneratorTestCase(base.BaseTestCase):
                                                     default=['1', '2', '3'],
                                                     sample_default=['5', '6'],
                                                     help='multiple strings'),
+        'string_type_with_bad_default': cfg.Opt('string_type_with_bad_default',
+                                                help='string with bad default',
+                                                default=4096),
         'custom_type': cfg.Opt('custom_type',
                                help='custom help',
                                type=type('string')),
@@ -618,6 +621,18 @@ class GeneratorTestCase(base.BaseTestCase):
 
 # custom help (unknown value)
 #custom_type = <None>
+''')),
+        ('string_type_with_bad_default',
+         dict(opts=[('test', [(None,
+                               [opts['string_type_with_bad_default']])])],
+              expected='''[DEFAULT]
+
+#
+# From test
+#
+
+# string with bad default (string value)
+#string_type_with_bad_default = 4096
 ''')),
     ]
 
