@@ -1563,6 +1563,12 @@ class ConfigParser(iniparser.BaseParser):
 
 
 class MultiConfigParser(object):
+    """A ConfigParser which handles multi-opts.
+
+    All methods in this class which accept config names should treat a section
+    name of None as 'DEFAULT'.
+    """
+
     _deprecated_opt_message = ('Option "%s" from group "%s" is deprecated. '
                                'Use option "%s" from group "%s".')
 
@@ -1612,6 +1618,8 @@ class MultiConfigParser(object):
         rvalue = []
 
         def normalize(name):
+            if name is None:
+                name = 'DEFAULT'
             return _normalize_group_name(name) if normalized else name
 
         names = [(normalize(section), name) for section, name in names]
@@ -1645,12 +1653,7 @@ class MultiConfigParser(object):
                     If the name param matches any entries in this list a
                     deprecation warning will be logged.
         """
-        # Opts in the DEFAULT group may come in with a group name of either
-        # 'DEFAULT' or None.  Force them all to 'DEFAULT' since that's a more
-        # user-friendly form.
-        deprecated_names = set((g or 'DEFAULT', n) for (g, n) in deprecated)
-        name = (name[0] or 'DEFAULT', name[1])
-        if name in deprecated_names and name not in self._emitted_deprecations:
+        if name in deprecated and name not in self._emitted_deprecations:
             self._emitted_deprecations.add(name)
             current = (current[0] or 'DEFAULT', current[1])
             # NOTE(bnemec): Not using versionutils for this to avoid a
