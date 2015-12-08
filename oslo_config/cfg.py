@@ -1185,10 +1185,31 @@ class PortOpt(Opt):
     :param **kwargs: arbitrary keyword arguments passed to :class:`Opt`
 
     .. versionadded:: 2.6
+    .. versionchanged:: 3.2
+       Added *choices* parameter.
     """
+    PORT_MIN = 1
+    PORT_MAX = 65535
 
-    def __init__(self, name, **kwargs):
-        type = types.Integer(min=1, max=65535, type_name='port value')
+    def __init__(self, name, choices=None, **kwargs):
+
+        # choices and min/max are mutally exclusive for Integer type. So check
+        # if choice are in the range of min/max and only assign choices to
+        # Integer type.
+        if choices is not None:
+            invalid_choices = []
+            for choice in choices:
+                if not self.PORT_MIN <= choice <= self.PORT_MAX:
+                    invalid_choices.append(six.text_type(choice))
+            if invalid_choices:
+                raise ValueError("'Choices' values %(choices)s should be in "
+                                 "the range of %(min)d and %(max)d" %
+                                 {'choices': ', '.join(invalid_choices),
+                                  'min': self.PORT_MIN, 'max': self.PORT_MAX})
+            type = types.Integer(choices=choices, type_name='port value')
+        else:
+            type = types.Integer(min=self.PORT_MIN, max=self.PORT_MAX,
+                                 type_name='port value')
         super(PortOpt, self).__init__(name, type=type, **kwargs)
 
 
