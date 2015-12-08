@@ -660,6 +660,7 @@ class Opt(object):
     :param deprecated_reason: indicates why this opt is planned for removal in
                               a future release. Silently ignored if
                               deprecated_for_removal is False
+    :param mutable: True if this option may be reloaded
 
     An Opt object has no public methods, but has a number of public properties:
 
@@ -715,6 +716,9 @@ class Opt(object):
 
     .. versionchanged:: 3.2
        Added *deprecated_reason* parameter.
+
+    .. versionchanged:: 3.3
+       Added *mutable* parameter.
     """
     multi = False
 
@@ -723,7 +727,8 @@ class Opt(object):
                  secret=False, required=False,
                  deprecated_name=None, deprecated_group=None,
                  deprecated_opts=None, sample_default=None,
-                 deprecated_for_removal=False, deprecated_reason=None):
+                 deprecated_for_removal=False, deprecated_reason=None,
+                 mutable=False):
         if name.startswith('_'):
             raise ValueError('illegal name %s with prefix _' % (name,))
         self.name = name
@@ -758,6 +763,8 @@ class Opt(object):
             self.deprecated_opts.append(DeprecatedOpt(deprecated_name,
                                                       group=deprecated_group))
         self._check_default()
+
+        self.mutable = mutable
 
     def _default_is_ref(self):
         """Check if default is a reference to another var."""
@@ -2032,6 +2039,7 @@ class ConfigOpts(collections.Mapping):
 
         self._oparser = None
         self._namespace = None
+        self._mutable_ns = None
         self.__cache = {}
         self._config_opts = []
         self._cli_opts = collections.deque()
@@ -2199,6 +2207,7 @@ class ConfigOpts(collections.Mapping):
         self._args = None
         self._oparser = None
         self._namespace = None
+        self._mutable_ns = None
         self._validate_default_values = False
         self.unregister_opts(self._config_opts)
         for group in self._groups.values():
@@ -2549,8 +2558,7 @@ class ConfigOpts(collections.Mapping):
 
         :param name: the opt name (or 'dest', more precisely)
         :param group: an OptGroup
-        :param namespace: the namespace object that retrieves the option
-                            value from
+        :param namespace: the namespace object to get the option value from
         :returns: the option value, or a GroupAttr object
         :raises: NoSuchOptError, NoSuchGroupError, ConfigFileValueError,
                  TemplateSubstitutionError
@@ -2567,13 +2575,14 @@ class ConfigOpts(collections.Mapping):
         if 'override' in info:
             return self._substitute(info['override'])
 
-        if namespace is None:
-            namespace = self._namespace
-
         def convert(value):
             return self._convert_value(
                 self._substitute(value, group, namespace), opt)
 
+        if opt.mutable and namespace is None:
+            namespace = self._mutable_ns
+        if namespace is None:
+            namespace = self._namespace
         if namespace is not None:
             group_name = group.name if group else None
             try:
@@ -2768,21 +2777,25 @@ class ConfigOpts(collections.Mapping):
                     opt.dest, repr(opt.type), value))
                 raise SystemExit
 
+    def _reload_config_files(self):
+        namespace = self._parse_config_files()
+        if namespace._files_not_found:
+            raise ConfigFilesNotFoundError(namespace._files_not_found)
+        if namespace._files_permission_denied:
+            raise ConfigFilesPermissionDeniedError(
+                namespace._files_permission_denied)
+        self._check_required_opts(namespace)
+        return namespace
+
     @__clear_cache
     def reload_config_files(self):
         """Reload configure files and parse all options
 
         :return False if reload configure files failed or else return True
         """
-        try:
-            namespace = self._parse_config_files()
-            if namespace._files_not_found:
-                raise ConfigFilesNotFoundError(namespace._files_not_found)
-            if namespace._files_permission_denied:
-                raise ConfigFilesPermissionDeniedError(
-                    namespace._files_permission_denied)
-            self._check_required_opts(namespace)
 
+        try:
+            namespace = self._reload_config_files()
         except SystemExit as exc:
             LOG.warning("Caught SystemExit while reloading configure files "
                         "with exit code: %d", exc.code)
@@ -2795,13 +2808,29 @@ class ConfigOpts(collections.Mapping):
             self._namespace = namespace
             return True
 
+    @__clear_cache
+    def mutate_config_files(self):
+        """Reload configure files and parse all options.
+
+        Only options marked as 'mutable' will appear to change.
+
+        :raises Error if reloading fails
+        """
+
+        self._mutable_ns = self._reload_config_files()
+
     def list_all_sections(self):
         """List all sections from the configuration.
 
         Returns an iterator over all section names found in the
         configuration files, whether declared beforehand or not.
         """
-        return self._namespace._sections()
+        s = set([])
+        if self._mutable_ns:
+            s |= set(self._mutable_ns._sections())
+        if self._namespace:
+            s |= set(self._namespace._sections())
+        return iter(sorted(s))
 
     class GroupAttr(collections.Mapping):
 
