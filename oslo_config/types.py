@@ -165,7 +165,9 @@ class String(ConfigType):
     def __eq__(self, other):
         return (
             (self.__class__ == other.__class__) and
-            (self.choices == other.choices) and
+            (set(self.choices) == set(other.choices) if
+             self.choices and other.choices else
+             self.choices == other.choices) and
             (self.quotes == other.quotes) and
             (self.regex == other.regex)
         )

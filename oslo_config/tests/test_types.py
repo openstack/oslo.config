@@ -78,7 +78,11 @@ class StringTypeTests(TypeTestHelper, unittest.TestCase):
     def test_equal_with_same_choices(self):
         t1 = types.String(choices=['foo', 'bar'])
         t2 = types.String(choices=['foo', 'bar'])
+        t3 = types.String(choices=('foo', 'bar'))
+        t4 = types.String(choices=['bar', 'foo'])
         self.assertTrue(t1 == t2)
+        self.assertTrue(t1 == t3)
+        self.assertTrue(t1 == t4)
 
     def test_not_equal_with_different_choices(self):
         t1 = types.String(choices=['foo', 'bar'])
