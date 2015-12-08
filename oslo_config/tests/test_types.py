@@ -242,6 +242,10 @@ class IntegerTypeTests(TypeTestHelper, unittest.TestCase):
         t = types.Integer(min=0, max=0)
         self.assertEqual('Integer(min=0, max=0)', repr(t))
 
+    def test_repr_with_choices(self):
+        t = types.Integer(choices=[80, 457])
+        self.assertEqual('Integer(choices=[80, 457])', repr(t))
+
     def test_equal(self):
         self.assertTrue(types.Integer() == types.Integer())
 
@@ -256,11 +260,34 @@ class IntegerTypeTests(TypeTestHelper, unittest.TestCase):
         t2 = types.Integer(min=1, max=123)
         self.assertTrue(t1 == t2)
 
+    def test_equal_with_same_choices(self):
+        t1 = types.Integer(choices=[80, 457])
+        t2 = types.Integer(choices=[457, 80])
+        self.assertTrue(t1 == t2)
+
     def test_not_equal(self):
         self.assertFalse(types.Integer(min=123) == types.Integer(min=456))
+        self.assertFalse(types.Integer(choices=[80, 457]) ==
+                         types.Integer(choices=[80, 40]))
+        self.assertFalse(types.Integer(choices=[80, 457]) ==
+                         types.Integer())
 
     def test_not_equal_to_other_class(self):
         self.assertFalse(types.Integer() == types.String())
+
+    def test_choices_with_min_max(self):
+        self.assertRaises(ValueError,
+                          types.Integer,
+                          min=10,
+                          choices=[50, 60])
+        self.assertRaises(ValueError,
+                          types.Integer,
+                          max=100,
+                          choices=[50, 60])
+        self.assertRaises(ValueError,
+                          types.Integer,
+                          min=10, max=100,
+                          choices=[50, 60])
 
     def test_min_greater_max(self):
         self.assertRaises(ValueError,
@@ -304,6 +331,22 @@ class IntegerTypeTests(TypeTestHelper, unittest.TestCase):
         t(-456)
         self.assertRaises(ValueError, t, 201)
         self.assertRaises(ValueError, t, -457)
+
+    def test_with_choices_list(self):
+        t = types.Integer(choices=[80, 457])
+        self.assertRaises(ValueError, t, 1)
+        self.assertRaises(ValueError, t, 200)
+        self.assertRaises(ValueError, t, -457)
+        t(80)
+        t(457)
+
+    def test_with_choices_tuple(self):
+        t = types.Integer(choices=(80, 457))
+        self.assertRaises(ValueError, t, 1)
+        self.assertRaises(ValueError, t, 200)
+        self.assertRaises(ValueError, t, -457)
+        t(80)
+        t(457)
 
 
 class FloatTypeTests(TypeTestHelper, unittest.TestCase):
