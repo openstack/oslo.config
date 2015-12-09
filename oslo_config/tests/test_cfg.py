@@ -3222,6 +3222,8 @@ class MultiConfigParserTestCase(BaseTestCase):
                          ['bar'])
         self.assertEqual(parser.get([('DEFAULT', 'foo')], multi=True),
                          ['bar'])
+        self.assertEqual(parser.get([(None, 'foo')], multi=True),
+                         ['bar'])
         self.assertEqual(parser._get([('DEFAULT', 'foo')],
                                      multi=True, normalized=True),
                          ['bar'])
@@ -4071,23 +4073,12 @@ class DeprecationWarningTests(DeprecationWarningTestBase):
         self.assertIn('Option "baz" from group "other"',
                       self.log_fixture.output)
 
-    def test_check_deprecated_default_none(self):
+    def test_check_deprecated(self):
         parser = self._parser_class()
-        deprecated_list = [(None, 'bar')]
+        deprecated_list = [('DEFAULT', 'bar')]
         parser._check_deprecated(('DEFAULT', 'bar'), (None, 'foo'),
                                  deprecated_list)
         self.assert_message_logged('bar', 'DEFAULT', 'foo', 'DEFAULT')
-        # Make sure check_deprecated didn't modify the list passed in
-        self.assertEqual([(None, 'bar')], deprecated_list)
-
-    def test_check_deprecated_none_default(self):
-        parser = self._parser_class()
-        deprecated_list = [('DEFAULT', 'bar')]
-        parser._check_deprecated((None, 'bar'), ('DEFAULT', 'foo'),
-                                 deprecated_list)
-        self.assert_message_logged('bar', 'DEFAULT', 'foo', 'DEFAULT')
-        # Make sure check_deprecated didn't modify the list passed in
-        self.assertEqual([('DEFAULT', 'bar')], deprecated_list)
 
     def assert_message_logged(self, deprecated_name, deprecated_group,
                               current_name, current_group):
