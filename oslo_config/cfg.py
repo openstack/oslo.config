@@ -1180,8 +1180,7 @@ class PortOpt(Opt):
     Option with ``type`` :class:`oslo_config.types.Integer`
 
     :param name: the option's name
-    :param min: minimum port number the option can take
-    :param max: maximum port number the option can take
+    :param choices: Optional sequence of valid values.
     :param **kwargs: arbitrary keyword arguments passed to :class:`Opt`
 
     .. versionadded:: 2.6
