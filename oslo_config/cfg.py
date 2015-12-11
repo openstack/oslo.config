@@ -997,7 +997,7 @@ class StrOpt(Opt):
                         between 'choices' or 'regex' will be ignored.
     :param max_length: If positive integer, the value must be less than or
                        equal to this parameter.
-    :param **kwargs: arbitrary keyword arguments passed to :class:`Opt`
+    :param \*\*kwargs: arbitrary keyword arguments passed to :class:`Opt`
 
     .. versionchanged:: 2.7
        Added *quotes* parameter
@@ -1034,7 +1034,7 @@ class BoolOpt(Opt):
     In config files, boolean values are cast with Boolean type.
 
     :param name: the option's name
-    :param **kwargs: arbitrary keyword arguments passed to :class:`Opt`
+    :param \*\*kwargs: arbitrary keyword arguments passed to :class:`Opt`
     """
 
     def __init__(self, name, **kwargs):
@@ -1090,7 +1090,7 @@ class IntOpt(Opt):
     :param name: the option's name
     :param min: minimum value the integer can take
     :param max: maximum value the integer can take
-    :param **kwargs: arbitrary keyword arguments passed to :class:`Opt`
+    :param \*\*kwargs: arbitrary keyword arguments passed to :class:`Opt`
 
     .. versionchanged:: 1.15
 
@@ -1109,7 +1109,7 @@ class FloatOpt(Opt):
     Option with ``type`` :class:`oslo_config.types.Float`
 
     :param name: the option's name
-    :param **kwargs: arbitrary keyword arguments passed to :class:`Opt`
+    :param \*\*kwargs: arbitrary keyword arguments passed to :class:`Opt`
     """
 
     def __init__(self, name, **kwargs):
@@ -1125,7 +1125,7 @@ class ListOpt(Opt):
     :param name: the option's name
     :param item_type: type of items (see :class:`oslo_config.types`)
     :param bounds: if True the value should be inside "[" and "]" pair
-    :param **kwargs: arbitrary keyword arguments passed to :class:`Opt`
+    :param \*\*kwargs: arbitrary keyword arguments passed to :class:`Opt`
 
     .. versionchanged:: 2.5
        Added *item_type* and *bounds* parameters.
@@ -1145,7 +1145,7 @@ class DictOpt(Opt):
     Option with ``type`` :class:`oslo_config.types.Dict`
 
     :param name: the option's name
-    :param **kwargs: arbitrary keyword arguments passed to :class:`Opt`
+    :param \*\*kwargs: arbitrary keyword arguments passed to :class:`Opt`
 
     .. versionadded:: 1.2
     """
@@ -1163,7 +1163,7 @@ class IPOpt(Opt):
     :param name: the option's name
     :param version: one of either ``4``, ``6``, or ``None`` to specify
        either version.
-    :param **kwargs: arbitrary keyword arguments passed to :class:`Opt`
+    :param \*\*kwargs: arbitrary keyword arguments passed to :class:`Opt`
 
     .. versionadded:: 1.4
     """
@@ -1181,7 +1181,7 @@ class PortOpt(Opt):
 
     :param name: the option's name
     :param choices: Optional sequence of valid values.
-    :param **kwargs: arbitrary keyword arguments passed to :class:`Opt`
+    :param \*\*kwargs: arbitrary keyword arguments passed to :class:`Opt`
 
     .. versionadded:: 2.6
     .. versionchanged:: 3.2
@@ -1221,7 +1221,7 @@ class MultiOpt(Opt):
 
     :param name: the option's name
     :param item_type: Type of items (see :class:`oslo_config.types`)
-    :param **kwargs: arbitrary keyword arguments passed to :class:`Opt`
+    :param \*\*kwargs: arbitrary keyword arguments passed to :class:`Opt`
 
     For example::
 
@@ -1258,7 +1258,7 @@ class MultiStrOpt(MultiOpt):
     type.
 
     :param name: the option's name
-    :param **kwargs: arbitrary keyword arguments passed to :class:`MultiOpt`
+    :param \*\*kwargs: arbitrary keyword arguments passed to :class:`MultiOpt`
     """
 
     def __init__(self, name, **kwargs):
