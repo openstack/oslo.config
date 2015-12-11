@@ -27,7 +27,6 @@ import logging
 import operator
 import sys
 import textwrap
-import warnings
 
 import pkg_resources
 import six
@@ -199,9 +198,12 @@ class _OptFormatter(object):
             defaults = opt.type.format_defaults(opt.default,
                                                 opt.sample_default)
         else:
-            msg = ('Option %s should have a type derived from '
-                   'types.ConfigType instead of %s' % (opt.name, opt.type))
-            warnings.warn(msg)
+            LOG.debug(
+                "The type for option %(name)s which is %(type)s is not a "
+                "subclass of types.ConfigType and doesn't provide a "
+                "'format_defaults' method. A default formatter is not "
+                "available so the best-effort formatter will be used.",
+                {'type': opt.type, 'name': opt.name})
             defaults = _format_defaults(opt)
         for default_str in defaults:
             if default_str:
