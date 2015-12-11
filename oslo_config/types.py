@@ -177,6 +177,8 @@ class String(ConfigType):
 
 
 class MultiString(String):
+    """Multi-valued string."""
+
     def __init__(self, type_name='multi valued'):
         super(MultiString, self).__init__(type_name=type_name)
 

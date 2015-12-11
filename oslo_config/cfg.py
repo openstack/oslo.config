@@ -38,14 +38,34 @@ The schema for each option is defined using the
 Option Types
 ------------
 
-Options can have arbitrary types via the ``type`` constructor to :class:`Opt`.
-The type constructor is a callable object that takes a string and either
-returns a value of that particular type or raises ValueError if the value can
-not be converted.
+Options can have arbitrary types via the `type` parameter to the :class:`Opt`
+constructor. The `type` parameter is a callable object that takes a string and
+either returns a value of that particular type or raises :class:`ValueError` if
+the value can not be converted.
 
-There are predefined types in :class:`oslo_config.cfg` : strings,
-integers, floats, booleans, IP address, port, sub-command, lists,
-'multi strings' and 'key/value pairs' (dictionary) ::
+For convenience, there are predefined option subclasses in
+:mod:`oslo_config.cfg` that set the option `type` as in the following table:
+
+====================================  ======
+Type                                  Option
+====================================  ======
+:class:`oslo_config.types.String`     - :class:`oslo_config.cfg.StrOpt`
+                                      - :class:`oslo_config.cfg.SubCommandOpt`
+:class:`oslo_config.types.Boolean`    :class:`oslo_config.cfg.BoolOpt`
+:class:`oslo_config.types.Integer`    - :class:`oslo_config.cfg.IntOpt`
+                                      - :class:`oslo_config.cfg.PortOpt`
+:class:`oslo_config.types.Float`      :class:`oslo_config.cfg.FloatOpt`
+:class:`oslo_config.types.List`       :class:`oslo_config.cfg.ListOpt`
+:class:`oslo_config.types.Dict`       :class:`oslo_config.cfg.DictOpt`
+:class:`oslo_config.types.IPAddress`  :class:`oslo_config.cfg.IPOpt`
+====================================  ======
+
+For :class:`oslo_config.cfg.MultiOpt` the `item_type` parameter defines
+the type of the values. For convenience, :class:`oslo_config.cfg.MultiStrOpt`
+is :class:`~oslo_config.cfg.MultiOpt` with the `item_type` parameter set to
+:class:`oslo_config.types.MultiString`.
+
+The following example defines options using the convenience classes::
 
     enabled_apis_opt = cfg.ListOpt('enabled_apis',
                                    default=['ec2', 'osapi_compute'],
