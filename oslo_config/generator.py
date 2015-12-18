@@ -193,6 +193,9 @@ class _OptFormatter(object):
             lines.append(
                 '# This option is deprecated for removal.\n'
                 '# Its value may be silently ignored in the future.\n')
+            if opt.deprecated_reason:
+                lines.extend(
+                    self._format_help('Reason: ' + opt.deprecated_reason))
 
         if hasattr(opt.type, 'format_defaults'):
             defaults = opt.type.format_defaults(opt.default,

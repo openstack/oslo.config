@@ -636,6 +636,9 @@ class Opt(object):
     :param sample_default: a default string for sample config files
     :param deprecated_for_removal: indicates whether this opt is planned for
                                    removal in a future release
+    :param deprecated_reason: indicates why this opt is planned for removal in
+                              a future release. Silently ignored if
+                              deprecated_for_removal is False
 
     An Opt object has no public methods, but has a number of public properties:
 
@@ -697,7 +700,7 @@ class Opt(object):
                  secret=False, required=False,
                  deprecated_name=None, deprecated_group=None,
                  deprecated_opts=None, sample_default=None,
-                 deprecated_for_removal=False):
+                 deprecated_for_removal=False, deprecated_reason=None):
         if name.startswith('_'):
             raise ValueError('illegal name %s with prefix _' % (name,))
         self.name = name
@@ -722,6 +725,7 @@ class Opt(object):
         self.secret = secret
         self.required = required
         self.deprecated_for_removal = deprecated_for_removal
+        self.deprecated_reason = deprecated_reason
         self._logged_deprecation = False
         if deprecated_name is not None:
             deprecated_name = deprecated_name.replace('-', '_')

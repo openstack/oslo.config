@@ -84,6 +84,13 @@ class GeneratorTestCase(base.BaseTestCase):
                                      help='deprecated'),
         'deprecated_for_removal_opt': cfg.StrOpt(
             'bar', deprecated_for_removal=True, help='deprecated for removal'),
+        'deprecated_reason_opt': cfg.BoolOpt(
+            'turn_off_stove',
+            default=False,
+            deprecated_for_removal=True,
+            deprecated_reason='This was supposed to work but it really, '
+                              'really did not. Always buy house insurance.',
+            help='Turn off stove'),
         'deprecated_group': cfg.StrOpt('bar',
                                        deprecated_group='group1',
                                        deprecated_name='foobar',
@@ -411,6 +418,26 @@ class GeneratorTestCase(base.BaseTestCase):
 # This option is deprecated for removal.
 # Its value may be silently ignored in the future.
 #bar = <None>
+''')),
+        ('deprecated_reason',
+         dict(opts=[('test', [(groups['foo'],
+                              [opts['deprecated_reason_opt']])])],
+              expected='''[DEFAULT]
+
+
+[foo]
+# foo help
+
+#
+# From test
+#
+
+# Turn off stove (boolean value)
+# This option is deprecated for removal.
+# Its value may be silently ignored in the future.
+# Reason: This was supposed to work but it really, really did not.
+# Always buy house insurance.
+#turn_off_stove = false
 ''')),
         ('deprecated_group',
          dict(opts=[('test', [(groups['foo'], [opts['deprecated_group']])])],
