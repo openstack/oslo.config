@@ -553,7 +553,7 @@ class GeneratorTestCase(base.BaseTestCase):
 # From test
 #
 
-# an ip address (ip address value)
+# an ip address (IP address value)
 #ip_opt = 127.0.0.1
 ''')),
         ('port_opt',

@@ -563,7 +563,7 @@ class IPAddress(ConfigType):
        Added *type_name* parameter.
     """
 
-    def __init__(self, version=None, type_name='ip address value'):
+    def __init__(self, version=None, type_name='IP address value'):
         super(IPAddress, self).__init__(type_name=type_name)
         version_checkers = {
             None: self._check_both_versions,
