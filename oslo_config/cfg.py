@@ -2367,7 +2367,8 @@ class ConfigOpts(collections.Mapping):
         logger.log(lvl, "*" * 80)
         logger.log(lvl, "Configuration options gathered from:")
         logger.log(lvl, "command line args: %s", self._args)
-        logger.log(lvl, "config files: %s", self.config_file)
+        logger.log(lvl, "config files: %s",
+                   hasattr(self, 'config_file') and self.config_file or [])
         logger.log(lvl, "=" * 80)
 
         def _sanitize(opt, value):

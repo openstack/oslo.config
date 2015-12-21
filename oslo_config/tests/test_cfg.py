@@ -3117,7 +3117,7 @@ class OptDumpingTestCase(BaseTestCase):
 
         self.conf.log_opt_values(logger, 666)
 
-        self.assertEqual(logger.logged, [
+        self.assertEqual([
                          "*" * 80,
                          "Configuration options gathered from:",
                          "command line args: ['--foo', 'this', '--blaa-bar', "
@@ -3131,7 +3131,7 @@ class OptDumpingTestCase(BaseTestCase):
                          "blaa.bar                       = that",
                          "blaa.key                       = ****",
                          "*" * 80,
-                         ])
+                         ], logger.logged)
 
     def test_log_opt_values(self):
         self._do_test_log_opt_values(self._args)
@@ -3139,6 +3139,21 @@ class OptDumpingTestCase(BaseTestCase):
     def test_log_opt_values_from_sys_argv(self):
         self.useFixture(fixtures.MonkeyPatch('sys.argv', ['foo'] + self._args))
         self._do_test_log_opt_values(None)
+
+    def test_log_opt_values_empty_config(self):
+        empty_conf = cfg.ConfigOpts()
+
+        logger = self.FakeLogger(self, 666)
+
+        empty_conf.log_opt_values(logger, 666)
+        self.assertEqual([
+                         "*" * 80,
+                         "Configuration options gathered from:",
+                         "command line args: None",
+                         "config files: []",
+                         "=" * 80,
+                         "*" * 80,
+                         ], logger.logged)
 
 
 class ConfigParserTestCase(BaseTestCase):
