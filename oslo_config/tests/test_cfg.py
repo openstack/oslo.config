@@ -887,7 +887,7 @@ class ConfigFileOptsTestCase(BaseTestCase):
         self.conf(['--config-file', paths[0]])
 
         self.assertTrue(hasattr(self.conf, 'foo'))
-        self.assertEqual(self.conf.foo, False)
+        self.assertFalse(self.conf.foo)
 
     def test_conf_file_bool_value(self):
         self.conf.register_opt(cfg.BoolOpt('foo'))
@@ -899,7 +899,7 @@ class ConfigFileOptsTestCase(BaseTestCase):
         self.conf(['--config-file', paths[0]])
 
         self.assertTrue(hasattr(self.conf, 'foo'))
-        self.assertEqual(self.conf.foo, True)
+        self.assertTrue(self.conf.foo)
 
     def test_conf_file_bool_cli_value_override(self):
         self.conf.register_cli_opt(cfg.BoolOpt('foo'))
@@ -912,7 +912,7 @@ class ConfigFileOptsTestCase(BaseTestCase):
                    '--config-file', paths[0]])
 
         self.assertTrue(hasattr(self.conf, 'foo'))
-        self.assertEqual(self.conf.foo, False)
+        self.assertFalse(self.conf.foo)
 
     def test_conf_file_bool_cli_inverse_override(self):
         self.conf.register_cli_opt(cfg.BoolOpt('foo'))
@@ -925,7 +925,7 @@ class ConfigFileOptsTestCase(BaseTestCase):
                    '--config-file', paths[0]])
 
         self.assertTrue(hasattr(self.conf, 'foo'))
-        self.assertEqual(self.conf.foo, True)
+        self.assertTrue(self.conf.foo)
 
     def test_conf_file_bool_cli_order_override(self):
         self.conf.register_cli_opt(cfg.BoolOpt('foo'))
@@ -938,7 +938,7 @@ class ConfigFileOptsTestCase(BaseTestCase):
                    '--foo'])
 
         self.assertTrue(hasattr(self.conf, 'foo'))
-        self.assertEqual(self.conf.foo, True)
+        self.assertTrue(self.conf.foo)
 
     def test_conf_file_bool_file_value_override(self):
         self.conf.register_cli_opt(cfg.BoolOpt('foo'))
@@ -954,7 +954,7 @@ class ConfigFileOptsTestCase(BaseTestCase):
                    '--config-file', paths[1]])
 
         self.assertTrue(hasattr(self.conf, 'foo'))
-        self.assertEqual(self.conf.foo, True)
+        self.assertTrue(self.conf.foo)
 
     def test_conf_file_bool_use_dname(self):
         self._do_dname_test_use(cfg.BoolOpt, 'yes', True)
@@ -2637,7 +2637,7 @@ class OverridesTestCase(BaseTestCase):
         self.conf.register_opt(cfg.BoolOpt('foo'))
         self.conf.set_override('foo', 'True', enforce_type=True)
         self.conf([])
-        self.assertEqual(self.conf.foo, True)
+        self.assertTrue(self.conf.foo)
         self.conf.clear_override('foo')
         self.assertIsNone(self.conf.foo)
 
