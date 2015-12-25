@@ -4116,7 +4116,7 @@ class DeprecationWarningTests(DeprecationWarningTestBase):
         self.assertEqual('bar', self.conf.foo)
         self.assertEqual('bar', self.conf.foo)
         # Options not set in the config should not be logged.
-        self.assertEqual(None, self.conf.bar)
+        self.assertIsNone(self.conf.bar)
         expected = ('Option "foo" from group "DEFAULT" is deprecated for '
                     'removal.  Its value may be silently ignored in the '
                     'future.\n')
@@ -4138,7 +4138,7 @@ class DeprecationWarningTests(DeprecationWarningTestBase):
         self.assertEqual('bar', self.conf.other.foo)
         self.assertEqual('bar', self.conf.other.foo)
         # Options not set in the config should not be logged.
-        self.assertEqual(None, self.conf.other.bar)
+        self.assertIsNone(self.conf.other.bar)
         expected = ('Option "foo" from group "other" is deprecated for '
                     'removal.  Its value may be silently ignored in the '
                     'future.\n')
