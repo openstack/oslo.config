@@ -43,6 +43,7 @@ _generator_opts = [
                default=70,
                help='The maximum length of help lines.'),
     cfg.MultiStrOpt('namespace',
+                    required=True,
                     help='Option namespace under "oslo.config.opts" in which '
                          'to query for options.'),
 ]

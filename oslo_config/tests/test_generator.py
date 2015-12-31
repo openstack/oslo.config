@@ -768,5 +768,10 @@ class GeneratorRaiseErrorTestCase(base.BaseTestCase):
         with mock.patch('pkg_resources.iter_entry_points', fake_eps):
             self.assertRaises(FakeException, generator.generate, self.conf)
 
+    def test_generator_call_with_no_arguments_raises_error(self):
+        testargs = ['oslo-config-generator']
+        with mock.patch('sys.argv', testargs):
+            self.assertRaises(cfg.RequiredOptError, generator.main, [])
+
 
 GeneratorTestCase.generate_scenarios()
