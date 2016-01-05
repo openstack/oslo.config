@@ -3711,7 +3711,7 @@ class ChoicesTestCase(BaseTestCase):
         self.conf(['--config-file', paths[0]])
 
         self.assertTrue(hasattr(self.conf, 'foo'))
-        self.assertEqual(self.conf.foo, None)
+        self.assertIsNone(self.conf.foo)
 
     def test_conf_file_bad_choice_value(self):
         self.conf.register_opt(cfg.StrOpt('foo',
