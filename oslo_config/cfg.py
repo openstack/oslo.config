@@ -710,8 +710,10 @@ class Opt(object):
        Added *deprecated_for_removal* parameter.
 
     .. versionchanged:: 2.7
-
        An exception is now raised if the default value has the wrong type.
+
+    .. versionchanged:: 3.2
+       Added *deprecated_reason* parameter.
     """
     multi = False
 
@@ -842,6 +844,7 @@ class Opt(object):
         :param kwargs: the keyword arguments for add_argument()
         :param prefix: an optional prefix to prepend to the opt name
         :param positional: whether the option is a positional CLI argument
+        :param deprecated_names: list of deprecated option names
         """
         def hyphen(arg):
             return arg if not positional else ''
@@ -873,7 +876,7 @@ class Opt(object):
         options added to argparse.
 
         :param group: an optional group
-        :param kwargs: optional keyword arguments to add to
+        :param \*\*kwargs: optional keyword arguments to add to
         :returns: a dict of keyword arguments
         """
         if not self.positional:
@@ -1658,6 +1661,7 @@ class MultiConfigParser(object):
         :param names: a list of (section, name) tuples
         :param multi: a boolean indicating whether to return multiple values
         :param normalized: whether to normalize group names to lowercase
+        :param current_name: current name in tuple being checked
         """
         rvalue = []
 
@@ -1834,6 +1838,7 @@ class _Namespace(argparse.Namespace):
         :param names: a list of (section, name) tuples
         :param multi: a boolean indicating whether to return multiple values
         :param positional: whether this is a positional option
+        :param current_name: current name in tuple being checked
         """
         try:
             return self._get_cli_value(names, positional)
@@ -2109,8 +2114,8 @@ class ConfigOpts(collections.Mapping):
         as an attribute of this object.
 
         :param opt: an instance of an Opt sub-class
-        :param cli: whether this is a CLI option
         :param group: an optional OptGroup object or group name
+        :param cli: whether this is a CLI option
         :return: False if the opt was already registered, True otherwise
         :raises: DuplicateOptError
         """
@@ -2775,10 +2780,13 @@ class ConfigOpts(collections.Mapping):
             """Construct a StrSubWrapper object.
 
             :param conf: a ConfigOpts object
+            :param group: an OptGroup object
+            :param namespace: the namespace object that retrieves the option
+                              value from
             """
             self.conf = conf
-            self.namespace = namespace
             self.group = group
+            self.namespace = namespace
 
         def __getitem__(self, key):
             """Look up an opt value from the ConfigOpts object.
