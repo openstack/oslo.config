@@ -361,6 +361,7 @@ command line arguments using the SubCommandOpt class:
 import argparse
 import collections
 import copy
+from debtcollector import removals
 import errno
 import functools
 import glob
@@ -799,8 +800,9 @@ class Opt(object):
                 names.append((dgroup if dgroup else group_name,
                               dname if dname else self.dest))
 
-        value = namespace._get_value(names, self.multi, self.positional,
-                                     current_name)
+        value = namespace._get_value(
+            names, multi=self.multi,
+            positional=self.positional, current_name=current_name)
         # The previous line will raise a KeyError if no value is set in the
         # config file, so we'll only log deprecations for set options.
         if self.deprecated_for_removal and not self._logged_deprecation:
@@ -1537,6 +1539,15 @@ class ParseError(iniparser.ParseError):
 
 
 class ConfigParser(iniparser.BaseParser):
+    """Parses a single config file, populating 'sections' to look like:
+
+        {'DEFAULT': {'key': [value, ...], ...},
+         ...}
+
+       Also populates self._normalized which looks the same but with normalized
+       section names.
+    """
+
     def __init__(self, filename, sections):
         super(ConfigParser, self).__init__()
         self.filename = filename
@@ -1607,13 +1618,20 @@ class ConfigParser(iniparser.BaseParser):
             raise
 
         namespace._add_parsed_config_file(sections, normalized)
+        namespace._parse_cli_opts_from_config_file(sections, normalized)
 
 
+@removals.remove(version='3.3', removal_version='4.0')
 class MultiConfigParser(object):
     """A ConfigParser which handles multi-opts.
 
     All methods in this class which accept config names should treat a section
     name of None as 'DEFAULT'.
+
+    This class was deprecated in Mitaka and should be removed in Ocata.
+    _Namespace holds values, ConfigParser._parse_file reads one file into a
+    _Namespace and ConfigOpts._parse_config_files reads multiple files into a
+    _Namespace.
     """
 
     _deprecated_opt_message = ('Option "%s" from group "%s" is deprecated. '
@@ -1712,7 +1730,6 @@ class MultiConfigParser(object):
 
 
 class _Namespace(argparse.Namespace):
-
     """An argparse namespace which also stores config file values.
 
     As we parse command line arguments, the values get set as attributes
@@ -1726,9 +1743,14 @@ class _Namespace(argparse.Namespace):
     or convert a config file value at this point.
     """
 
+    _deprecated_opt_message = ('Option "%s" from group "%s" is deprecated. '
+                               'Use option "%s" from group "%s".')
+
     def __init__(self, conf):
         self._conf = conf
-        self._parser = MultiConfigParser()
+        self._parsed = []
+        self._normalized = []
+        self._emitted_deprecations = set()
         self._files_not_found = []
         self._files_permission_denied = []
 
@@ -1755,7 +1777,7 @@ class _Namespace(argparse.Namespace):
         override values found in this file.
         """
         namespace = _Namespace(self._conf)
-        namespace._parser._add_parsed_config_file(sections, normalized)
+        namespace._add_parsed_config_file(sections, normalized)
 
         for opt, group in self._conf._all_cli_opts():
             group_name = group.name if group is not None else None
@@ -1788,8 +1810,8 @@ class _Namespace(argparse.Namespace):
         :param normalized: sections mapping with section names normalized
         :raises: ConfigFileValueError
         """
-        self._parse_cli_opts_from_config_file(sections, normalized)
-        self._parser._add_parsed_config_file(sections, normalized)
+        self._parsed.insert(0, sections)
+        self._normalized.insert(0, normalized)
 
     def _file_not_found(self, config_file):
         """Record that we were unable to open a config file.
@@ -1805,7 +1827,7 @@ class _Namespace(argparse.Namespace):
         """
         self._files_permission_denied.append(config_file)
 
-    def _get_cli_value(self, names, positional):
+    def _get_cli_value(self, names, positional=False):
         """Fetch a CLI option value.
 
         Look up the value of a CLI option. The value itself may have come from
@@ -1828,7 +1850,64 @@ class _Namespace(argparse.Namespace):
 
         raise KeyError
 
-    def _get_value(self, names, multi, positional, current_name):
+    def _get_file_value(
+            self, names, multi=False, normalized=False, current_name=None):
+        """Fetch a config file value from the parsed files.
+
+        :param names: a list of (section, name) tuples
+        :param multi: a boolean indicating whether to return multiple values
+        :param normalized: whether to normalize group names to lowercase
+        :param current_name: current name in tuple being checked
+        """
+        rvalue = []
+
+        def normalize(name):
+            if name is None:
+                name = 'DEFAULT'
+            return _normalize_group_name(name) if normalized else name
+
+        names = [(normalize(section), name) for section, name in names]
+
+        for sections in (self._normalized if normalized else self._parsed):
+            for section, name in names:
+                if section not in sections:
+                    continue
+                if name in sections[section]:
+                    current_name = current_name or names[0]
+                    self._check_deprecated((section, name), current_name,
+                                           names[1:])
+                    val = sections[section][name]
+                    if multi:
+                        rvalue = val + rvalue
+                    else:
+                        return val
+        if multi and rvalue != []:
+            return rvalue
+        raise KeyError
+
+    def _check_deprecated(self, name, current, deprecated):
+        """Check for usage of deprecated names.
+
+        :param name: A tuple of the form (group, name) representing the group
+                     and name where an opt value was found.
+        :param current: A tuple of the form (group, name) representing the
+                        current name for an option.
+        :param deprecated: A list of tuples with the same format as the name
+                    param which represent any deprecated names for an option.
+                    If the name param matches any entries in this list a
+                    deprecation warning will be logged.
+        """
+        if name in deprecated and name not in self._emitted_deprecations:
+            self._emitted_deprecations.add(name)
+            current = (current[0] or 'DEFAULT', current[1])
+            # NOTE(bnemec): Not using versionutils for this to avoid a
+            # circular dependency between oslo.config and whatever library
+            # versionutils ends up in.
+            LOG.warning(self._deprecated_opt_message, name[1],
+                        name[0], current[1], current[0])
+
+    def _get_value(self, names, multi=False, positional=False,
+                   current_name=None, normalized=True):
         """Fetch a value from config files.
 
         Multiple names for a given configuration option may be supplied so
@@ -1836,17 +1915,23 @@ class _Namespace(argparse.Namespace):
         names or groups.
 
         :param names: a list of (section, name) tuples
-        :param multi: a boolean indicating whether to return multiple values
         :param positional: whether this is a positional option
-        :param current_name: current name in tuple being checked
+        :param multi: a boolean indicating whether to return multiple values
+        :param normalized: whether to normalize group names to lowercase
         """
         try:
             return self._get_cli_value(names, positional)
         except KeyError:
             names = [(g if g is not None else 'DEFAULT', n) for g, n in names]
-            values = self._parser._get(names, multi=multi, normalized=True,
-                                       current_name=current_name)
+            values = self._get_file_value(
+                names, multi=multi, normalized=normalized,
+                current_name=current_name)
             return values if multi else values[-1]
+
+    def _sections(self):
+        for sections in self._parsed:
+            for section in sections:
+                yield section
 
 
 class _CachedArgumentParser(argparse.ArgumentParser):
@@ -2694,9 +2779,7 @@ class ConfigOpts(collections.Mapping):
         Returns an iterator over all section names found in the
         configuration files, whether declared beforehand or not.
         """
-        for sections in self._namespace._parser.parsed:
-            for section in sections:
-                yield section
+        return self._namespace._sections()
 
     class GroupAttr(collections.Mapping):
 

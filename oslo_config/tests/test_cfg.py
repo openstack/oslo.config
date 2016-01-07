@@ -3294,6 +3294,78 @@ class MultiConfigParserTestCase(BaseTestCase):
                          ['foo', 'foofoo', 'foofoofoo'])
 
 
+class NamespaceTestCase(BaseTestCase):
+    def setUp(self):
+        super(NamespaceTestCase, self).setUp()
+        self.ns = cfg._Namespace(self.conf)
+
+    def read(self, *texts):
+        paths = ((str(i), t) for i, t in enumerate(texts))
+        for path in self.create_tempfiles(paths):
+            cfg.ConfigParser._parse_file(path, self.ns)
+
+    def assertAbsent(self, key, normalized=False):
+        self.assertRaises(KeyError, self.ns._get_value, [key],
+                          normalized=normalized)
+
+    def assertValue(self, key, expect, multi=False, normalized=False):
+        actual = self.ns._get_value([key], multi=multi, normalized=normalized)
+        self.assertEqual(actual, expect)
+
+    def test_cli(self):
+        self.conf.register_cli_opt(cfg.StrOpt('foo'))
+        key = (None, 'foo')
+        self.assertAbsent(key)
+
+        self.read('[DEFAULT]\n'
+                  'foo = file0\n')
+        self.assertValue(key, 'file0')
+
+        self.read('[DEFAULT]\n'
+                  'foo = file1\n')
+        self.assertEqual(self.ns._get_cli_value([key]), 'file1')
+
+    def test_single_file(self):
+        self.read('[DEFAULT]\n'
+                  'foo = bar\n'
+                  '[BLAA]\n'
+                  'bar = foo\n')
+
+        self.assertValue(('DEFAULT', 'foo'), 'bar')
+        self.assertValue(('DEFAULT', 'foo'), ['bar'], multi=True)
+        self.assertValue(('DEFAULT', 'foo'), ['bar'], multi=True)
+        self.assertValue((None, 'foo'), ['bar'], multi=True)
+        self.assertValue(('DEFAULT', 'foo'), ['bar'], multi=True,
+                         normalized=True)
+
+        self.assertValue(('BLAA', 'bar'), 'foo')
+        self.assertValue(('BLAA', 'bar'), ['foo'], multi=True)
+        self.assertValue(('blaa', 'bar'), ['foo'], multi=True,
+                         normalized=True)
+
+    def test_multiple_files(self):
+        self.read('[DEFAULT]\n'
+                  'foo = bar\n'
+                  '[BLAA]\n'
+                  'bar = foo',
+
+                  '[DEFAULT]\n'
+                  'foo = barbar\n'
+                  '[BLAA]\n'
+                  'bar = foofoo\n'
+                  '[bLAa]\n'
+                  'bar = foofoofoo\n')
+
+        self.assertValue(('DEFAULT', 'foo'), 'barbar')
+        self.assertValue(('DEFAULT', 'foo'), ['bar', 'barbar'], multi=True)
+
+        self.assertValue(('BLAA', 'bar'), 'foofoo')
+        self.assertValue(('bLAa', 'bar'), 'foofoofoo')
+        self.assertValue(('BLAA', 'bar'), ['foo', 'foofoo'], multi=True)
+        self.assertValue(('Blaa', 'bar'), ['foo', 'foofoo', 'foofoofoo'],
+                         multi=True, normalized=True)
+
+
 class TildeExpansionTestCase(BaseTestCase):
 
     def test_config_file_tilde(self):
