@@ -242,7 +242,40 @@ def _list_opts(namespaces):
         names=namespaces,
         on_load_failure_callback=on_load_failure_callback,
         invoke_on_load=True)
-    return [(ep.name, ep.obj) for ep in mgr]
+    opts = [(ep.name, ep.obj) for ep in mgr]
+
+    def _cleanup_opts(read_opts):
+        # create a clean structure which makes the cleanup of doubles easier
+        #     namespace1 :
+        #         group1: [ opts1 ]
+        #         group2: [ opts2 ]
+        #     namespace2 :
+        #         group3: [ opts3 ]
+        #         group4: [ opts4 ]
+        clean = {}
+        for namespace, listing in read_opts:
+            if namespace not in clean:
+                clean[namespace] = {}
+            for group, opts in listing:
+                if group not in clean[namespace]:
+                    clean[namespace][group] = []
+                clean[namespace][group] += opts
+                # This set() is the magic which removes the doubles for
+                # one group in one namespace. Everything else in this
+                # method is preparation or post-treatment.
+                clean[namespace][group] = list(set(clean[namespace][group]))
+
+        # build the list of (namespace, [(group, [opt_1, opt_2])]) out of
+        # the cleaned structure.
+        cleaned_opts = []
+        for namespace in clean:
+            groups_opts = []
+            for group, opts in clean[namespace].items():
+                groups_opts.append((group, opts))
+            cleaned_opts.append((namespace, groups_opts))
+        return cleaned_opts
+
+    return _cleanup_opts(opts)
 
 
 def on_load_failure_callback(*args, **kwargs):
