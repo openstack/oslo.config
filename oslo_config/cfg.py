@@ -642,7 +642,7 @@ class Opt(object):
     :param name: the option's name
     :param type: the option's type. Must be a callable object that takes string
                  and returns converted and validated value
-    :param dest: the name of the corresponding ConfigOpts property
+    :param dest: the name of the corresponding :class:`.ConfigOpts` property
     :param short: a single character CLI option name
     :param default: the default value of the option
     :param positional: True if the option is a positional CLI argument
@@ -652,7 +652,7 @@ class Opt(object):
     :param required: true if a value must be supplied for this option
     :param deprecated_name: deprecated name option.  Acts like an alias
     :param deprecated_group: the group containing a deprecated alias
-    :param deprecated_opts: array of DeprecatedOpt(s)
+    :param deprecated_opts: list of :class:`.DeprecatedOpt`
     :param sample_default: a default string for sample config files
     :param deprecated_for_removal: indicates whether this opt is planned for
                                    removal in a future release
@@ -674,7 +674,8 @@ class Opt(object):
 
     .. py:attribute:: dest
 
-        the (hyphen-less) ConfigOpts property which contains the option value
+        the (hyphen-less) :class:`.ConfigOpts` property which contains the
+        option value
 
     .. py:attribute:: short
 
@@ -1310,7 +1311,7 @@ class SubCommandOpt(Opt):
     sub-parser arguments available as additional attributes.
 
     :param name: the option's name
-    :param dest: the name of the corresponding ConfigOpts property
+    :param dest: the name of the corresponding :class:`.ConfigOpts` property
     :param handler: callable which is supplied subparsers object when invoked
     :param title: title of the sub-commands group in help output
     :param description: description of the group in help output
