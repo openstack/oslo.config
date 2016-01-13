@@ -133,10 +133,12 @@ class ShowOptionsDirective(rst.Directive):
                         title='Deprecated Variations',
                     )
                 if opt.deprecated_for_removal:
-                    _add_indented('.. warning:')
+                    _add_indented('.. warning::')
                     _add_indented('   This option is deprecated for removal.')
                     _add_indented('   Its value may be silently ignored ')
                     _add_indented('   in the future.')
+                    if opt.deprecated_reason:
+                        _add_indented('   Reason: ' + opt.deprecated_reason)
                     _add('')
 
                 _add('')
