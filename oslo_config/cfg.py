@@ -1203,7 +1203,7 @@ class IPOpt(Opt):
 
 class PortOpt(Opt):
 
-    """Option for a TCP/IP port number.  Ports can range from 1 to 65535.
+    """Option for a TCP/IP port number.  Ports can range from 0 to 65535.
 
     Option with ``type`` :class:`oslo_config.types.Integer`
 
@@ -1214,8 +1214,10 @@ class PortOpt(Opt):
     .. versionadded:: 2.6
     .. versionchanged:: 3.2
        Added *choices* parameter.
+    .. versionchanged:: 3.3
+       Allow port number with 0.
     """
-    PORT_MIN = 1
+    PORT_MIN = 0
     PORT_MAX = 65535
 
     def __init__(self, name, choices=None, **kwargs):

@@ -3774,7 +3774,7 @@ class PortChoicesTestCase(BaseTestCase):
         self.assertRaises(SystemExit, self.conf, ['--port', '8181'])
 
     def test_choice_out_range(self):
-        self.assertRaisesRegexp(ValueError, 'values 65537, 0 should',
+        self.assertRaisesRegexp(ValueError, 'values 65537 should',
                                 cfg.PortOpt, 'port', choices=[80, 65537, 0])
 
     def test_conf_file_choice_value(self):
