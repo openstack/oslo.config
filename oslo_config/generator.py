@@ -175,10 +175,10 @@ class _OptFormatter(object):
             help_text = u'(%s)' % opt_type
         lines = self._format_help(help_text)
 
-        if getattr(opt.type, 'min', None):
+        if getattr(opt.type, 'min', None) is not None:
             lines.append('# Minimum value: %d\n' % opt.type.min)
 
-        if getattr(opt.type, 'max', None):
+        if getattr(opt.type, 'max', None) is not None:
             lines.append('# Maximum value: %d\n' % opt.type.max)
 
         if getattr(opt.type, 'choices', None):

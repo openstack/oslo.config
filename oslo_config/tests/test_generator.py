@@ -117,6 +117,15 @@ class GeneratorTestCase(base.BaseTestCase):
                               min=1,
                               max=20,
                               help='an integer'),
+        'int_opt_min_0': cfg.IntOpt('int_opt_min_0',
+                                    default=10,
+                                    min=0,
+                                    max=20,
+                                    help='an integer'),
+        'int_opt_max_0': cfg.IntOpt('int_opt_max_0',
+                                    default=-1,
+                                    max=0,
+                                    help='an integer'),
         'float_opt': cfg.FloatOpt('float_opt',
                                   default=0.1,
                                   help='a float'),
@@ -512,6 +521,32 @@ class GeneratorTestCase(base.BaseTestCase):
 # Maximum value: 20
 #int_opt = 10
 ''')),
+        ('int_opt_min_0',
+         dict(opts=[('test', [(None, [opts['int_opt_min_0']])])],
+              expected='''[DEFAULT]
+
+#
+# From test
+#
+
+# an integer (integer value)
+# Minimum value: 0
+# Maximum value: 20
+#int_opt_min_0 = 10
+''')),
+        ('int_opt_max_0',
+         dict(opts=[('test', [(None, [opts['int_opt_max_0']])])],
+              expected='''[DEFAULT]
+
+#
+# From test
+#
+
+# an integer (integer value)
+# Maximum value: 0
+#int_opt_max_0 = -1
+''')),
+
         ('float_opt',
          dict(opts=[('test', [(None, [opts['float_opt']])])],
               expected='''[DEFAULT]
