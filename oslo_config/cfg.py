@@ -1948,17 +1948,16 @@ class ConfigOpts(collections.Mapping):
 
         return prog, default_config_files
 
-    def _setup(self, project, prog, version, usage, default_config_files):
-        """Initialize a ConfigOpts object for option parsing."""
-
-        self._config_opts = [
+    @staticmethod
+    def _make_config_options(default_config_files):
+        return [
             _ConfigFileOpt('config-file',
                            default=default_config_files,
                            metavar='PATH',
                            help=('Path to a config file to use. Multiple '
                                  'config files can be specified, with values '
-                                 'in later files taking precedence. The '
-                                 'default files used are: %(default)s.')),
+                                 'in later files taking precedence. Defaults '
+                                 'to %(default)s.')),
             _ConfigDirOpt('config-dir',
                           metavar='DIR',
                           help='Path to a config directory to pull *.conf '
@@ -1970,6 +1969,11 @@ class ConfigOpts(collections.Mapping):
                                'over-ridden options in the directory take '
                                'precedence.'),
         ]
+
+    def _setup(self, project, prog, version, usage, default_config_files):
+        """Initialize a ConfigOpts object for option parsing."""
+
+        self._config_opts = self._make_config_options(default_config_files)
         self.register_cli_opts(self._config_opts)
 
         self.project = project
