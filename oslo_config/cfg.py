@@ -2818,6 +2818,30 @@ class ConfigOpts(collections.Mapping):
         """
 
         self._mutable_ns = self._reload_config_files()
+        self._warn_immutability()
+
+    def _warn_immutability(self):
+        """Check immutable opts have not changed.
+
+        _do_get won't return the new values but presumably someone changed the
+        config file expecting them to change so we should warn them they won't.
+        """
+        for info, group in self._all_opt_infos():
+            opt = info['opt']
+            if opt.mutable:
+                continue
+            groupname = group.name if group else 'DEFAULT'
+            try:
+                old = opt._get_from_namespace(self._namespace, groupname)
+            except KeyError:
+                old = None
+            try:
+                new = opt._get_from_namespace(self._mutable_ns, groupname)
+            except KeyError:
+                new = None
+            if old != new:
+                LOG.warn("Ignoring change to immutable option: (%s, %s)"
+                         % (groupname, opt.name))
 
     def list_all_sections(self):
         """List all sections from the configuration.

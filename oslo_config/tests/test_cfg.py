@@ -1647,6 +1647,8 @@ class ConfigFileReloadTestCase(BaseTestCase):
 class ConfigFileMutateTestCase(BaseTestCase):
     def setUp(self):
         super(ConfigFileMutateTestCase, self).setUp()
+        self.my_group = cfg.OptGroup('group', 'group options')
+        self.conf.register_group(self.my_group)
 
     def _test_conf_files_mutate(self):
         paths = self.create_tempfiles([
@@ -1681,15 +1683,21 @@ class ConfigFileMutateTestCase(BaseTestCase):
 
     def test_conf_files_mutate_group(self):
         """Test that mutable opts in groups can be reloaded."""
-        my_group = cfg.OptGroup('group', 'group options')
-        self.conf.register_group(my_group)
-        self.conf.register_cli_opt(
-            cfg.StrOpt('boo', mutable=True),
-            group=my_group)
+        self.conf.register_cli_opt(cfg.StrOpt('boo', mutable=True),
+                                   group=self.my_group)
         self._test_conf_files_mutate()
         self.assertTrue(hasattr(self.conf, 'group'))
         self.assertTrue(hasattr(self.conf.group, 'boo'))
         self.assertEqual(self.conf.group.boo, 'new_boo')
+
+    def test_warn_immutability(self):
+        self.log_fixture = self.useFixture(fixtures.FakeLogger())
+        self.conf.register_cli_opt(cfg.StrOpt('foo', mutable=True))
+        self.conf.register_cli_opt(cfg.StrOpt('boo'), group=self.my_group)
+        self._test_conf_files_mutate()
+        self.assertEqual(
+            "Ignoring change to immutable option: (group, boo)\n",
+            self.log_fixture.output)
 
 
 class OptGroupsTestCase(BaseTestCase):
