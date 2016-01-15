@@ -24,6 +24,7 @@ Contents
    generator
    faq
    contributing
+   builtins
    sphinxconfiggen
 
 Release Notes
