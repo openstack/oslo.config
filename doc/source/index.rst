@@ -22,10 +22,11 @@ Contents
    namespaces
    styleguide
    generator
+   builtins
+   sphinxext
+   sphinxconfiggen
    faq
    contributing
-   builtins
-   sphinxconfiggen
 
 Release Notes
 =============

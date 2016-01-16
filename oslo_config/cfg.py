@@ -1915,6 +1915,10 @@ class ConfigOpts(collections.Mapping):
     ConfigOpts is a configuration option manager with APIs for registering
     option schemas, grouping options, parsing option values and retrieving
     the values of options.
+
+    It has built-in support for :oslo.config:option:`config_file` and
+    :oslo.config:option:`config_dir` options.
+
     """
 
     def __init__(self):

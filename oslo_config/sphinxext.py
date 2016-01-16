@@ -13,6 +13,12 @@
 from docutils import nodes
 from docutils.parsers import rst
 from docutils.statemachine import ViewList
+from sphinx import addnodes
+from sphinx.directives import ObjectDescription
+from sphinx.domains import Domain
+from sphinx.domains import ObjType
+from sphinx.roles import XRefRole
+from sphinx.util.nodes import make_refnode
 from sphinx.util.nodes import nested_parse_with_titles
 
 from oslo_config import cfg
@@ -46,6 +52,14 @@ def _list_table(add, headers, data, title='', columns=None):
 def _indent(text, n=2):
     padding = ' ' * n
     return '\n'.join(padding + l for l in text.splitlines())
+
+
+def _make_anchor_target(group_name, option_name):
+    # We need to ensure this is unique across entire documentation
+    # http://www.sphinx-doc.org/en/stable/markup/inline.html#ref-role
+    target = '%s.%s' % (cfg._normalize_group_name(group_name),
+                        option_name.lower())
+    return target
 
 
 class ShowOptionsDirective(rst.Directive):
@@ -98,18 +112,14 @@ class ShowOptionsDirective(rst.Directive):
         for group_name, opt_list in sorted(by_section.items()):
             group_name = group_name or 'DEFAULT'
             app.info('[oslo.config] %s %s' % (namespace, group_name))
-            _add(group_name)
-            _add('=' * len(group_name))
+
+            _add('.. oslo.config:group:: %s' % group_name)
             _add('')
 
             for opt in opt_list:
                 opt_type = self._TYPE_DESCRIPTIONS.get(type(opt),
                                                        'unknown type')
-                # We need to ensure this is unique across entire documentation
-                # http://www.sphinx-doc.org/en/stable/markup/inline.html#ref-role
-                _add('.. _opt-%s-%s:' % (group_name.lower(), opt.dest.lower()))
-                _add('')
-                _add('``%s``' % opt.dest)
+                _add('.. oslo.config:option:: %s' % opt.dest)
                 _add('')
                 _add_indented(':Type: %s' % opt_type)
                 for default in generator._format_defaults(opt):
@@ -168,5 +178,137 @@ class ShowOptionsDirective(rst.Directive):
         return six.text_type(choice)
 
 
+class ConfigGroupXRefRole(XRefRole):
+    "Handles :oslo.config:group: roles pointing to configuration groups."
+
+    def __init__(self):
+        super(ConfigGroupXRefRole, self).__init__(
+            warn_dangling=True,
+        )
+
+    def process_link(self, env, refnode, has_explicit_title, title, target):
+        # The anchor for the group link is the group name.
+        return target, target
+
+
+class ConfigOptXRefRole(XRefRole):
+    "Handles :oslo.config:option: roles pointing to configuration options."
+
+    def __init__(self):
+        super(ConfigOptXRefRole, self).__init__(
+            warn_dangling=True,
+        )
+
+    def process_link(self, env, refnode, has_explicit_title, title, target):
+        if not has_explicit_title:
+            title = target
+        if '.' in target:
+            group, opt_name = target.split('.')
+        else:
+            group = 'DEFAULT'
+            opt_name = target
+        anchor = _make_anchor_target(group, opt_name)
+        return title, anchor
+
+
+class ConfigGroup(ObjectDescription):
+    "Description of a configuration group (.. group)."
+
+    def handle_signature(self, sig, signode):
+        """Transform a group description into RST nodes."""
+        group_name = sig
+        signode += addnodes.desc_name(
+            group_name,
+            'Option Group: %s' % group_name,
+        )
+        signode['allnames'] = [group_name]
+        return group_name
+
+    def add_target_and_index(self, firstname, sig, signode):
+        cached_groups = self.env.domaindata['oslo.config']['groups']
+        # Store the current group for use later in option directives
+        self.env.temp_data['oslo.config:group'] = sig
+        # Store the location where this group is being defined
+        # for use when resolving cross-references later.
+        # FIXME: This should take the source namespace into account, too
+        cached_groups[sig] = self.env.docname
+        # Compute the normalized target and set the node to have that
+        # as an id
+        target_name = cfg._normalize_group_name(sig)
+        signode['ids'].append(target_name)
+        self.state.document.note_explicit_target(signode)
+
+
+class ConfigOption(ObjectDescription):
+    "Description of a configuration option (.. option)."
+
+    def handle_signature(self, sig, signode):
+        """Transform an option description into RST nodes."""
+        optname = sig
+        # Insert a node into the output showing the option name
+        signode += addnodes.desc_name(optname, optname)
+        signode['allnames'] = [optname]
+        return optname
+
+    def add_target_and_index(self, firstname, sig, signode):
+        cached_options = self.env.domaindata['oslo.config']['options']
+        # Look up the current group name from the processing context
+        currgroup = self.env.temp_data.get('oslo.config:group')
+        # Compute the normalized target name for the option and give
+        # that to the node as an id
+        target_name = _make_anchor_target(currgroup, sig)
+        signode['ids'].append(target_name)
+        self.state.document.note_explicit_target(signode)
+        # Store the location of the option definition for later use in
+        # resolving cross-references
+        # FIXME: This should take the source namespace into account, too
+        cached_options[target_name] = self.env.docname
+
+
+class ConfigDomain(Domain):
+    """oslo.config domain."""
+    name = 'oslo.config'
+    label = 'oslo.config'
+    object_types = {
+        'configoption': ObjType('configuration option', 'option'),
+    }
+    directives = {
+        'group': ConfigGroup,
+        'option': ConfigOption,
+    }
+    roles = {
+        'option': ConfigOptXRefRole(),
+        'group': ConfigGroupXRefRole(),
+    }
+    initial_data = {
+        'options': {},
+        'groups': {},
+    }
+
+    def resolve_xref(self, env, fromdocname, builder,
+                     typ, target, node, contnode):
+        if typ == 'option':
+            group_name, option_name = target.split('.', 1)
+            return make_refnode(
+                builder,
+                fromdocname,
+                env.domaindata['oslo.config']['options'][target],
+                target,
+                contnode,
+                option_name,
+            )
+        if typ == 'group':
+            return make_refnode(
+                builder,
+                fromdocname,
+                env.domaindata['oslo.config']['groups'][target],
+                target,
+                contnode,
+                target,
+            )
+        return None
+
+
 def setup(app):
     app.add_directive('show-options', ShowOptionsDirective)
+    app.add_domain(ConfigDomain)
