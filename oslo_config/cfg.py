@@ -2822,7 +2822,7 @@ class ConfigOpts(collections.Mapping):
     def list_all_sections(self):
         """List all sections from the configuration.
 
-        Returns an iterator over all section names found in the
+        Returns a sorted list of all section names found in the
         configuration files, whether declared beforehand or not.
         """
         s = set([])
@@ -2830,7 +2830,7 @@ class ConfigOpts(collections.Mapping):
             s |= set(self._mutable_ns._sections())
         if self._namespace:
             s |= set(self._namespace._sections())
-        return iter(sorted(s))
+        return sorted(s)
 
     class GroupAttr(collections.Mapping):
 
