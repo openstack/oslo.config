@@ -103,6 +103,10 @@ class ShowOptionsDirective(rst.Directive):
             for opt in opt_list:
                 opt_type = self._TYPE_DESCRIPTIONS.get(type(opt),
                                                        'unknown type')
+                # We need to ensure this is unique across entire documentation
+                # http://www.sphinx-doc.org/en/stable/markup/inline.html#ref-role
+                _add('.. _opt-%s-%s:' % (group_name.lower(), opt.dest.lower()))
+                _add('')
                 _add('``%s``' % opt.dest)
                 _add('')
                 _add_indented(':Type: %s' % opt_type)
