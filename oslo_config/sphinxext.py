@@ -62,6 +62,8 @@ class ShowOptionsDirective(rst.Directive):
         cfg.ListOpt: 'list',
         cfg.DictOpt: 'dict',
         cfg.MultiStrOpt: 'multi-valued',
+        cfg._ConfigFileOpt: 'list of filenames',
+        cfg._ConfigDirOpt: 'list of directory names',
     }
 
     def run(self):

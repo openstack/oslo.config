@@ -83,7 +83,8 @@ def _format_defaults(opt):
         elif isinstance(opt, (cfg.IntOpt, cfg.FloatOpt,
                               cfg.PortOpt)):
             default_str = str(opt.default)
-        elif isinstance(opt, cfg.ListOpt):
+        elif isinstance(opt, (cfg.ListOpt, cfg._ConfigFileOpt,
+                              cfg._ConfigDirOpt)):
             default_str = ','.join(opt.default)
         elif isinstance(opt, cfg.DictOpt):
             sorted_items = sorted(opt.default.items(),
