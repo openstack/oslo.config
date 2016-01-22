@@ -126,7 +126,12 @@ class ShowOptionsDirective(rst.Directive):
                     _add_indented(':Valid Values: %s' % choices_text)
                 _add('')
 
-                _add_indented(opt.help)
+                try:
+                    help_text = opt.help % {'default': 'the value above'}
+                except TypeError:
+                    # There is no mention of the default in the help string.
+                    help_text = opt.help
+                _add_indented(help_text)
                 _add('')
 
                 if opt.deprecated_opts:
