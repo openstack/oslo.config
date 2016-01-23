@@ -780,6 +780,51 @@ class GeneratorTestCase(base.BaseTestCase):
 
 class IgnoreDoublesTestCase(base.BaseTestCase):
 
+    opts = [cfg.StrOpt('foo', help='foo option'),
+            cfg.StrOpt('bar', help='bar option'),
+            cfg.StrOpt('foo_bar', help='foobar'),
+            cfg.StrOpt('str_opt', help='a string'),
+            cfg.BoolOpt('bool_opt', help='a boolean'),
+            cfg.IntOpt('int_opt', help='an integer')]
+
+    def test_cleanup_opts_default(self):
+        o = [("namespace1", [
+              ("group1", self.opts)])]
+        self.assertEqual(o, generator._cleanup_opts(o))
+
+    def test_cleanup_opts_dup_opt(self):
+        o = [("namespace1", [
+              ("group1", self.opts + [self.opts[0]])])]
+        e = [("namespace1", [
+              ("group1", self.opts)])]
+        self.assertEqual(e, generator._cleanup_opts(o))
+
+    def test_cleanup_opts_dup_groups_opt(self):
+        o = [("namespace1", [
+              ("group1", self.opts + [self.opts[1]]),
+              ("group2", self.opts),
+              ("group3", self.opts + [self.opts[2]])])]
+        e = [("namespace1", [
+              ("group1", self.opts),
+              ("group2", self.opts),
+              ("group3", self.opts)])]
+        self.assertEqual(e, generator._cleanup_opts(o))
+
+    def test_cleanup_opts_dup_namespace_groups_opts(self):
+        o = [("namespace1", [
+              ("group1", self.opts + [self.opts[1]]),
+              ("group2", self.opts)]),
+             ("namespace2", [
+              ("group1", self.opts + [self.opts[2]]),
+              ("group2", self.opts)])]
+        e = [("namespace1", [
+              ("group1", self.opts),
+              ("group2", self.opts)]),
+             ("namespace2", [
+              ("group1", self.opts),
+              ("group2", self.opts)])]
+        self.assertEqual(e, generator._cleanup_opts(o))
+
     @mock.patch('stevedore.named.NamedExtensionManager')
     def test_list_ignores_doubles(self, named_mgr):
         config_opts = [cfg.StrOpt('foo'),
