@@ -138,8 +138,9 @@ class ShowOptionsDirective(rst.Directive):
 
                 try:
                     help_text = opt.help % {'default': 'the value above'}
-                except TypeError:
-                    # There is no mention of the default in the help string.
+                except (TypeError, KeyError):
+                    # There is no mention of the default in the help string,
+                    # or the string had some unknown key
                     help_text = opt.help
                 _add_indented(help_text)
                 _add('')
