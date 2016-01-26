@@ -23,6 +23,7 @@ Tool for generating a sample configuration file. See
 .. versionadded:: 1.4
 """
 
+import collections
 import logging
 import operator
 import sys
@@ -232,6 +233,40 @@ class _OptFormatter(object):
         self.output_file.writelines(l)
 
 
+def _cleanup_opts(read_opts):
+    """Cleanup duplicate options in namespace groups
+
+    Return a structure which removes duplicate options from a namespace group.
+    NOTE:(rbradfor) This does not remove duplicated options from repeating
+    groups in different namespaces:
+
+    :param read_opts: a list (namespace, [(group, [opt_1, opt_2])]) tuples
+    :returns: a list of (namespace, [(group, [opt_1, opt_2])]) tuples
+    """
+
+    # OrderedDict is used specifically in the three levels to maintain the
+    # source order of namespace/group/opt values
+    clean = collections.OrderedDict()
+    for namespace, listing in read_opts:
+        if namespace not in clean:
+            clean[namespace] = collections.OrderedDict()
+        for group, opts in listing:
+            if group not in clean[namespace]:
+                clean[namespace][group] = collections.OrderedDict()
+            for opt in opts:
+                clean[namespace][group][opt.dest] = opt
+
+    # recreate the list of (namespace, [(group, [opt_1, opt_2])]) tuples
+    # from the cleaned structure.
+    cleaned_opts = [
+        (namespace, [(group, list(clean[namespace][group].values()))
+                     for group in clean[namespace]])
+        for namespace in clean
+    ]
+
+    return cleaned_opts
+
+
 def _list_opts(namespaces):
     """List the options available via the given namespaces.
 
@@ -244,37 +279,6 @@ def _list_opts(namespaces):
         on_load_failure_callback=on_load_failure_callback,
         invoke_on_load=True)
     opts = [(ep.name, ep.obj) for ep in mgr]
-
-    def _cleanup_opts(read_opts):
-        # create a clean structure which makes the cleanup of doubles easier
-        #     namespace1 :
-        #         group1: [ opts1 ]
-        #         group2: [ opts2 ]
-        #     namespace2 :
-        #         group3: [ opts3 ]
-        #         group4: [ opts4 ]
-        clean = {}
-        for namespace, listing in read_opts:
-            if namespace not in clean:
-                clean[namespace] = {}
-            for group, opts in listing:
-                if group not in clean[namespace]:
-                    clean[namespace][group] = []
-                clean[namespace][group] += opts
-                # This set() is the magic which removes the doubles for
-                # one group in one namespace. Everything else in this
-                # method is preparation or post-treatment.
-                clean[namespace][group] = list(set(clean[namespace][group]))
-
-        # build the list of (namespace, [(group, [opt_1, opt_2])]) out of
-        # the cleaned structure.
-        cleaned_opts = []
-        for namespace in clean:
-            groups_opts = []
-            for group, opts in clean[namespace].items():
-                groups_opts.append((group, opts))
-            cleaned_opts.append((namespace, groups_opts))
-        return cleaned_opts
 
     return _cleanup_opts(opts)
 
