@@ -1621,7 +1621,7 @@ class ConfigParser(iniparser.BaseParser):
         namespace._parse_cli_opts_from_config_file(sections, normalized)
 
 
-@removals.remove(version='3.3', removal_version='4.0')
+@removals.remove(version='3.4', removal_version='4.0')
 class MultiConfigParser(object):
     """A ConfigParser which handles multi-opts.
 
