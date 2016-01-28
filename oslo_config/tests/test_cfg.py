@@ -1644,6 +1644,54 @@ class ConfigFileReloadTestCase(BaseTestCase):
         self.assertEqual(self.conf.foo1, 'test11')
 
 
+class ConfigFileMutateTestCase(BaseTestCase):
+    def setUp(self):
+        super(ConfigFileMutateTestCase, self).setUp()
+
+    def _test_conf_files_mutate(self):
+        paths = self.create_tempfiles([
+            ('1', '[DEFAULT]\n'
+                  'foo = old_foo\n'
+                  '[group]\n'
+                  'boo = old_boo\n'),
+            ('2', '[DEFAULT]\n'
+                  'foo = new_foo\n'
+                  '[group]\n'
+                  'boo = new_boo\n')])
+
+        self.conf(['--config-file', paths[0]])
+        shutil.copy(paths[1], paths[0])
+        return self.conf.mutate_config_files()
+
+    def test_conf_files_mutate_none(self):
+        """Test that immutable opts are not reloaded"""
+
+        self.conf.register_cli_opt(cfg.StrOpt('foo'))
+        self._test_conf_files_mutate()
+        self.assertTrue(hasattr(self.conf, 'foo'))
+        self.assertEqual(self.conf.foo, 'old_foo')
+
+    def test_conf_files_mutate_foo(self):
+        """Test that a mutable opt can be reloaded."""
+
+        self.conf.register_cli_opt(cfg.StrOpt('foo', mutable=True))
+        self._test_conf_files_mutate()
+        self.assertTrue(hasattr(self.conf, 'foo'))
+        self.assertEqual(self.conf.foo, 'new_foo')
+
+    def test_conf_files_mutate_group(self):
+        """Test that mutable opts in groups can be reloaded."""
+        my_group = cfg.OptGroup('group', 'group options')
+        self.conf.register_group(my_group)
+        self.conf.register_cli_opt(
+            cfg.StrOpt('boo', mutable=True),
+            group=my_group)
+        self._test_conf_files_mutate()
+        self.assertTrue(hasattr(self.conf, 'group'))
+        self.assertTrue(hasattr(self.conf.group, 'boo'))
+        self.assertEqual(self.conf.group.boo, 'new_boo')
+
+
 class OptGroupsTestCase(BaseTestCase):
 
     def test_arg_group(self):
@@ -4091,17 +4139,41 @@ class OptTestCase(base.BaseTestCase):
         self.assertRaises(ValueError, cfg.BoolOpt, '_foo')
 
 
-class SectionsTestCase(base.BaseTestCase):
+class SectionsTestCase(BaseTestCase):
     def test_list_all_sections(self):
         paths = self.create_tempfiles([('test.ini',
                                         '[DEFAULT]\n'
                                         'foo = bar\n'
                                         '[BLAA]\n'
+                                        'bar = foo\n'),
+                                       ('test2.ini',
+                                        '[DEFAULT]\n'
+                                        'foo = bar\n'
+                                        '[BLAA]\n'
                                         'bar = foo\n')])
-        config = cfg.ConfigOpts()
-        config(args=[], default_config_files=[paths[0]])
-        sections = set(config.list_all_sections())
-        self.assertEqual(sections, set(['DEFAULT', 'BLAA']))
+        self.conf(args=[], default_config_files=paths)
+        self.assertEqual(['BLAA', 'DEFAULT'],
+                         list(self.conf.list_all_sections()))
+
+    def test_list_all_sections_post_mutate(self):
+        paths = self.create_tempfiles([('test.ini',
+                                        '[DEFAULT]\n'
+                                        'foo = bar\n'
+                                        '[BLAA]\n'
+                                        'bar = foo\n'),
+                                       ('test2.ini',
+                                        '[WOMBAT]\n'
+                                        'woo = war\n'
+                                        '[BLAA]\n'
+                                        'bar = foo\n')])
+        self.conf(args=[], default_config_files=paths[:1])
+        self.assertEqual(['BLAA', 'DEFAULT'],
+                         list(self.conf.list_all_sections()))
+
+        shutil.copy(paths[1], paths[0])
+        self.conf.mutate_config_files()
+        self.assertEqual(['BLAA', 'DEFAULT', 'WOMBAT'],
+                         list(self.conf.list_all_sections()))
 
 
 class DeprecationWarningTestBase(BaseTestCase):
