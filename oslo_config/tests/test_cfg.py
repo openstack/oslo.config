@@ -4153,7 +4153,7 @@ class SectionsTestCase(BaseTestCase):
                                         'bar = foo\n')])
         self.conf(args=[], default_config_files=paths)
         self.assertEqual(['BLAA', 'DEFAULT'],
-                         list(self.conf.list_all_sections()))
+                         self.conf.list_all_sections())
 
     def test_list_all_sections_post_mutate(self):
         paths = self.create_tempfiles([('test.ini',
@@ -4168,12 +4168,12 @@ class SectionsTestCase(BaseTestCase):
                                         'bar = foo\n')])
         self.conf(args=[], default_config_files=paths[:1])
         self.assertEqual(['BLAA', 'DEFAULT'],
-                         list(self.conf.list_all_sections()))
+                         self.conf.list_all_sections())
 
         shutil.copy(paths[1], paths[0])
         self.conf.mutate_config_files()
         self.assertEqual(['BLAA', 'DEFAULT', 'WOMBAT'],
-                         list(self.conf.list_all_sections()))
+                         self.conf.list_all_sections())
 
 
 class DeprecationWarningTestBase(BaseTestCase):
