@@ -2831,7 +2831,19 @@ class ConfigOpts(collections.Mapping):
         old_mutate_ns = self._mutable_ns or self._namespace
         self._mutable_ns = self._reload_config_files()
         self._warn_immutability()
-        return self._diff_ns(old_mutate_ns, self._mutable_ns)
+        fresh = self._diff_ns(old_mutate_ns, self._mutable_ns)
+
+        def key_fn(item):
+            # Py3 won't sort heterogeneous types. Sort None as TAB which has a
+            # very low ASCII value.
+            (groupname, optname) = item[0]
+            return item[0] if groupname else ('\t', optname)
+        sorted_fresh = sorted(fresh.items(), key=key_fn)
+        for (groupname, optname), (old, new) in sorted_fresh:
+            groupname = groupname if groupname else 'DEFAULT'
+            LOG.info("Option %s.%s changed from [%s] to [%s]",
+                     groupname, optname, old, new)
+        return fresh
 
     def _warn_immutability(self):
         """Check immutable opts have not changed.
@@ -2853,7 +2865,7 @@ class ConfigOpts(collections.Mapping):
             except KeyError:
                 new = None
             if old != new:
-                LOG.warn("Ignoring change to immutable option: (%s, %s)"
+                LOG.warn("Ignoring change to immutable option %s.%s"
                          % (groupname, opt.name))
 
     def _diff_ns(self, old_ns, new_ns):
