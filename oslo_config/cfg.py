@@ -2828,8 +2828,10 @@ class ConfigOpts(collections.Mapping):
         :raises Error if reloading fails
         """
 
+        old_mutate_ns = self._mutable_ns or self._namespace
         self._mutable_ns = self._reload_config_files()
         self._warn_immutability()
+        return self._diff_ns(old_mutate_ns, self._mutable_ns)
 
     def _warn_immutability(self):
         """Check immutable opts have not changed.
@@ -2853,6 +2855,31 @@ class ConfigOpts(collections.Mapping):
             if old != new:
                 LOG.warn("Ignoring change to immutable option: (%s, %s)"
                          % (groupname, opt.name))
+
+    def _diff_ns(self, old_ns, new_ns):
+        """Compare mutable option values between two namespaces.
+
+        This can be used to only reconfigure stateful sessions when necessary.
+
+        :return {(None or 'group', 'optname'): (old_value, new_value), ... }
+        """
+        diff = {}
+        for info, group in self._all_opt_infos():
+            opt = info['opt']
+            if not opt.mutable:
+                continue
+            groupname = group.name if group else None
+            try:
+                old = opt._get_from_namespace(old_ns, groupname)
+            except KeyError:
+                old = None
+            try:
+                new = opt._get_from_namespace(new_ns, groupname)
+            except KeyError:
+                new = None
+            if old != new:
+                diff[(groupname, opt.name)] = (old, new)
+        return diff
 
     def list_all_sections(self):
         """List all sections from the configuration.

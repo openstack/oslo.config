@@ -1699,6 +1699,17 @@ class ConfigFileMutateTestCase(BaseTestCase):
             "Ignoring change to immutable option: (group, boo)\n",
             self.log_fixture.output)
 
+    def test_diff(self):
+        self.conf.register_cli_opt(cfg.StrOpt('imm'))
+        self.conf.register_cli_opt(cfg.StrOpt('foo', mutable=True))
+        self.conf.register_cli_opt(cfg.StrOpt('boo', mutable=True),
+                                   group=self.my_group)
+        diff = self._test_conf_files_mutate()
+        self.assertEqual(
+            {(None, 'foo'): ('old_foo', 'new_foo'),
+             ('group', 'boo'): ('old_boo', 'new_boo')},
+            diff)
+
 
 class OptGroupsTestCase(BaseTestCase):
 
