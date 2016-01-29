@@ -1223,7 +1223,7 @@ class PortOpt(Opt):
     .. versionadded:: 2.6
     .. versionchanged:: 3.2
        Added *choices* parameter.
-    .. versionchanged:: 3.3
+    .. versionchanged:: 3.4
        Allow port number with 0.
     """
     PORT_MIN = 0
