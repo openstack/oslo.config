@@ -18,6 +18,7 @@ import fixtures
 import mock
 from oslotest import base
 from six import moves
+import tempfile
 import testscenarios
 
 from oslo_config import cfg
@@ -847,6 +848,86 @@ class IgnoreDoublesTestCase(base.BaseTestCase):
             for _, opts in listing:
                 slurped_opts += len(opts)
         self.assertEqual(len(config_opts), slurped_opts)
+
+
+class GeneratorAdditionalTestCase(base.BaseTestCase):
+
+    opts = [cfg.StrOpt('foo', help='foo option', default='fred'),
+            cfg.StrOpt('bar', help='bar option'),
+            cfg.StrOpt('foo_bar', help='foobar'),
+            cfg.StrOpt('str_opt', help='a string'),
+            cfg.BoolOpt('bool_opt', help='a boolean'),
+            cfg.IntOpt('int_opt', help='an integer')]
+
+    def test_get_group_name(self):
+        name = "group1"
+        item = [name]
+        self.assertEqual(name, generator._get_group_name(item))
+
+    def test_get_group_name_as_optgroup(self):
+        name = "group2"
+        item = [cfg.OptGroup(name)]
+        self.assertEqual(name, generator._get_group_name(item))
+
+    def test_get_groups_empty_ns(self):
+        groups = generator._get_groups([])
+        self.assertEqual({'DEFAULT': []}, groups)
+
+    def test_get_groups_single_ns(self):
+        config = [("namespace1", [
+                   ("beta", self.opts),
+                   ("alpha", self.opts)])]
+        groups = generator._get_groups(config)
+        self.assertEqual(['DEFAULT', 'alpha', 'beta'], sorted(groups))
+
+    def test_get_groups_multiple_ns(self):
+        config = [("namespace1", [
+                   ("beta", self.opts),
+                   ("alpha", self.opts)]),
+                  ("namespace2", [
+                   ("gamma", self.opts),
+                   ("alpha", self.opts)])]
+        groups = generator._get_groups(config)
+        self.assertEqual(['DEFAULT', 'alpha', 'beta', 'gamma'], sorted(groups))
+
+    def test_output_opts_empty_default(self):
+
+        config = [("namespace1", [
+                   ("alpha", [])])]
+        groups = generator._get_groups(config)
+
+        fd, tmp_file = tempfile.mkstemp()
+        f = open(tmp_file, 'w+')
+        formatter = generator._OptFormatter(output_file=f)
+        expected = '''[DEFAULT]
+'''
+        generator._output_opts(formatter, 'DEFAULT', groups.pop('DEFAULT'))
+        f.close()
+        content = open(tmp_file).read()
+        self.assertEqual(expected, content)
+
+    def test_output_opts_group(self):
+
+        config = [("namespace1", [
+                   ("alpha", [self.opts[0]])])]
+        groups = generator._get_groups(config)
+
+        fd, tmp_file = tempfile.mkstemp()
+        f = open(tmp_file, 'w+')
+        formatter = generator._OptFormatter(output_file=f)
+        expected = '''[alpha]
+
+#
+# From namespace1
+#
+
+# foo option (string value)
+#foo = fred
+'''
+        generator._output_opts(formatter, 'alpha', groups.pop('alpha'))
+        f.close()
+        content = open(tmp_file).read()
+        self.assertEqual(expected, content)
 
 
 class GeneratorRaiseErrorTestCase(base.BaseTestCase):
