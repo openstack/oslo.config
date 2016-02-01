@@ -718,7 +718,7 @@ class Opt(object):
     .. versionchanged:: 3.2
        Added *deprecated_reason* parameter.
 
-    .. versionchanged:: 3.3
+    .. versionchanged:: 3.5
        Added *mutable* parameter.
     """
     multi = False
