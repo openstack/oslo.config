@@ -21,8 +21,11 @@ two roles.
 
    ::
 
-     :oslo.config:option:`config_file`
-     :oslo.config:option:`DEFAULT.config_file`
+     #. :oslo.config:option:`config_file`
+     #. :oslo.config:option:`DEFAULT.config_file`
+
+   #. :oslo.config:option:`config_file`
+   #. :oslo.config:option:`DEFAULT.config_file`
 
 .. rst:role:: group
 
@@ -31,3 +34,5 @@ two roles.
    ::
 
      :oslo.config:group:`DEFAULT`
+
+   :oslo.config:group:`DEFAULT`

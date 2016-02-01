@@ -212,32 +212,50 @@ class ConfigOptXRefRole(XRefRole):
         return title, anchor
 
 
-class ConfigGroup(ObjectDescription):
-    "Description of a configuration group (.. group)."
+class ConfigGroup(rst.Directive):
 
-    def handle_signature(self, sig, signode):
-        """Transform a group description into RST nodes."""
-        group_name = sig
-        signode += addnodes.desc_name(
-            group_name,
-            'Option Group: %s' % group_name,
-        )
-        signode['allnames'] = [group_name]
-        return group_name
+    has_content = True
 
-    def add_target_and_index(self, firstname, sig, signode):
-        cached_groups = self.env.domaindata['oslo.config']['groups']
+    def run(self):
+        env = self.state.document.settings.env
+        app = env.app
+
+        group_name = ' '.join(self.content)
+
+        cached_groups = env.domaindata['oslo.config']['groups']
+
         # Store the current group for use later in option directives
-        self.env.temp_data['oslo.config:group'] = sig
+        env.temp_data['oslo.config:group'] = group_name
+        app.info('oslo.config group %r' % group_name)
+
         # Store the location where this group is being defined
         # for use when resolving cross-references later.
         # FIXME: This should take the source namespace into account, too
-        cached_groups[sig] = self.env.docname
+        cached_groups[group_name] = env.docname
+
+        result = ViewList()
+        source_name = '<' + __name__ + '>'
+
+        def _add(text):
+            "Append some text to the output result view to be parsed."
+            result.append(text, source_name)
+
+        _add(group_name)
+        _add('-' * len(group_name))
+        node = nodes.section()
+        node.document = self.state.document
+        nested_parse_with_titles(self.state, result, node)
+
+        first_child = node.children[0]
+        self.state.document.note_explicit_target(first_child)
+
         # Compute the normalized target and set the node to have that
         # as an id
-        target_name = cfg._normalize_group_name(sig)
-        signode['ids'].append(target_name)
-        self.state.document.note_explicit_target(signode)
+        target_name = cfg._normalize_group_name(group_name)
+        first_child['ids'].append(target_name)
+
+        indexnode = addnodes.index(entries=[])
+        return [indexnode] + node.children
 
 
 class ConfigOption(ObjectDescription):
@@ -246,6 +264,7 @@ class ConfigOption(ObjectDescription):
     def handle_signature(self, sig, signode):
         """Transform an option description into RST nodes."""
         optname = sig
+        self.env.app.info('oslo.config option %s' % optname)
         # Insert a node into the output showing the option name
         signode += addnodes.desc_name(optname, optname)
         signode['allnames'] = [optname]
