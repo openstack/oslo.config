@@ -878,7 +878,18 @@ class ConfigFileOptsTestCase(BaseTestCase):
         self.assertTrue(hasattr(self.conf, 'foo'))
         self.assertEqual(self.conf.foo, 'bar')
 
-    def test_conf_file_bool_default(self):
+    def test_conf_file_bool_default_none(self):
+        self.conf.register_opt(cfg.BoolOpt('foo'))
+
+        paths = self.create_tempfiles([('test',
+                                        '[DEFAULT]\n')])
+
+        self.conf(['--config-file', paths[0]])
+
+        self.assertTrue(hasattr(self.conf, 'foo'))
+        self.assertIsNone(self.conf.foo)
+
+    def test_conf_file_bool_default_false(self):
         self.conf.register_opt(cfg.BoolOpt('foo', default=False))
 
         paths = self.create_tempfiles([('test',
