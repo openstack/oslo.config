@@ -1776,15 +1776,13 @@ class _Namespace(argparse.Namespace):
         try:
             return self._cli[name]
         except KeyError:
-            raise AttributeError(
-                "'_Namespace' object has no attribute '%s'" % name)
+            return super(_Namespace, self).__getattr__(name)
 
     def __delattr__(self, name):
         try:
             del self._cli[name]
         except KeyError:
-            raise AttributeError(
-                "'_Namespace' object has no attribute '%s'" % name)
+            return super(_Namespace, self).__delattr__(name)
 
     def _parse_cli_opts_from_config_file(self, sections, normalized):
         """Parse CLI options from a config file.

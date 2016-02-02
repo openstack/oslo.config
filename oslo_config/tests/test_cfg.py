@@ -3457,6 +3457,18 @@ class NamespaceTestCase(BaseTestCase):
         self.assertRaises(AttributeError, self.ns.__getattr__, 'boo')
         self.assertRaises(AttributeError, self.ns.__delattr__, 'boo')
 
+    def test_attrs_subparser(self):
+        CONF = cfg.ConfigOpts()
+        CONF.register_cli_opt(cfg.SubCommandOpt(
+            'foo', handler=lambda sub: sub.add_parser('foo')))
+        CONF(['foo'])
+
+    def test_attrs_subparser_failure(self):
+        CONF = cfg.ConfigOpts()
+        CONF.register_cli_opt(cfg.SubCommandOpt(
+            'foo', handler=lambda sub: sub.add_parser('foo')))
+        self.assertRaises(SystemExit, CONF, ['foo', 'bar'])
+
 
 class TildeExpansionTestCase(BaseTestCase):
 
