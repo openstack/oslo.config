@@ -3443,20 +3443,6 @@ class NamespaceTestCase(BaseTestCase):
         self.assertValue(('Blaa', 'bar'), ['foo', 'foofoo', 'foofoofoo'],
                          multi=True, normalized=True)
 
-    def test_attrs(self):
-        self.ns.boo = 11
-        self.assertEqual(11, self.ns.boo)
-        self.assertEqual({'boo': 11}, self.ns._cli)
-
-        setattr(self.ns, 'boo', 22)
-        self.assertEqual(22, getattr(self.ns, 'boo'))
-        self.assertEqual({'boo': 22}, self.ns._cli)
-
-        delattr(self.ns, 'boo')
-        self.assertEqual({}, self.ns._cli)
-        self.assertRaises(AttributeError, self.ns.__getattr__, 'boo')
-        self.assertRaises(AttributeError, self.ns.__delattr__, 'boo')
-
     def test_attrs_subparser(self):
         CONF = cfg.ConfigOpts()
         CONF.register_cli_opt(cfg.SubCommandOpt(

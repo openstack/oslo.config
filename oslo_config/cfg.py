@@ -1763,26 +1763,6 @@ class _Namespace(argparse.Namespace):
         self._emitted_deprecations = set()
         self._files_not_found = []
         self._files_permission_denied = []
-        # Do this last
-        self._cli = {}
-
-    def __setattr__(self, name, value):
-        if '_cli' not in self.__dict__:
-            super(_Namespace, self).__setattr__(name, value)
-            return
-        self._cli[name] = value
-
-    def __getattr__(self, name):
-        try:
-            return self._cli[name]
-        except KeyError:
-            return super(_Namespace, self).__getattr__(name)
-
-    def __delattr__(self, name):
-        try:
-            del self._cli[name]
-        except KeyError:
-            return super(_Namespace, self).__delattr__(name)
 
     def _parse_cli_opts_from_config_file(self, sections, normalized):
         """Parse CLI options from a config file.
