@@ -8,12 +8,26 @@ two roles.
 
 .. rst:directive:: show-options
 
-   Given a namespace, show all of the options exported from that
-   namespace.
+   Given a list of namespaces, show all of the options exported from
+   them.
 
    ::
 
-       .. show-options:: oslo.config
+       .. show-options::
+
+          oslo.config
+          oslo.log
+
+   To show each namespace separately, add the ``split-namespaces``
+   flag.
+
+   ::
+
+       .. show-options::
+          :split-namespaces:
+
+          oslo.config
+          oslo.log
 
 .. rst:role:: option
 

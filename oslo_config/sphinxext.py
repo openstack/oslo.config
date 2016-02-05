@@ -12,6 +12,8 @@
 
 from docutils import nodes
 from docutils.parsers import rst
+from docutils.parsers.rst import directives
+
 from docutils.statemachine import ViewList
 from sphinx import addnodes
 from sphinx.directives import ObjectDescription
@@ -64,7 +66,9 @@ def _make_anchor_target(group_name, option_name):
 
 class ShowOptionsDirective(rst.Directive):
 
-    # option_spec = {}
+    option_spec = {
+        'split-namespaces': directives.flag,
+    }
 
     has_content = True
 
@@ -84,9 +88,15 @@ class ShowOptionsDirective(rst.Directive):
         env = self.state.document.settings.env
         app = env.app
 
-        namespace = ' '.join(self.content)
+        split_namespaces = 'split-namespaces' in self.options
 
-        opts = generator._list_opts([namespace])
+        namespaces = [
+            c.strip()
+            for c in self.content
+            if c.strip()
+        ]
+
+        opts = generator._list_opts(namespaces)
 
         result = ViewList()
         source_name = '<' + __name__ + '>'
@@ -108,6 +118,8 @@ class ShowOptionsDirective(rst.Directive):
             app.info('[oslo.config] %s %s' % (namespace, group_name))
 
             _add('.. oslo.config:group:: %s' % group_name)
+            if namespace:
+                _add('   :namespace: %s' % namespace)
             _add('')
 
             for opt in opt_list:
@@ -159,14 +171,17 @@ class ShowOptionsDirective(rst.Directive):
 
                 _add('')
 
-        by_section = {}
-
-        for ignore, opt_list in opts:
-            for group_name, opts in opt_list:
-                by_section.setdefault(group_name, []).extend(opts)
-
-        for group_name, opt_list in sorted(by_section.items()):
-            _show_group(namespace, group_name, opt_list)
+        if split_namespaces:
+            for namespace, opt_list in opts:
+                for group_name, opts in opt_list:
+                    _show_group(namespace, group_name, opts)
+        else:
+            by_section = {}
+            for ignore, opt_list in opts:
+                for group_name, group_opts in opt_list:
+                    by_section.setdefault(group_name, []).extend(group_opts)
+            for group_name, group_opts in sorted(by_section.items()):
+                _show_group(None, group_name, group_opts)
 
         node = nodes.section()
         node.document = self.state.document
@@ -219,11 +234,16 @@ class ConfigGroup(rst.Directive):
 
     has_content = True
 
+    option_spec = {
+        'namespace': directives.unchanged,
+    }
+
     def run(self):
         env = self.state.document.settings.env
         app = env.app
 
         group_name = ' '.join(self.content)
+        namespace = self.options.get('namespace')
 
         cached_groups = env.domaindata['oslo.config']['groups']
 
@@ -243,8 +263,13 @@ class ConfigGroup(rst.Directive):
             "Append some text to the output result view to be parsed."
             result.append(text, source_name)
 
-        _add(group_name)
-        _add('-' * len(group_name))
+        if namespace:
+            title = '%s: %s' % (namespace, group_name)
+        else:
+            title = group_name
+
+        _add(title)
+        _add('-' * len(title))
         node = nodes.section()
         node.document = self.state.document
         nested_parse_with_titles(self.state, result, node)
