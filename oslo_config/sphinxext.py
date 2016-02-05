@@ -68,6 +68,7 @@ class ShowOptionsDirective(rst.Directive):
 
     option_spec = {
         'split-namespaces': directives.flag,
+        'config-file': directives.unchanged,
     }
 
     has_content = True
@@ -90,11 +91,22 @@ class ShowOptionsDirective(rst.Directive):
 
         split_namespaces = 'split-namespaces' in self.options
 
-        namespaces = [
-            c.strip()
-            for c in self.content
-            if c.strip()
-        ]
+        config_file = self.options.get('config-file')
+        if config_file:
+            app.info('loading config file %s' % config_file)
+            conf = cfg.ConfigOpts()
+            conf.register_opts(generator._generator_opts)
+            conf(
+                args=['--config-file', config_file],
+                project='oslo.config.sphinxext',
+            )
+            namespaces = conf.namespace[:]
+        else:
+            namespaces = [
+                c.strip()
+                for c in self.content
+                if c.strip()
+            ]
 
         opts = generator._list_opts(namespaces)
 
