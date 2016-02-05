@@ -103,13 +103,7 @@ class ShowOptionsDirective(rst.Directive):
             """
             _add(_indent(text))
 
-        by_section = {}
-
-        for ignore, opt_list in opts:
-            for group_name, opts in opt_list:
-                by_section.setdefault(group_name, []).extend(opts)
-
-        for group_name, opt_list in sorted(by_section.items()):
+        def _show_group(namespace, group_name, opt_list):
             group_name = group_name or 'DEFAULT'
             app.info('[oslo.config] %s %s' % (namespace, group_name))
 
@@ -164,6 +158,15 @@ class ShowOptionsDirective(rst.Directive):
                     _add('')
 
                 _add('')
+
+        by_section = {}
+
+        for ignore, opt_list in opts:
+            for group_name, opts in opt_list:
+                by_section.setdefault(group_name, []).extend(opts)
+
+        for group_name, opt_list in sorted(by_section.items()):
+            _show_group(namespace, group_name, opt_list)
 
         node = nodes.section()
         node.document = self.state.document
