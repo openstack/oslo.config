@@ -29,26 +29,26 @@ from oslo_config import generator
 import six
 
 
-def _list_table(add, headers, data, title='', columns=None):
+def _list_table(headers, data, title='', columns=None):
     """Build a list-table directive.
 
     :param add: Function to add one row to output.
     :param headers: List of header values.
     :param data: Iterable of row data, yielding lists or tuples with rows.
     """
-    add('.. list-table:: %s' % title)
-    add('   :header-rows: 1')
+    yield '.. list-table:: %s' % title
+    yield '   :header-rows: 1'
     if columns:
-        add('   :widths: %s' % (','.join(str(c) for c in columns)))
-    add('')
-    add('   - * %s' % headers[0])
+        yield '   :widths: %s' % (','.join(str(c) for c in columns))
+    yield ''
+    yield '   - * %s' % headers[0]
     for h in headers[1:]:
-        add('     * %s' % h)
+        yield '     * %s' % h
     for row in data:
-        add('   - * %s' % row[0])
+        yield '   - * %s' % row[0]
         for r in row[1:]:
-            add('     * %s' % r)
-    add('')
+            yield '     * %s' % r
+    yield ''
 
 
 def _indent(text, n=2):
@@ -64,6 +64,110 @@ def _make_anchor_target(group_name, option_name):
     return target
 
 
+_TYPE_DESCRIPTIONS = {
+    cfg.StrOpt: 'string',
+    cfg.BoolOpt: 'boolean',
+    cfg.IntOpt: 'integer',
+    cfg.FloatOpt: 'floating point',
+    cfg.ListOpt: 'list',
+    cfg.DictOpt: 'dict',
+    cfg.MultiStrOpt: 'multi-valued',
+    cfg._ConfigFileOpt: 'list of filenames',
+    cfg._ConfigDirOpt: 'list of directory names',
+}
+
+
+def _get_choice_text(choice):
+    if choice is None:
+        return '<None>'
+    elif choice == '':
+        return "''"
+    return six.text_type(choice)
+
+
+def _format_group(app, namespace, group_name, opt_list):
+    group_name = group_name or 'DEFAULT'
+    app.info('[oslo.config] %s %s' % (namespace, group_name))
+
+    yield '.. oslo.config:group:: %s' % group_name
+    if namespace:
+        yield '   :namespace: %s' % namespace
+    yield ''
+
+    for opt in opt_list:
+        opt_type = _TYPE_DESCRIPTIONS.get(type(opt),
+                                          'unknown type')
+        yield '.. oslo.config:option:: %s' % opt.dest
+        yield ''
+        yield _indent(':Type: %s' % opt_type)
+        for default in generator._format_defaults(opt):
+            if default:
+                default = '``' + default + '``'
+            yield _indent(':Default: %s' % default)
+        if getattr(opt.type, 'min', None):
+            yield _indent(':Minimum Value: %s' % opt.type.min)
+        if getattr(opt.type, 'max', None):
+            yield _indent(':Maximum Value: %s' % opt.type.max)
+        if getattr(opt.type, 'choices', None):
+            choices_text = ', '.join([_get_choice_text(choice)
+                                      for choice in opt.type.choices])
+            yield _indent(':Valid Values: %s' % choices_text)
+        yield ''
+
+        try:
+            help_text = opt.help % {'default': 'the value above'}
+        except (TypeError, KeyError):
+            # There is no mention of the default in the help string,
+            # or the string had some unknown key
+            help_text = opt.help
+        if help_text:
+            yield _indent(help_text)
+            yield ''
+
+        if opt.deprecated_opts:
+            for line in _list_table(
+                    ['Group', 'Name'],
+                    ((d.group or 'DEFAULT',
+                      d.name or opt.dest or 'UNSET')
+                     for d in opt.deprecated_opts),
+                    title='Deprecated Variations'):
+                yield _indent(line)
+        if opt.deprecated_for_removal:
+            yield _indent('.. warning::')
+            yield _indent('   This option is deprecated for removal.')
+            yield _indent('   Its value may be silently ignored ')
+            yield _indent('   in the future.')
+            yield ''
+            if opt.deprecated_reason:
+                yield _indent('   :Reason: ' + opt.deprecated_reason)
+            yield ''
+
+        yield ''
+
+
+def _format_option_help(app, namespaces, split_namespaces):
+    """Generate a series of lines of restructuredtext.
+
+    Format the option help as restructuredtext and return it as a list
+    of lines.
+    """
+    opts = generator._list_opts(namespaces)
+
+    if split_namespaces:
+        for namespace, opt_list in opts:
+            for group_name, opts in opt_list:
+                for line in _format_group(app, namespace, group_name, opts):
+                    yield line
+    else:
+        by_section = {}
+        for ignore, opt_list in opts:
+            for group_name, group_opts in opt_list:
+                by_section.setdefault(group_name, []).extend(group_opts)
+        for group_name, group_opts in sorted(by_section.items()):
+            for line in _format_group(app, None, group_name, group_opts):
+                yield line
+
+
 class ShowOptionsDirective(rst.Directive):
 
     option_spec = {
@@ -72,18 +176,6 @@ class ShowOptionsDirective(rst.Directive):
     }
 
     has_content = True
-
-    _TYPE_DESCRIPTIONS = {
-        cfg.StrOpt: 'string',
-        cfg.BoolOpt: 'boolean',
-        cfg.IntOpt: 'integer',
-        cfg.FloatOpt: 'floating point',
-        cfg.ListOpt: 'list',
-        cfg.DictOpt: 'dict',
-        cfg.MultiStrOpt: 'multi-valued',
-        cfg._ConfigFileOpt: 'list of filenames',
-        cfg._ConfigDirOpt: 'list of directory names',
-    }
 
     def run(self):
         env = self.state.document.settings.env
@@ -108,105 +200,16 @@ class ShowOptionsDirective(rst.Directive):
                 if c.strip()
             ]
 
-        opts = generator._list_opts(namespaces)
-
         result = ViewList()
         source_name = '<' + __name__ + '>'
-
-        def _add(text):
-            "Append some text to the output result view to be parsed."
-            result.append(text, source_name)
-
-        def _add_indented(text):
-            """Append some text, indented by a couple of spaces.
-
-            Indent everything under the option name,
-            to format it as a definition list.
-            """
-            _add(_indent(text))
-
-        def _show_group(namespace, group_name, opt_list):
-            group_name = group_name or 'DEFAULT'
-            app.info('[oslo.config] %s %s' % (namespace, group_name))
-
-            _add('.. oslo.config:group:: %s' % group_name)
-            if namespace:
-                _add('   :namespace: %s' % namespace)
-            _add('')
-
-            for opt in opt_list:
-                opt_type = self._TYPE_DESCRIPTIONS.get(type(opt),
-                                                       'unknown type')
-                _add('.. oslo.config:option:: %s' % opt.dest)
-                _add('')
-                _add_indented(':Type: %s' % opt_type)
-                for default in generator._format_defaults(opt):
-                    if default:
-                        default = '``' + default + '``'
-                    _add_indented(':Default: %s' % default)
-                if getattr(opt.type, 'min', None):
-                    _add_indented(':Minimum Value: %s' % opt.type.min)
-                if getattr(opt.type, 'max', None):
-                    _add_indented(':Maximum Value: %s' % opt.type.max)
-                if getattr(opt.type, 'choices', None):
-                    choices_text = ', '.join([self._get_choice_text(choice)
-                                              for choice in opt.type.choices])
-                    _add_indented(':Valid Values: %s' % choices_text)
-                _add('')
-
-                try:
-                    help_text = opt.help % {'default': 'the value above'}
-                except (TypeError, KeyError):
-                    # There is no mention of the default in the help string,
-                    # or the string had some unknown key
-                    help_text = opt.help
-                _add_indented(help_text)
-                _add('')
-
-                if opt.deprecated_opts:
-                    _list_table(
-                        _add_indented,
-                        ['Group', 'Name'],
-                        ((d.group or 'DEFAULT',
-                          d.name or opt.dest or 'UNSET')
-                         for d in opt.deprecated_opts),
-                        title='Deprecated Variations',
-                    )
-                if opt.deprecated_for_removal:
-                    _add_indented('.. warning::')
-                    _add_indented('   This option is deprecated for removal.')
-                    _add_indented('   Its value may be silently ignored ')
-                    _add_indented('   in the future.')
-                    if opt.deprecated_reason:
-                        _add_indented('   Reason: ' + opt.deprecated_reason)
-                    _add('')
-
-                _add('')
-
-        if split_namespaces:
-            for namespace, opt_list in opts:
-                for group_name, opts in opt_list:
-                    _show_group(namespace, group_name, opts)
-        else:
-            by_section = {}
-            for ignore, opt_list in opts:
-                for group_name, group_opts in opt_list:
-                    by_section.setdefault(group_name, []).extend(group_opts)
-            for group_name, group_opts in sorted(by_section.items()):
-                _show_group(None, group_name, group_opts)
+        for line in _format_option_help(app, namespaces, split_namespaces):
+            result.append(line, source_name)
 
         node = nodes.section()
         node.document = self.state.document
         nested_parse_with_titles(self.state, result, node)
 
         return node.children
-
-    def _get_choice_text(self, choice):
-        if choice is None:
-            return '<None>'
-        elif choice == '':
-            return "''"
-        return six.text_type(choice)
 
 
 class ConfigGroupXRefRole(XRefRole):
