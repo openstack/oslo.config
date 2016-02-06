@@ -27,6 +27,7 @@ class FormatGroupTest(base.BaseTestCase):
             app=mock.Mock(),
             namespace=None,
             group_name=None,
+            group_obj=None,
             opt_list=[
                 cfg.StrOpt('opt_name',
                            help='this appears in the default group'),
@@ -49,6 +50,7 @@ class FormatGroupTest(base.BaseTestCase):
             app=mock.Mock(),
             namespace=None,
             group_name=None,
+            group_obj=None,
             opt_list=[
                 cfg.StrOpt('opt_name',
                            default='this is the default',
@@ -72,6 +74,7 @@ class FormatGroupTest(base.BaseTestCase):
             app=mock.Mock(),
             namespace=None,
             group_name=None,
+            group_obj=None,
             opt_list=[
                 cfg.IntOpt('opt_name',
                            min=1),
@@ -93,6 +96,7 @@ class FormatGroupTest(base.BaseTestCase):
             app=mock.Mock(),
             namespace=None,
             group_name=None,
+            group_obj=None,
             opt_list=[
                 cfg.IntOpt('opt_name',
                            max=1),
@@ -114,6 +118,7 @@ class FormatGroupTest(base.BaseTestCase):
             app=mock.Mock(),
             namespace=None,
             group_name=None,
+            group_obj=None,
             opt_list=[
                 cfg.StrOpt('opt_name',
                            choices=['a', 'b', 'c', None, '']),
@@ -130,11 +135,52 @@ class FormatGroupTest(base.BaseTestCase):
 
         ''').lstrip(), results)
 
+    def test_group_obj_without_help(self):
+        # option with None group placed in DEFAULT
+        results = '\n'.join(list(sphinxext._format_group(
+            app=mock.Mock(),
+            namespace=None,
+            group_name='group',
+            group_obj=cfg.OptGroup('group'),
+            opt_list=[cfg.StrOpt('opt_name')],
+        )))
+        self.assertEqual(textwrap.dedent('''
+        .. oslo.config:group:: group
+
+        .. oslo.config:option:: opt_name
+
+          :Type: string
+          :Default: ``<None>``
+
+        ''').lstrip(), results)
+
+    def test_group_obj_with_help(self):
+        # option with None group placed in DEFAULT
+        results = '\n'.join(list(sphinxext._format_group(
+            app=mock.Mock(),
+            namespace=None,
+            group_name='group',
+            group_obj=cfg.OptGroup('group', help='group help'),
+            opt_list=[cfg.StrOpt('opt_name')],
+        )))
+        self.assertEqual(textwrap.dedent('''
+        .. oslo.config:group:: group
+
+          group help
+
+        .. oslo.config:option:: opt_name
+
+          :Type: string
+          :Default: ``<None>``
+
+        ''').lstrip(), results)
+
     def test_deprecated_opts(self):
         results = '\n'.join(list(sphinxext._format_group(
             app=mock.Mock(),
             namespace=None,
             group_name=None,
+            group_obj=None,
             opt_list=[
                 cfg.StrOpt('opt_name',
                            deprecated_name='deprecated_name',
@@ -164,6 +210,7 @@ class FormatGroupTest(base.BaseTestCase):
             app=mock.Mock(),
             namespace=None,
             group_name=None,
+            group_obj=None,
             opt_list=[
                 cfg.StrOpt('opt_name',
                            deprecated_for_removal=True,
@@ -189,10 +236,18 @@ class FormatOptionHelpTest(base.BaseTestCase):
             namespaces=['namespace1', 'namespace2'],
             split_namespaces=True))
         _format_group.assert_any_call(
-            None, 'namespace1', None, ['opt1'],
+            app=None,
+            namespace='namespace1',
+            group_name=None,
+            group_obj=None,
+            opt_list=['opt1'],
         )
         _format_group.assert_any_call(
-            None, 'namespace2', None, ['opt2'],
+            app=None,
+            namespace='namespace2',
+            group_name=None,
+            group_obj=None,
+            opt_list=['opt2'],
         )
 
     @mock.patch('oslo_config.generator._list_opts')
@@ -207,5 +262,57 @@ class FormatOptionHelpTest(base.BaseTestCase):
             namespaces=['namespace1', 'namespace2'],
             split_namespaces=False))
         _format_group.assert_called_once_with(
-            None, None, None, ['opt1', 'opt2'],
+            app=None,
+            namespace=None,
+            group_name=None,
+            group_obj=None,
+            opt_list=['opt1', 'opt2'],
+        )
+
+    @mock.patch('oslo_config.generator._list_opts')
+    @mock.patch('oslo_config.sphinxext._format_group')
+    def test_dont_split_namespaces_with_group(self, _format_group, _list_opts):
+        grp_obj = cfg.OptGroup('grp1')
+        _list_opts.return_value = [
+            ('namespace1', [(grp_obj, ['opt1'])]),
+            ('namespace2', [('grp1', ['opt2'])]),
+        ]
+        list(sphinxext._format_option_help(
+            app=None,
+            namespaces=['namespace1', 'namespace2'],
+            split_namespaces=False))
+        _format_group.assert_any_call(
+            app=None,
+            namespace=None,
+            group_name='grp1',
+            group_obj=grp_obj,
+            opt_list=['opt1', 'opt2'],
+        )
+
+    @mock.patch('oslo_config.generator._list_opts')
+    @mock.patch('oslo_config.sphinxext._format_group')
+    def test_split_namespaces_with_group(self, _format_group, _list_opts):
+        grp_obj = cfg.OptGroup('grp1')
+        _list_opts.return_value = [
+            ('namespace1', [(grp_obj, ['opt1'])]),
+            ('namespace2', [('grp1', ['opt2'])]),
+        ]
+        list(sphinxext._format_option_help(
+            app=None,
+            namespaces=['namespace1', 'namespace2'],
+            split_namespaces=True))
+        print(_format_group.call_args_list)
+        _format_group.assert_any_call(
+            app=None,
+            namespace='namespace1',
+            group_name='grp1',
+            group_obj=grp_obj,
+            opt_list=['opt1'],
+        )
+        _format_group.assert_any_call(
+            app=None,
+            namespace='namespace2',
+            group_name='grp1',
+            group_obj=None,
+            opt_list=['opt2'],
         )
