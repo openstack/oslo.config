@@ -281,6 +281,21 @@ def _get_raw_opts_loaders(namespaces):
     return [(e.name, e.plugin) for e in mgr]
 
 
+def _get_opt_default_updaters(namespaces):
+    mgr = stevedore.named.NamedExtensionManager(
+        'oslo.config.opts.defaults',
+        names=namespaces,
+        on_load_failure_callback=on_load_failure_callback,
+        invoke_on_load=False)
+    return [ep.plugin for ep in mgr]
+
+
+def _update_defaults(namespaces):
+    "Let application hooks update defaults inside libraries."
+    for update in _get_opt_default_updaters(namespaces):
+        update()
+
+
 def _list_opts(namespaces):
     """List the options available via the given namespaces.
 
@@ -289,9 +304,16 @@ def _list_opts(namespaces):
     :param namespaces: a list of namespaces registered under 'oslo.config.opts'
     :returns: a list of (namespace, [(group, [opt_1, opt_2])]) tuples
     """
+    # Load the functions to get the options.
+    loaders = _get_raw_opts_loaders(namespaces)
+    # Update defaults, which might change global settings in library
+    # modules.
+    _update_defaults(namespaces)
+    # Ask for the option definitions. At this point any global default
+    # changes made by the updaters should be in effect.
     opts = [
         (namespace, loader())
-        for namespace, loader in _get_raw_opts_loaders(namespaces)
+        for namespace, loader in loaders
     ]
     return _cleanup_opts(opts)
 

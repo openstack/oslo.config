@@ -876,4 +876,43 @@ class GeneratorRaiseErrorTestCase(base.BaseTestCase):
             self.assertRaises(cfg.RequiredOptError, generator.main, [])
 
 
+class ChangeDefaultsTestCase(base.BaseTestCase):
+
+    @mock.patch.object(generator, '_get_opt_default_updaters')
+    @mock.patch.object(generator, '_get_raw_opts_loaders')
+    def test_no_modifiers_registered(self, raw_opts_loaders, get_updaters):
+        orig_opt = cfg.StrOpt('foo', default='bar')
+        raw_opts_loaders.return_value = [
+            ('namespace', lambda: [(None, [orig_opt])]),
+        ]
+        get_updaters.return_value = []
+
+        opts = generator._list_opts(['namespace'])
+        # NOTE(dhellmann): Who designed this data structure?
+        the_opt = opts[0][1][0][1][0]
+
+        self.assertEqual('bar', the_opt.default)
+        self.assertIs(orig_opt, the_opt)
+
+    @mock.patch.object(generator, '_get_opt_default_updaters')
+    @mock.patch.object(generator, '_get_raw_opts_loaders')
+    def test_change_default(self, raw_opts_loaders, get_updaters):
+        orig_opt = cfg.StrOpt('foo', default='bar')
+        raw_opts_loaders.return_value = [
+            ('namespace', lambda: [(None, [orig_opt])]),
+        ]
+
+        def updater():
+            cfg.set_defaults([orig_opt], foo='blah')
+
+        get_updaters.return_value = [updater]
+
+        opts = generator._list_opts(['namespace'])
+        # NOTE(dhellmann): Who designed this data structure?
+        the_opt = opts[0][1][0][1][0]
+
+        self.assertEqual('blah', the_opt.default)
+        self.assertIs(orig_opt, the_opt)
+
+
 GeneratorTestCase.generate_scenarios()
