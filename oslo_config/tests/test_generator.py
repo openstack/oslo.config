@@ -729,9 +729,9 @@ class GeneratorTestCase(base.BaseTestCase):
     def _capture_stdout(self):
         return self._capture_stream('stdout')
 
-    @mock.patch('stevedore.named.NamedExtensionManager')
+    @mock.patch.object(generator, '_get_raw_opts_loaders')
     @mock.patch.object(generator, 'LOG')
-    def test_generate(self, mock_log, named_mgr):
+    def test_generate(self, mock_log, raw_opts_loader):
         generator.register_cli_opts(self.conf)
 
         namespaces = [i[0] for i in self.opts]
@@ -750,12 +750,17 @@ class GeneratorTestCase(base.BaseTestCase):
             output_file = self.tempdir.join(self.output_file)
             self.config(output_file=output_file)
 
-        mock_eps = []
-        for name, opts in self.opts:
-            mock_ep = mock.Mock()
-            mock_ep.configure_mock(name=name, obj=opts)
-            mock_eps.append(mock_ep)
-        named_mgr.return_value = mock_eps
+        # We have a static data structure matching what should be
+        # returned by _list_opts() but we're mocking out a lower level
+        # function that needs to return a namespace and a callable to
+        # return options from that namespace. We have to pass opts to
+        # the lambda to cache a reference to the name because the list
+        # comprehension changes the thing pointed to by the name each
+        # time through the loop.
+        raw_opts_loader.return_value = [
+            (ns, lambda opts=opts: opts)
+            for ns, opts in self.opts
+        ]
 
         generator.generate(self.conf)
 
@@ -764,12 +769,6 @@ class GeneratorTestCase(base.BaseTestCase):
         else:
             content = open(output_file).read()
             self.assertEqual(self.expected, content)
-
-        named_mgr.assert_called_once_with(
-            'oslo.config.opts',
-            names=namespaces,
-            on_load_failure_callback=generator.on_load_failure_callback,
-            invoke_on_load=True)
 
         log_warning = getattr(self, 'log_warning', None)
         if log_warning is not None:
@@ -825,28 +824,25 @@ class IgnoreDoublesTestCase(base.BaseTestCase):
               ("group2", self.opts)])]
         self.assertEqual(e, generator._cleanup_opts(o))
 
-    @mock.patch('stevedore.named.NamedExtensionManager')
-    def test_list_ignores_doubles(self, named_mgr):
-        config_opts = [cfg.StrOpt('foo'),
-                       cfg.StrOpt('bar'),
-                       ]
-        mock_ep1 = mock.Mock()
-        mock_ep1.configure_mock(name="namespace",
-                                obj=[("group", config_opts)])
-        mock_ep2 = mock.Mock()
-        mock_ep2.configure_mock(name="namespace",
-                                obj=[("group", config_opts)])
+    @mock.patch.object(generator, '_get_raw_opts_loaders')
+    def test_list_ignores_doubles(self, raw_opts_loaders):
+        config_opts = [
+            (None, [cfg.StrOpt('foo'), cfg.StrOpt('bar')]),
+        ]
+
         # These are the very same config options, but read twice.
         # This is possible if one misconfigures the entry point for the
         # sample config generator.
-        mock_eps = [mock_ep1, mock_ep2]
-        named_mgr.return_value = mock_eps
+        raw_opts_loaders.return_value = [
+            ('namespace', lambda: config_opts),
+            ('namespace', lambda: config_opts),
+        ]
 
         slurped_opts = 0
         for _, listing in generator._list_opts(None):
             for _, opts in listing:
                 slurped_opts += len(opts)
-        self.assertEqual(len(config_opts), slurped_opts)
+        self.assertEqual(2, slurped_opts)
 
 
 class GeneratorRaiseErrorTestCase(base.BaseTestCase):

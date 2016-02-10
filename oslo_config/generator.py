@@ -267,7 +267,7 @@ def _cleanup_opts(read_opts):
     return cleaned_opts
 
 
-def _list_opts(namespaces):
+def _get_raw_opts_loaders(namespaces):
     """List the options available via the given namespaces.
 
     :param namespaces: a list of namespaces registered under 'oslo.config.opts'
@@ -277,9 +277,22 @@ def _list_opts(namespaces):
         'oslo.config.opts',
         names=namespaces,
         on_load_failure_callback=on_load_failure_callback,
-        invoke_on_load=True)
-    opts = [(ep.name, ep.obj) for ep in mgr]
+        invoke_on_load=False)
+    return [(e.name, e.plugin) for e in mgr]
 
+
+def _list_opts(namespaces):
+    """List the options available via the given namespaces.
+
+    Duplicate options from a namespace are removed.
+
+    :param namespaces: a list of namespaces registered under 'oslo.config.opts'
+    :returns: a list of (namespace, [(group, [opt_1, opt_2])]) tuples
+    """
+    opts = [
+        (namespace, loader())
+        for namespace, loader in _get_raw_opts_loaders(namespaces)
+    ]
     return _cleanup_opts(opts)
 
 
