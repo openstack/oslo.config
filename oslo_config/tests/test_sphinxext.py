@@ -1,0 +1,211 @@
+#    Licensed under the Apache License, Version 2.0 (the "License"); you may
+#    not use this file except in compliance with the License. You may obtain
+#    a copy of the License at
+#
+#         http://www.apache.org/licenses/LICENSE-2.0
+#
+#    Unless required by applicable law or agreed to in writing, software
+#    distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+#    WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+#    License for the specific language governing permissions and limitations
+#    under the License.
+
+import textwrap
+
+import mock
+from oslotest import base
+
+from oslo_config import cfg
+from oslo_config import sphinxext
+
+
+class FormatGroupTest(base.BaseTestCase):
+
+    def test_none_in_default(self):
+        # option with None group placed in DEFAULT
+        results = '\n'.join(list(sphinxext._format_group(
+            app=mock.Mock(),
+            namespace=None,
+            group_name=None,
+            opt_list=[
+                cfg.StrOpt('opt_name',
+                           help='this appears in the default group'),
+            ],
+        )))
+        self.assertEqual(textwrap.dedent('''
+        .. oslo.config:group:: DEFAULT
+
+        .. oslo.config:option:: opt_name
+
+          :Type: string
+          :Default: ``<None>``
+
+          this appears in the default group
+
+        ''').lstrip(), results)
+
+    def test_with_default_value(self):
+        results = '\n'.join(list(sphinxext._format_group(
+            app=mock.Mock(),
+            namespace=None,
+            group_name=None,
+            opt_list=[
+                cfg.StrOpt('opt_name',
+                           default='this is the default',
+                           help='this appears in the default group'),
+            ],
+        )))
+        self.assertEqual(textwrap.dedent('''
+        .. oslo.config:group:: DEFAULT
+
+        .. oslo.config:option:: opt_name
+
+          :Type: string
+          :Default: ``this is the default``
+
+          this appears in the default group
+
+        ''').lstrip(), results)
+
+    def test_with_min(self):
+        results = '\n'.join(list(sphinxext._format_group(
+            app=mock.Mock(),
+            namespace=None,
+            group_name=None,
+            opt_list=[
+                cfg.IntOpt('opt_name',
+                           min=1),
+            ],
+        )))
+        self.assertEqual(textwrap.dedent('''
+        .. oslo.config:group:: DEFAULT
+
+        .. oslo.config:option:: opt_name
+
+          :Type: integer
+          :Default: ``<None>``
+          :Minimum Value: 1
+
+        ''').lstrip(), results)
+
+    def test_with_max(self):
+        results = '\n'.join(list(sphinxext._format_group(
+            app=mock.Mock(),
+            namespace=None,
+            group_name=None,
+            opt_list=[
+                cfg.IntOpt('opt_name',
+                           max=1),
+            ],
+        )))
+        self.assertEqual(textwrap.dedent('''
+        .. oslo.config:group:: DEFAULT
+
+        .. oslo.config:option:: opt_name
+
+          :Type: integer
+          :Default: ``<None>``
+          :Maximum Value: 1
+
+        ''').lstrip(), results)
+
+    def test_with_choices(self):
+        results = '\n'.join(list(sphinxext._format_group(
+            app=mock.Mock(),
+            namespace=None,
+            group_name=None,
+            opt_list=[
+                cfg.StrOpt('opt_name',
+                           choices=['a', 'b', 'c', None, '']),
+            ],
+        )))
+        self.assertEqual(textwrap.dedent('''
+        .. oslo.config:group:: DEFAULT
+
+        .. oslo.config:option:: opt_name
+
+          :Type: string
+          :Default: ``<None>``
+          :Valid Values: a, b, c, <None>, ''
+
+        ''').lstrip(), results)
+
+    def test_deprecated_opts(self):
+        results = '\n'.join(list(sphinxext._format_group(
+            app=mock.Mock(),
+            namespace=None,
+            group_name=None,
+            opt_list=[
+                cfg.StrOpt('opt_name',
+                           deprecated_name='deprecated_name',
+                           )
+            ],
+        )))
+        self.assertEqual(textwrap.dedent('''
+        .. oslo.config:group:: DEFAULT
+
+        .. oslo.config:option:: opt_name
+
+          :Type: string
+          :Default: ``<None>``
+
+          .. list-table:: Deprecated Variations
+             :header-rows: 1
+
+             - * Group
+               * Name
+             - * DEFAULT
+               * deprecated_name
+
+        ''').lstrip(), results)
+
+    def test_deprecated_for_removal(self):
+        results = '\n'.join(list(sphinxext._format_group(
+            app=mock.Mock(),
+            namespace=None,
+            group_name=None,
+            opt_list=[
+                cfg.StrOpt('opt_name',
+                           deprecated_for_removal=True,
+                           deprecated_reason='because I said so',
+                           )
+            ],
+        )))
+        self.assertIn('.. warning::', results)
+        self.assertIn('because I said so', results)
+
+
+class FormatOptionHelpTest(base.BaseTestCase):
+
+    @mock.patch('oslo_config.generator._list_opts')
+    @mock.patch('oslo_config.sphinxext._format_group')
+    def test_split_namespaces(self, _format_group, _list_opts):
+        _list_opts.return_value = [
+            ('namespace1', [(None, ['opt1'])]),
+            ('namespace2', [(None, ['opt2'])]),
+        ]
+        list(sphinxext._format_option_help(
+            app=None,
+            namespaces=['namespace1', 'namespace2'],
+            split_namespaces=True))
+        _format_group.assert_any_call(
+            None, 'namespace1', None, ['opt1'],
+        )
+        _format_group.assert_any_call(
+            None, 'namespace2', None, ['opt2'],
+        )
+
+    @mock.patch('oslo_config.generator._list_opts')
+    @mock.patch('oslo_config.sphinxext._format_group')
+    def test_dont_split_namespaces(self, _format_group, _list_opts):
+        _list_opts.return_value = [
+            ('namespace1', [(None, ['opt1'])]),
+            ('namespace2', [(None, ['opt2'])]),
+        ]
+        list(sphinxext._format_option_help(
+            app=None,
+            namespaces=['namespace1', 'namespace2'],
+            split_namespaces=False))
+        _format_group.assert_called_once_with(
+            None, None, None, ['opt1', 'opt2'],
+        )
