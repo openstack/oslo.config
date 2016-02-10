@@ -85,7 +85,7 @@ def _get_choice_text(choice):
     return six.text_type(choice)
 
 
-def _format_group(app, namespace, group_name, opt_list):
+def _format_group(app, namespace, group_name, group_obj, opt_list):
     group_name = group_name or 'DEFAULT'
     app.info('[oslo.config] %s %s' % (namespace, group_name))
 
@@ -93,6 +93,10 @@ def _format_group(app, namespace, group_name, opt_list):
     if namespace:
         yield '   :namespace: %s' % namespace
     yield ''
+
+    if group_obj and group_obj.help:
+        yield _indent(group_obj.help.rstrip())
+        yield ''
 
     for opt in opt_list:
         opt_type = _TYPE_DESCRIPTIONS.get(type(opt),
@@ -155,16 +159,45 @@ def _format_option_help(app, namespaces, split_namespaces):
 
     if split_namespaces:
         for namespace, opt_list in opts:
-            for group_name, opts in opt_list:
-                for line in _format_group(app, namespace, group_name, opts):
+            for group, opts in opt_list:
+                if isinstance(group, cfg.OptGroup):
+                    group_name = group.name
+                else:
+                    group_name = group
+                    group = None
+                lines = _format_group(
+                    app=app,
+                    namespace=namespace,
+                    group_name=group_name,
+                    group_obj=group,
+                    opt_list=opts,
+                )
+                for line in lines:
                     yield line
     else:
+        # Merge the options from different namespaces that belong to
+        # the same group together and format them without the
+        # namespace.
         by_section = {}
+        group_objs = {}
         for ignore, opt_list in opts:
-            for group_name, group_opts in opt_list:
+            for group, group_opts in opt_list:
+                if isinstance(group, cfg.OptGroup):
+                    group_name = group.name
+                else:
+                    group_name = group
+                    group = None
+                group_objs.setdefault(group_name, group)
                 by_section.setdefault(group_name, []).extend(group_opts)
         for group_name, group_opts in sorted(by_section.items()):
-            for line in _format_group(app, None, group_name, group_opts):
+            lines = _format_group(
+                app=app,
+                namespace=None,
+                group_name=group_name,
+                group_obj=group_objs.get(group_name),
+                opt_list=group_opts,
+            )
+            for line in lines:
                 yield line
 
 
