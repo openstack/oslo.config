@@ -29,6 +29,14 @@ two roles.
           oslo.config
           oslo.log
 
+   To use an existing configuration file for the sample configuration
+   generator, use the ``config-file`` option instead of specifying the
+   namespaces inline.
+   ::
+
+       .. show-options::
+          :config-file: etc/oslo-config-generator/glance-api.conf
+
 .. rst:role:: option
 
    Link to an option.
