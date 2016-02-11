@@ -1707,11 +1707,14 @@ class ConfigFileMutateTestCase(BaseTestCase):
         self.conf.register_cli_opt(cfg.StrOpt('boo'), group=self.my_group)
         self._test_conf_files_mutate()
         self.assertEqual(
-            "Ignoring change to immutable option: (group, boo)\n",
+            "Ignoring change to immutable option group.boo\n"
+            "Option DEFAULT.foo changed from [old_foo] to [new_foo]\n",
             self.log_fixture.output)
 
     def test_diff(self):
+        self.log_fixture = self.useFixture(fixtures.FakeLogger())
         self.conf.register_cli_opt(cfg.StrOpt('imm'))
+        self.conf.register_cli_opt(cfg.StrOpt('blank', mutable=True))
         self.conf.register_cli_opt(cfg.StrOpt('foo', mutable=True))
         self.conf.register_cli_opt(cfg.StrOpt('boo', mutable=True),
                                    group=self.my_group)
@@ -1720,6 +1723,9 @@ class ConfigFileMutateTestCase(BaseTestCase):
             {(None, 'foo'): ('old_foo', 'new_foo'),
              ('group', 'boo'): ('old_boo', 'new_boo')},
             diff)
+        expected = ("Option DEFAULT.foo changed from [old_foo] to [new_foo]\n"
+                    "Option group.boo changed from [old_boo] to [new_boo]\n")
+        self.assertEqual(expected, self.log_fixture.output)
 
 
 class OptGroupsTestCase(BaseTestCase):
