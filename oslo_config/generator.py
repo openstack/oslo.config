@@ -287,6 +287,36 @@ def on_load_failure_callback(*args, **kwargs):
     raise
 
 
+def _output_opts(f, group, namespaces):
+    f.format_group(group)
+    for (namespace, opts) in sorted(namespaces,
+                                    key=operator.itemgetter(0)):
+        f.write('\n#\n# From %s\n#\n' % namespace)
+        for opt in opts:
+            f.write('\n')
+            f.format(opt)
+
+
+def _get_group_name(item):
+    group = item[0]
+    # The keys of the groups dictionary could be an OptGroup. Otherwise the
+    # help text of an OptGroup wouldn't be part of the generated sample
+    # file. It could also be just a plain group name without any further
+    # attributes. That's the reason why we have to differentiate here.
+    return group.name if isinstance(group, cfg.OptGroup) else group
+
+
+def _get_groups(conf_ns):
+    groups = {'DEFAULT': []}
+    for namespace, listing in conf_ns:
+        for group, opts in listing:
+            if not opts:
+                continue
+            namespaces = groups.setdefault(group or 'DEFAULT', [])
+            namespaces.append((namespace, opts))
+    return groups
+
+
 def generate(conf):
     """Generate a sample config file.
 
@@ -303,39 +333,12 @@ def generate(conf):
     formatter = _OptFormatter(output_file=output_file,
                               wrap_width=conf.wrap_width)
 
-    groups = {'DEFAULT': []}
-    for namespace, listing in _list_opts(conf.namespace):
-        for group, opts in listing:
-            if not opts:
-                continue
-            namespaces = groups.setdefault(group or 'DEFAULT', [])
-            namespaces.append((namespace, opts))
-
-    def _output_opts(f, group, namespaces):
-        f.format_group(group)
-        for (namespace, opts) in sorted(namespaces,
-                                        key=operator.itemgetter(0)):
-            f.write('\n#\n# From %s\n#\n' % namespace)
-            for opt in opts:
-                f.write('\n')
-                f.format(opt)
-
-    def _get_group_name(item):
-        group = item[0]
-        # The keys of the groups dictionary could be an OptGroup. Otherwise the
-        # help text of an OptGroup wouldn't be part of the generated sample
-        # file. It could also be just a plain group name without any further
-        # attributes. That's the reason why we have to distinct this here.
-        if isinstance(group, cfg.OptGroup):
-            group_name = group.name
-        else:
-            group_name = group
-        return group_name
+    groups = _get_groups(_list_opts(conf.namespace))
 
     # Output the "DEFAULT" section as the very first section
     _output_opts(formatter, 'DEFAULT', groups.pop('DEFAULT'))
 
-    # output all other config sections with opts in alphabetical order
+    # output all other config sections with groups in alphabetical order
     for group, namespaces in sorted(groups.items(), key=_get_group_name):
         formatter.write('\n\n')
         _output_opts(formatter, group, namespaces)
