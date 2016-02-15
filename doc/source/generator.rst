@@ -58,11 +58,11 @@ group help. An example, using both styles::
       # text is generated for the 'blaa' group.
       return [('blaa', opts1), (baz_group, opts2)]
 
-You might choose to return a copy of the options so that the return value can't
-be modified for nefarious purposes, though this is not strictly necessary::
+.. note::
 
-  def list_opts():
-      return [('blaa', copy.deepcopy(opts))]
+   You should return the original options, not a copy, because the
+   default update hooks depend on the original option object being
+   returned.
 
 The module holding the entry point *must* be importable, even if the
 dependencies of that module are not installed. For example, driver
@@ -72,6 +72,42 @@ installed. To accomplish this, the optional dependency can either be
 imported using :func:`oslo.utils.importutils.try_import` or the option
 definitions can be placed in a file that does not try to import the
 optional dependency.
+
+Modifying Defaults from Other Namespaces
+----------------------------------------
+
+Occasionally applications need to override the defaults for options
+defined in libraries. At runtime this is done using an API within the
+library. Since the config generator cannot guarantee the order in
+which namespaces will be imported, we can't ensure that application
+code can change the option defaults before the generator loads the
+options from a library. Instead, a separate optional processing hook
+is provided for applications to register a function to update default
+values after *all* options are loaded.
+
+The hooks are registered in a separate entry point namespace
+(``oslo.config.opts.defaults``), using the same entry point name as
+the application's ``list_opts()`` function.
+
+::
+
+  [entry_points]
+  oslo.config.opts.defaults =
+      keystone = keystone.common.config:update_opt_defaults
+
+The update function should take no arguments. It should invoke the
+public :func:`set_defaults` functions in any libraries for which it
+has option defaults to override, just as the application does during
+its normal startup process.
+
+::
+
+   from oslo_log import log
+
+   def update_opt_defaults():
+       log.set_defaults(
+           default_log_levels=log.get_default_log_levels() + ['noisy=WARN'],
+       )
 
 Generating Multiple Sample Configs
 ----------------------------------
