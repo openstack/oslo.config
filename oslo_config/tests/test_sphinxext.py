@@ -91,6 +91,28 @@ class FormatGroupTest(base.BaseTestCase):
 
         ''').lstrip(), results)
 
+    def test_with_min_0(self):
+        results = '\n'.join(list(sphinxext._format_group(
+            app=mock.Mock(),
+            namespace=None,
+            group_name=None,
+            group_obj=None,
+            opt_list=[
+                cfg.IntOpt('opt_name',
+                           min=0),
+            ],
+        )))
+        self.assertEqual(textwrap.dedent('''
+        .. oslo.config:group:: DEFAULT
+
+        .. oslo.config:option:: opt_name
+
+          :Type: integer
+          :Default: ``<None>``
+          :Minimum Value: 0
+
+        ''').lstrip(), results)
+
     def test_with_max(self):
         results = '\n'.join(list(sphinxext._format_group(
             app=mock.Mock(),
@@ -110,6 +132,28 @@ class FormatGroupTest(base.BaseTestCase):
           :Type: integer
           :Default: ``<None>``
           :Maximum Value: 1
+
+        ''').lstrip(), results)
+
+    def test_with_max_0(self):
+        results = '\n'.join(list(sphinxext._format_group(
+            app=mock.Mock(),
+            namespace=None,
+            group_name=None,
+            group_obj=None,
+            opt_list=[
+                cfg.IntOpt('opt_name',
+                           max=0),
+            ],
+        )))
+        self.assertEqual(textwrap.dedent('''
+        .. oslo.config:group:: DEFAULT
+
+        .. oslo.config:option:: opt_name
+
+          :Type: integer
+          :Default: ``<None>``
+          :Maximum Value: 0
 
         ''').lstrip(), results)
 

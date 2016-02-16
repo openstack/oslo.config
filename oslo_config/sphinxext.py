@@ -108,9 +108,9 @@ def _format_group(app, namespace, group_name, group_obj, opt_list):
             if default:
                 default = '``' + default + '``'
             yield _indent(':Default: %s' % default)
-        if getattr(opt.type, 'min', None):
+        if getattr(opt.type, 'min', None) is not None:
             yield _indent(':Minimum Value: %s' % opt.type.min)
-        if getattr(opt.type, 'max', None):
+        if getattr(opt.type, 'max', None) is not None:
             yield _indent(':Maximum Value: %s' % opt.type.max)
         if getattr(opt.type, 'choices', None):
             choices_text = ', '.join([_get_choice_text(choice)
