@@ -1443,6 +1443,7 @@ class _ConfigDirOpt(Opt):
             :raises: ConfigFileParseError, ConfigFileValueError,
                      ConfigDirNotFoundError
             """
+            namespace._config_dirs.append(values)
             setattr(namespace, self.dest, values)
 
             values = os.path.expanduser(values)
@@ -1456,7 +1457,7 @@ class _ConfigDirOpt(Opt):
                 ConfigParser._parse_file(config_file, namespace)
 
     def __init__(self, name, **kwargs):
-        super(_ConfigDirOpt, self).__init__(name, type=types.String(),
+        super(_ConfigDirOpt, self).__init__(name, type=types.List(),
                                             **kwargs)
 
     def _get_argparse_kwargs(self, group, **kwargs):
@@ -1763,6 +1764,7 @@ class _Namespace(argparse.Namespace):
         self._emitted_deprecations = set()
         self._files_not_found = []
         self._files_permission_denied = []
+        self._config_dirs = []
 
     def _parse_cli_opts_from_config_file(self, sections, normalized):
         """Parse CLI options from a config file.
@@ -2435,6 +2437,10 @@ class ConfigOpts(collections.Mapping):
             info.pop('default', None)
             info.pop('override', None)
 
+    @property
+    def config_dirs(self):
+        return self._namespace._config_dirs
+
     def find_file(self, name):
         """Locate a file located alongside the config files.
 
@@ -2453,8 +2459,9 @@ class ConfigOpts(collections.Mapping):
         :returns: the path to a matching file, or None
         """
         dirs = []
-        if self.config_dir:
-            dirs.append(_fixpath(self.config_dir))
+        if self._namespace._config_dirs:
+            for directory in self._namespace._config_dirs:
+                dirs.append(_fixpath(directory))
 
         for cf in reversed(self.config_file):
             dirs.append(os.path.dirname(_fixpath(cf)))

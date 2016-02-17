@@ -3157,15 +3157,30 @@ class FindFileTestCase(BaseTestCase):
 
         self.assertEqual(self.conf.find_file('policy.json'), paths[1])
 
+    def test_find_policy_file_with_multiple_config_dirs(self):
+        dir1 = tempfile.mkdtemp()
+        self.tempdirs.append(dir1)
+
+        dir2 = tempfile.mkdtemp()
+        self.tempdirs.append(dir2)
+
+        self.conf(['--config-dir', dir1, '--config-dir', dir2])
+        self.assertEqual(2, len(self.conf.config_dirs))
+        self.assertEqual(dir1, self.conf.config_dirs[0])
+        self.assertEqual(dir2, self.conf.config_dirs[1])
+
     def test_find_policy_file_with_config_dir(self):
         dir = tempfile.mkdtemp()
         self.tempdirs.append(dir)
+
+        dir2 = tempfile.mkdtemp()
+        self.tempdirs.append(dir2)
 
         path = self.create_tempfiles([(os.path.join(dir, 'policy.json'),
                                        '{}')],
                                      ext='')[0]
 
-        self.conf(['--config-dir', dir])
+        self.conf(['--config-dir', dir, '--config-dir', dir2])
 
         self.assertEqual(self.conf.find_file('policy.json'), path)
 
