@@ -17,3 +17,6 @@ dist/
 .project
 .pydevproject
 /doc/source/sample.config
+
+# Files created by releasenotes build
+releasenotes/build
