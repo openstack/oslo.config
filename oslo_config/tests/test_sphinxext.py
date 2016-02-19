@@ -265,6 +265,49 @@ class FormatGroupTest(base.BaseTestCase):
         self.assertIn('.. warning::', results)
         self.assertIn('because I said so', results)
 
+    def test_mutable(self):
+        results = '\n'.join(list(sphinxext._format_group(
+            app=mock.Mock(),
+            namespace=None,
+            group_name=None,
+            group_obj=None,
+            opt_list=[
+                cfg.IntOpt('opt_name',
+                           mutable=True),
+            ],
+        )))
+        self.assertEqual(textwrap.dedent('''
+        .. oslo.config:group:: DEFAULT
+
+        .. oslo.config:option:: opt_name
+
+          :Type: integer
+          :Default: ``<None>``
+          :Mutable: This option can be changed without restarting.
+
+        ''').lstrip(), results)
+
+    def test_not_mutable(self):
+        results = '\n'.join(list(sphinxext._format_group(
+            app=mock.Mock(),
+            namespace=None,
+            group_name=None,
+            group_obj=None,
+            opt_list=[
+                cfg.IntOpt('opt_name',
+                           mutable=False),
+            ],
+        )))
+        self.assertEqual(textwrap.dedent('''
+        .. oslo.config:group:: DEFAULT
+
+        .. oslo.config:option:: opt_name
+
+          :Type: integer
+          :Default: ``<None>``
+
+        ''').lstrip(), results)
+
 
 class FormatOptionHelpTest(base.BaseTestCase):
 

@@ -116,6 +116,29 @@ def _format_group(app, namespace, group_name, group_obj, opt_list):
             choices_text = ', '.join([_get_choice_text(choice)
                                       for choice in opt.type.choices])
             yield _indent(':Valid Values: %s' % choices_text)
+        try:
+            if opt.mutable:
+                yield _indent(
+                    ':Mutable: This option can be changed without restarting.',
+                )
+        except AttributeError as err:
+            # NOTE(dhellmann): keystoneauth defines its own Opt class,
+            # and neutron (at least) returns instances of those
+            # classes instead of oslo_config Opt instances. The new
+            # mutable attribute is the first property where the API
+            # isn't supported in the external class, so we can use
+            # this failure to emit a warning. See
+            # https://bugs.launchpad.net/keystoneauth/+bug/1548433 for
+            # more details.
+            import warnings
+            if not isinstance(cfg.Opt, opt):
+                warnings.warn(
+                    'Incompatible option class for %s (%r): %s' %
+                    (opt.dest, opt.__class__, err),
+                )
+            else:
+                warnings.warn('Failed to fully format sample for %s: %s' %
+                              (opt.dest, err))
         yield ''
 
         try:
