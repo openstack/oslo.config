@@ -2042,6 +2042,7 @@ class ConfigOpts(collections.Mapping):
         self._oparser = None
         self._namespace = None
         self._mutable_ns = None
+        self._mutate_hooks = set([])
         self.__cache = {}
         self._config_opts = []
         self._cli_opts = collections.deque()
@@ -2214,6 +2215,7 @@ class ConfigOpts(collections.Mapping):
         self._oparser = None
         self._namespace = None
         self._mutable_ns = None
+        # Keep _mutate_hooks
         self._validate_default_values = False
         self.unregister_opts(self._config_opts)
         for group in self._groups.values():
@@ -2819,12 +2821,25 @@ class ConfigOpts(collections.Mapping):
             self._namespace = namespace
             return True
 
+    def register_mutate_hook(self, hook):
+        """Registers a hook to be called by mutate_config_files.
+
+        :param hook: a function accepting this ConfigOpts object and a dict of
+                     config mutations, as returned by mutate_config_files.
+        :return None
+        """
+        self._mutate_hooks.add(hook)
+
     @__clear_cache
     def mutate_config_files(self):
         """Reload configure files and parse all options.
 
         Only options marked as 'mutable' will appear to change.
 
+        Hooks are called in a NON-DETERMINISTIC ORDER. Do not expect hooks to
+        be called in the same order as they were added.
+
+        :return {(None or 'group', 'optname'): (old_value, new_value), ... }
         :raises Error if reloading fails
         """
 
@@ -2843,6 +2858,8 @@ class ConfigOpts(collections.Mapping):
             groupname = groupname if groupname else 'DEFAULT'
             LOG.info("Option %s.%s changed from [%s] to [%s]",
                      groupname, optname, old, new)
+        for hook in self._mutate_hooks:
+            hook(self, fresh)
         return fresh
 
     def _warn_immutability(self):

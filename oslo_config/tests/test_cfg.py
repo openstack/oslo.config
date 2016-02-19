@@ -1727,6 +1727,37 @@ class ConfigFileMutateTestCase(BaseTestCase):
                     "Option group.boo changed from [old_boo] to [new_boo]\n")
         self.assertEqual(expected, self.log_fixture.output)
 
+    def test_hooks(self):
+        fresh = {}
+        result = [0]
+
+        def foo(conf, foo_fresh):
+            self.assertEqual(self.conf, conf)
+            self.assertEqual(fresh, foo_fresh)
+            result[0] += 1
+
+        self.conf.register_mutate_hook(foo)
+        self.conf.register_mutate_hook(foo)
+        self._test_conf_files_mutate()
+        self.assertEqual(1, result[0])
+
+    def test_clear(self):
+        """Show that #clear doesn't undeclare opts.
+
+        This justifies not clearing mutate_hooks either. ResetAndClearTestCase
+        shows that values are cleared.
+        """
+        self.conf.register_cli_opt(cfg.StrOpt('cli'))
+        self.conf.register_opt(cfg.StrOpt('foo'))
+        dests = [info['opt'].dest for info, _ in self.conf._all_opt_infos()]
+        self.assertIn('cli', dests)
+        self.assertIn('foo', dests)
+
+        self.conf.clear()
+        dests = [info['opt'].dest for info, _ in self.conf._all_opt_infos()]
+        self.assertIn('cli', dests)
+        self.assertIn('foo', dests)
+
 
 class OptGroupsTestCase(BaseTestCase):
 
