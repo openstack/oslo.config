@@ -3162,6 +3162,10 @@ class SadPathTestCase(BaseTestCase):
 
 class FindFileTestCase(BaseTestCase):
 
+    def test_find_file_without_init(self):
+        self.assertRaises(cfg.NotInitializedError,
+                          self.conf.find_file, 'foo.json')
+
     def test_find_policy_file(self):
         policy_file = '/etc/policy.json'
 
