@@ -1727,7 +1727,7 @@ class ConfigFileMutateTestCase(BaseTestCase):
                     "Option group.boo changed from [old_boo] to [new_boo]\n")
         self.assertEqual(expected, self.log_fixture.output)
 
-    def test_hooks(self):
+    def test_hooks_invoked_once(self):
         fresh = {}
         result = [0]
 
@@ -1740,6 +1740,34 @@ class ConfigFileMutateTestCase(BaseTestCase):
         self.conf.register_mutate_hook(foo)
         self._test_conf_files_mutate()
         self.assertEqual(1, result[0])
+
+    def test_hooks_see_new_values(self):
+        def foo(conf, fresh):
+            # Verify that we see the new value inside the mutate hook.
+            self.assertEqual('new_foo', conf.foo)
+
+        self.conf.register_cli_opt(cfg.StrOpt('foo', mutable=True))
+        self.conf.register_mutate_hook(foo)
+
+        paths = self.create_tempfiles([
+            ('1', '[DEFAULT]\n'
+                  'foo = old_foo\n'
+                  '[group]\n'
+                  'boo = old_boo\n'),
+            ('2', '[DEFAULT]\n'
+                  'foo = new_foo\n'
+                  '[group]\n'
+                  'boo = new_boo\n')])
+
+        self.conf(['--config-file', paths[0]])
+        # We access the value once before mutating it to ensure the
+        # cache is populated.
+        self.assertEqual('old_foo', self.conf.foo)
+
+        shutil.copy(paths[1], paths[0])
+        self.conf.mutate_config_files()
+        # Verify that we see the new value after mutation is complete.
+        self.assertEqual('new_foo', self.conf.foo)
 
     def test_clear(self):
         """Show that #clear doesn't undeclare opts.

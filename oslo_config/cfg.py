@@ -2830,7 +2830,6 @@ class ConfigOpts(collections.Mapping):
         """
         self._mutate_hooks.add(hook)
 
-    @__clear_cache
     def mutate_config_files(self):
         """Reload configure files and parse all options.
 
@@ -2842,6 +2841,7 @@ class ConfigOpts(collections.Mapping):
         :return {(None or 'group', 'optname'): (old_value, new_value), ... }
         :raises Error if reloading fails
         """
+        self.__cache.clear()
 
         old_mutate_ns = self._mutable_ns or self._namespace
         self._mutable_ns = self._reload_config_files()
