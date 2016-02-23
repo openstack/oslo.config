@@ -940,6 +940,31 @@ class GeneratorAdditionalTestCase(base.BaseTestCase):
         self.assertEqual(expected, content)
 
 
+class GeneratorMutableOptionTestCase(base.BaseTestCase):
+
+    def test_include_message(self):
+        out = moves.StringIO()
+        opt = cfg.StrOpt('foo', help='foo option', mutable=True)
+        gen = generator._OptFormatter(output_file=out)
+        gen.format(opt)
+        result = out.getvalue()
+        self.assertIn(
+            'This option can be changed without restarting.',
+            result,
+        )
+
+    def test_do_not_include_message(self):
+        out = moves.StringIO()
+        opt = cfg.StrOpt('foo', help='foo option', mutable=False)
+        gen = generator._OptFormatter(output_file=out)
+        gen.format(opt)
+        result = out.getvalue()
+        self.assertNotIn(
+            'This option can be changed without restarting.',
+            result,
+        )
+
+
 class GeneratorRaiseErrorTestCase(base.BaseTestCase):
 
     def test_generator_raises_error(self):

@@ -189,6 +189,30 @@ class _OptFormatter(object):
                                       for choice in opt.type.choices])
             lines.append('# Allowed values: %s\n' % choices_text)
 
+        try:
+            if opt.mutable:
+                lines.append(
+                    '# Note: This option can be changed without restarting.\n'
+                )
+        except AttributeError as err:
+            # NOTE(dhellmann): keystoneauth defines its own Opt class,
+            # and neutron (at least) returns instances of those
+            # classes instead of oslo_config Opt instances. The new
+            # mutable attribute is the first property where the API
+            # isn't supported in the external class, so we can use
+            # this failure to emit a warning. See
+            # https://bugs.launchpad.net/keystoneauth/+bug/1548433 for
+            # more details.
+            import warnings
+            if not isinstance(cfg.Opt, opt):
+                warnings.warn(
+                    'Incompatible option class for %s (%r): %s' %
+                    (opt.dest, opt.__class__, err),
+                )
+            else:
+                warnings.warn('Failed to fully format sample for %s: %s' %
+                              (opt.dest, err))
+
         for d in opt.deprecated_opts:
             lines.append('# Deprecated group/name - [%s]/%s\n' %
                          (d.group or 'DEFAULT', d.name or opt.dest))
@@ -330,7 +354,12 @@ def _output_opts(f, group, namespaces):
         f.write('\n#\n# From %s\n#\n' % namespace)
         for opt in opts:
             f.write('\n')
-            f.format(opt)
+            try:
+                f.format(opt)
+            except Exception as err:
+                f.write('# Warning: Failed to format sample for %s\n' %
+                        (opt.dest,))
+                f.write('# %s\n' % (err,))
 
 
 def _get_group_name(item):
