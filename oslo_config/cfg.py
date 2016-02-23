@@ -2475,6 +2475,8 @@ class ConfigOpts(collections.Mapping):
         :param name: the filename, for example 'policy.json'
         :returns: the path to a matching file, or None
         """
+        if not self._namespace:
+            raise NotInitializedError()
         dirs = []
         if self._namespace._config_dirs:
             for directory in self._namespace._config_dirs:
