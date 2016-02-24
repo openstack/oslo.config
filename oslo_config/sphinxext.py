@@ -346,7 +346,6 @@ class ConfigGroup(rst.Directive):
         nested_parse_with_titles(self.state, result, node)
 
         first_child = node.children[0]
-        self.state.document.note_explicit_target(first_child)
 
         # Compute the normalized target and set the node to have that
         # as an id
