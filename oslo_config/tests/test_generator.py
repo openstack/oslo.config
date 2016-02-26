@@ -782,8 +782,9 @@ class GeneratorTestCase(base.BaseTestCase):
         if self.stdout:
             self.assertEqual(self.expected, stdout.getvalue())
         else:
-            content = open(output_file).read()
-            self.assertEqual(self.expected, content)
+            with open(output_file, 'r') as f:
+                actual = f.read()
+            self.assertEqual(self.expected, actual)
 
         log_warning = getattr(self, 'log_warning', None)
         if log_warning is not None:
@@ -907,14 +908,14 @@ class GeneratorAdditionalTestCase(base.BaseTestCase):
         groups = generator._get_groups(config)
 
         fd, tmp_file = tempfile.mkstemp()
-        f = open(tmp_file, 'w+')
-        formatter = generator._OptFormatter(output_file=f)
+        with open(tmp_file, 'w+') as f:
+            formatter = generator._OptFormatter(output_file=f)
+            generator._output_opts(formatter, 'DEFAULT', groups.pop('DEFAULT'))
         expected = '''[DEFAULT]
 '''
-        generator._output_opts(formatter, 'DEFAULT', groups.pop('DEFAULT'))
-        f.close()
-        content = open(tmp_file).read()
-        self.assertEqual(expected, content)
+        with open(tmp_file, 'r') as f:
+            actual = f.read()
+        self.assertEqual(expected, actual)
 
     def test_output_opts_group(self):
 
@@ -923,8 +924,9 @@ class GeneratorAdditionalTestCase(base.BaseTestCase):
         groups = generator._get_groups(config)
 
         fd, tmp_file = tempfile.mkstemp()
-        f = open(tmp_file, 'w+')
-        formatter = generator._OptFormatter(output_file=f)
+        with open(tmp_file, 'w+') as f:
+            formatter = generator._OptFormatter(output_file=f)
+            generator._output_opts(formatter, 'alpha', groups.pop('alpha'))
         expected = '''[alpha]
 
 #
@@ -934,10 +936,9 @@ class GeneratorAdditionalTestCase(base.BaseTestCase):
 # foo option (string value)
 #foo = fred
 '''
-        generator._output_opts(formatter, 'alpha', groups.pop('alpha'))
-        f.close()
-        content = open(tmp_file).read()
-        self.assertEqual(expected, content)
+        with open(tmp_file, 'r') as f:
+            actual = f.read()
+        self.assertEqual(expected, actual)
 
 
 class GeneratorMutableOptionTestCase(base.BaseTestCase):
