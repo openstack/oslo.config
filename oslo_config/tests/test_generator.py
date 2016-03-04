@@ -80,9 +80,8 @@ class GeneratorTestCase(base.BaseTestCase):
                                   default='a',
                                   choices=(None, '', 'a', 'b', 'c'),
                                   help='a string with choices'),
-        'deprecated_opt': cfg.StrOpt('bar',
-                                     deprecated_name='foobar',
-                                     help='deprecated'),
+        'deprecated_opt_without_deprecated_group': cfg.StrOpt(
+            'bar', deprecated_name='foobar', help='deprecated'),
         'deprecated_for_removal_opt': cfg.StrOpt(
             'bar', deprecated_for_removal=True, help='deprecated for removal'),
         'deprecated_reason_opt': cfg.BoolOpt(
@@ -92,10 +91,9 @@ class GeneratorTestCase(base.BaseTestCase):
             deprecated_reason='This was supposed to work but it really, '
                               'really did not. Always buy house insurance.',
             help='DEPRECATED: Turn off stove'),
-        'deprecated_group': cfg.StrOpt('bar',
-                                       deprecated_group='group1',
-                                       deprecated_name='foobar',
-                                       help='deprecated'),
+        'deprecated_opt_with_deprecated_group': cfg.StrOpt(
+            'bar', deprecated_name='foobar', deprecated_group='group1',
+            help='deprecated'),
         # Unknown Opt default must be a string
         'unknown_type': cfg.Opt('unknown_opt',
                                 default='123',
@@ -398,8 +396,10 @@ class GeneratorTestCase(base.BaseTestCase):
 # Allowed values: <None>, '', a, b, c
 #choices_opt = a
 ''')),
-        ('deprecated',
-         dict(opts=[('test', [(groups['foo'], [opts['deprecated_opt']])])],
+        ('deprecated opt without deprecated group',
+         dict(opts=[('test',
+                     [(groups['foo'],
+                       [opts['deprecated_opt_without_deprecated_group']])])],
               expected='''[DEFAULT]
 
 
@@ -411,7 +411,7 @@ class GeneratorTestCase(base.BaseTestCase):
 #
 
 # deprecated (string value)
-# Deprecated group/name - [DEFAULT]/foobar
+# Deprecated group/name - [foo]/foobar
 #bar = <None>
 ''')),
         ('deprecated_for_removal',
@@ -452,8 +452,10 @@ class GeneratorTestCase(base.BaseTestCase):
 # Always buy house insurance.
 #turn_off_stove = false
 ''')),
-        ('deprecated_group',
-         dict(opts=[('test', [(groups['foo'], [opts['deprecated_group']])])],
+        ('deprecated_opt_with_deprecated_group',
+         dict(opts=[('test',
+                     [(groups['foo'],
+                       [opts['deprecated_opt_with_deprecated_group']])])],
               expected='''[DEFAULT]
 
 
@@ -1010,7 +1012,7 @@ class GeneratorMutableOptionTestCase(base.BaseTestCase):
         out = moves.StringIO()
         opt = cfg.StrOpt('foo', help='foo option', mutable=True)
         gen = generator._OptFormatter(output_file=out)
-        gen.format(opt)
+        gen.format(opt, 'group1')
         result = out.getvalue()
         self.assertIn(
             'This option can be changed without restarting.',
@@ -1021,7 +1023,7 @@ class GeneratorMutableOptionTestCase(base.BaseTestCase):
         out = moves.StringIO()
         opt = cfg.StrOpt('foo', help='foo option', mutable=False)
         gen = generator._OptFormatter(output_file=out)
-        gen.format(opt)
+        gen.format(opt, 'group1')
         result = out.getvalue()
         self.assertNotIn(
             'This option can be changed without restarting.',

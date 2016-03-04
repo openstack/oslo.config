@@ -219,7 +219,7 @@ class FormatGroupTest(base.BaseTestCase):
 
         ''').lstrip(), results)
 
-    def test_deprecated_opts(self):
+    def test_deprecated_opts_without_deprecated_group(self):
         results = '\n'.join(list(sphinxext._format_group(
             app=mock.Mock(),
             namespace=None,
@@ -245,6 +245,37 @@ class FormatGroupTest(base.BaseTestCase):
              - * Group
                * Name
              - * DEFAULT
+               * deprecated_name
+
+        ''').lstrip(), results)
+
+    def test_deprecated_opts_with_deprecated_group(self):
+        results = '\n'.join(list(sphinxext._format_group(
+            app=mock.Mock(),
+            namespace=None,
+            group_name=None,
+            group_obj=None,
+            opt_list=[
+                cfg.StrOpt('opt_name',
+                           deprecated_name='deprecated_name',
+                           deprecated_group='deprecated_group',
+                           )
+            ],
+        )))
+        self.assertEqual(textwrap.dedent('''
+        .. oslo.config:group:: DEFAULT
+
+        .. oslo.config:option:: opt_name
+
+          :Type: string
+          :Default: ``<None>``
+
+          .. list-table:: Deprecated Variations
+             :header-rows: 1
+
+             - * Group
+               * Name
+             - * deprecated_group
                * deprecated_name
 
         ''').lstrip(), results)
