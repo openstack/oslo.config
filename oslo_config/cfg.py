@@ -2031,6 +2031,8 @@ class ConfigOpts(collections.Mapping):
     :oslo.config:option:`config_dir` options.
 
     """
+    disallow_names = ('project', 'prog', 'version',
+                      'usage', 'default_config_files')
 
     def __init__(self):
         """Construct a ConfigOpts object."""
@@ -2248,6 +2250,14 @@ class ConfigOpts(collections.Mapping):
             if cli:
                 self._add_cli_opt(opt, group)
             return group._register_opt(opt, cli)
+
+        # NOTE(gcb) We can't use some names which are same with attributes of
+        # Opts in default group. They includes project, prog, version, usage
+        # and default_config_files.
+        if group is None:
+            if opt.name in self.disallow_names:
+                raise ValueError('Name %s was reserved for oslo.config.'
+                                 % opt.name)
 
         if cli:
             self._add_cli_opt(opt, None)
