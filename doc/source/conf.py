@@ -4,6 +4,7 @@ import os
 import subprocess
 import sys
 import time
+import warnings
 
 sys.path.insert(0, os.path.abspath('../..'))
 # -- General configuration ----------------------------------------------------
@@ -64,6 +65,8 @@ try:
     html_last_updated_fmt = subprocess.Popen(
         git_cmd, stdout=subprocess.PIPE).communicate()[0]
 except Exception:
+    warnings.warn('Cannot get last updated time from git repository, '
+                  'using current time.')
     html_last_updated_fmt = time.ctime()
 
 # Grouping the document tree into LaTeX files. List of tuples
