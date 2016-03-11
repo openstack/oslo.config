@@ -2884,8 +2884,8 @@ class ConfigOpts(collections.Mapping):
             except KeyError:
                 new = None
             if old != new:
-                LOG.warn("Ignoring change to immutable option %s.%s"
-                         % (groupname, opt.name))
+                LOG.warning("Ignoring change to immutable option %s.%s"
+                            % (groupname, opt.name))
 
     def _diff_ns(self, old_ns, new_ns):
         """Compare mutable option values between two namespaces.
