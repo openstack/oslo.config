@@ -204,7 +204,7 @@ class _OptFormatter(object):
             # https://bugs.launchpad.net/keystoneauth/+bug/1548433 for
             # more details.
             import warnings
-            if not isinstance(cfg.Opt, opt):
+            if not isinstance(opt, cfg.Opt):
                 warnings.warn(
                     'Incompatible option class for %s (%r): %s' %
                     (opt.dest, opt.__class__, err),
