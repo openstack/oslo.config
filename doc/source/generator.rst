@@ -87,13 +87,34 @@ values after *all* options are loaded.
 
 The hooks are registered in a separate entry point namespace
 (``oslo.config.opts.defaults``), using the same entry point name as
-the application's ``list_opts()`` function.
+**the application's** ``list_opts()`` function.
 
 ::
 
   [entry_points]
   oslo.config.opts.defaults =
       keystone = keystone.common.config:update_opt_defaults
+
+.. warning::
+
+   Never, under any circumstances, register an entry point using a
+   name owned by another project. Doing so causes unexpected interplay
+   between projects within the config generator and will result in
+   failure to generate the configuration file or invalid values
+   showing in the sample.
+
+   In this case, the name of the entry point for the default override
+   function *must* match the name of one of the entry points defining
+   options for the application in order to be detected and
+   used. Applications that have multple list_opts functions should use
+   one that is present in the inputs for the config generator where
+   the changed defaults need to appear. For example, if an application
+   defines ``foo.api`` to list the API-related options, and needs to
+   override the defaults in the ``oslo.middleware.cors`` library, the
+   application should register ``foo.api`` under
+   ``oslo.config.opts.defaults`` and point to a function within the
+   application code space that changes the defaults for
+   ``oslo.middleware.cors``.
 
 The update function should take no arguments. It should invoke the
 public :func:`set_defaults` functions in any libraries for which it
