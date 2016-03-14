@@ -171,8 +171,8 @@ defined by the alphabetic sorting order of their file names.
 The parsing of CLI args and config files is initiated by invoking the config
 manager for example::
 
-    conf = ConfigOpts()
-    conf.register_opt(BoolOpt('verbose', ...))
+    conf = cfg.ConfigOpts()
+    conf.register_opt(cfg.BoolOpt('verbose', ...))
     conf(sys.argv[1:])
     if conf.verbose:
         ...
@@ -333,8 +333,8 @@ Positional Command Line Arguments
 Positional command line arguments are supported via a 'positional' Opt
 constructor argument::
 
-    >>> conf = ConfigOpts()
-    >>> conf.register_cli_opt(MultiStrOpt('bar', positional=True))
+    >>> conf = cfg.ConfigOpts()
+    >>> conf.register_cli_opt(cfg.MultiStrOpt('bar', positional=True))
     True
     >>> conf(['a', 'b'])
     >>> conf.bar
@@ -350,8 +350,8 @@ command line arguments using the SubCommandOpt class:
     ...     list_action = subparsers.add_parser('list')
     ...     list_action.add_argument('id')
     ...
-    >>> conf = ConfigOpts()
-    >>> conf.register_cli_opt(SubCommandOpt('action', handler=add_parsers))
+    >>> conf = cfg.ConfigOpts()
+    >>> conf.register_cli_opt(cfg.SubCommandOpt('action', handler=add_parsers))
     True
     >>> conf(args=['list', '10'])
     >>> conf.action.name, conf.action.id
