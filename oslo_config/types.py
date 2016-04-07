@@ -248,12 +248,9 @@ class Number(ConfigType):
     """Number class, base for Integer and Float.
 
     :param min: Optional check that value is greater than or equal to min.
-                Mutually exclusive with 'choices'.
     :param max: Optional check that value is less than or equal to max.
-                Mutually exclusive with 'choices'.
     :param type_name: Type name to be used in the sample config file.
-    :param choices: Optional sequence of valid values. Mutually exclusive
-                    with 'min/max'.
+    :param choices: Optional sequence of valid values.
     :param num_type: the type of number used for casting (i.e int, float)
 
     .. versionadded:: 3.14
@@ -263,15 +260,14 @@ class Number(ConfigType):
                  min=None, max=None, choices=None):
         super(Number, self).__init__(type_name=type_name)
 
-        # Validate the choices and limits
-        if choices is not None:
-            if min is not None or max is not None:
-                raise ValueError("'choices' and 'min/max' cannot both be "
-                                 "specified")
-        else:
-            if min is not None and max is not None and max < min:
-                raise ValueError('Max value is less than min value')
-
+        if min is not None and max is not None and max < min:
+            raise ValueError('Max value is less than min value')
+        invalid_choices = [c for c in choices or []
+                           if (min is not None and min > c)
+                           or (max is not None and max < c)]
+        if invalid_choices:
+            raise ValueError("Choices %s are out of bounds [%s..%s]"
+                             % (invalid_choices, min, max))
         self.min = min
         self.max = max
         self.choices = choices
@@ -281,31 +277,21 @@ class Number(ConfigType):
         if not isinstance(value, self.num_type):
             s = str(value).strip()
             if s == '':
-                value = None
-            else:
-                value = self.num_type(value)
+                return None
+            value = self.num_type(value)
 
-        if value is not None:
-            if self.choices is not None:
-                self._check_choices(value)
-            else:
-                self._check_range(value)
-
-        return value
-
-    def _check_choices(self, value):
-        if value in self.choices:
-            return
+        if self.choices is None:
+            if self.min is not None and value < self.min:
+                raise ValueError('Should be greater than or equal to %g' %
+                                 self.min)
+            if self.max is not None and value > self.max:
+                raise ValueError('Should be less than or equal to %g' %
+                                 self.max)
         else:
-            raise ValueError('Valid values are %r, but found %g' % (
-                             self.choices, value))
-
-    def _check_range(self, value):
-        if self.min is not None and value < self.min:
-            raise ValueError('Should be greater than or equal to %g' %
-                             self.min)
-        if self.max is not None and value > self.max:
-            raise ValueError('Should be less than or equal to %g' % self.max)
+            if value not in self.choices:
+                raise ValueError('Valid values are %r, but found %g' % (
+                                 self.choices, value))
+        return value
 
     def __repr__(self):
         props = []
@@ -343,12 +329,9 @@ class Integer(Number):
     If value is whitespace or empty string will return None.
 
     :param min: Optional check that value is greater than or equal to min.
-                Mutually exclusive with 'choices'.
     :param max: Optional check that value is less than or equal to max.
-                Mutually exclusive with 'choices'.
     :param type_name: Type name to be used in the sample config file.
-    :param choices: Optional sequence of valid values. Mutually exclusive
-                    with 'min/max'.
+    :param choices: Optional sequence of valid values.
 
     .. versionchanged:: 2.4
        The class now honors zero for *min* and *max* parameters.
@@ -358,6 +341,10 @@ class Integer(Number):
 
     .. versionchanged:: 3.2
        Added *choices* parameter.
+
+    .. versionchanged:: 3.16
+       *choices* is no longer mutually exclusive with *min*/*max*. If those are
+       supplied, all choices are verified to be within the range.
     """
 
     def __init__(self, min=None, max=None, type_name='integer value',
@@ -380,11 +367,43 @@ class Float(Number):
 
     .. versionchanged:: 3.14
 
-       Added *min* and *max* parameters.
+       Added *min* and *max* parameters. If *choices* are also supplied, they
+       must be within the range.
     """
 
     def __init__(self, min=None, max=None, type_name='floating point value'):
         super(Float, self).__init__(float, type_name, min=min, max=max)
+
+
+class Port(Integer):
+
+    """Port type
+
+    Represents a L4 Port.
+
+    :param type_name: Type name to be used in the sample config file.
+    :param choices: Optional sequence of valid values.
+    :param min: Optional check that value is greater than or equal to min.
+    :param max: Optional check that value is less than or equal to max.
+
+    .. versionadded:: 3.16
+    """
+
+    PORT_MIN = 0
+    PORT_MAX = 65535
+
+    def __init__(self, min=None, max=None, type_name='port', choices=None):
+        min = self.PORT_MIN if min is None else min
+        max = self.PORT_MAX if max is None else max
+        if min < self.PORT_MIN:
+            raise ValueError('Min value cannot be less than %(min)d',
+                             {'min': self.PORT_MIN})
+        if max > self.PORT_MAX:
+            raise ValueError('Max value cannot be more than %(max)d',
+                             {'max': self.PORT_MAX})
+
+        super(Port, self).__init__(min=min, max=max, type_name=type_name,
+                                   choices=choices)
 
 
 class List(ConfigType):

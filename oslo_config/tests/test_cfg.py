@@ -1538,6 +1538,129 @@ class ConfigFileOptsTestCase(BaseTestCase):
         self.conf(['--config-file', paths[0]])
         self.assertRaises(cfg.ConfigFileValueError, self.conf._get, 'foo')
 
+    def test_conf_file_port_list(self):
+        self.conf.register_opt(cfg.ListOpt('foo', item_type=types.Port()))
+
+        paths = self.create_tempfiles([('test',
+                                        '[DEFAULT]\n'
+                                        'foo = 22, 80\n')])
+
+        self.conf(['--config-file', paths[0]])
+        self.assertTrue(hasattr(self.conf, 'foo'))
+        self.assertEqual([22, 80], self.conf.foo)
+
+    def test_conf_file_port_list_default(self):
+        self.conf.register_opt(cfg.ListOpt('foo', item_type=types.Port(),
+                                           default=[55, 77]))
+
+        paths = self.create_tempfiles([('test',
+                                        '[DEFAULT]\n'
+                                        'foo = 22, 80\n')])
+
+        self.conf(['--config-file', paths[0]])
+        self.assertTrue(hasattr(self.conf, 'foo'))
+        self.assertEqual([22, 80], self.conf.foo)
+
+    def test_conf_file_port_list_only_default(self):
+        self.conf.register_opt(cfg.ListOpt('foo', item_type=types.Port(),
+                                           default=[55, 77]))
+
+        paths = self.create_tempfiles([('test',
+                                        '[DEFAULT]\n')])
+
+        self.conf(['--config-file', paths[0]])
+        self.assertTrue(hasattr(self.conf, 'foo'))
+        self.assertEqual([55, 77], self.conf.foo)
+
+    def test_conf_file_port_list_outside_range(self):
+        self.conf.register_opt(cfg.ListOpt('foo', item_type=types.Port()))
+
+        paths = self.create_tempfiles([('test',
+                                        '[DEFAULT]\n'
+                                        'foo = 1,65536\n')])
+
+        self.conf(['--config-file', paths[0]])
+        self.assertRaises(cfg.ConfigFileValueError, self.conf._get, 'foo')
+
+    def test_conf_file_port_min_max_above_max(self):
+        self.conf.register_opt(cfg.PortOpt('foo', min=1, max=5))
+
+        paths = self.create_tempfiles([('test',
+                                        '[DEFAULT]\n'
+                                        'foo = 10\n')])
+
+        self.conf(['--config-file', paths[0]])
+        self.assertRaises(cfg.ConfigFileValueError, self.conf._get, 'foo')
+
+    def test_conf_file_port_only_max_above_max(self):
+        self.conf.register_opt(cfg.PortOpt('foo', max=500))
+
+        paths = self.create_tempfiles([('test',
+                                        '[DEFAULT]\n'
+                                        'foo = 600\n')])
+
+        self.conf(['--config-file', paths[0]])
+        self.assertRaises(cfg.ConfigFileValueError, self.conf._get, 'foo')
+
+    def test_conf_file_port_min_max_below_min(self):
+        self.conf.register_opt(cfg.PortOpt('foo', min=100, max=500))
+
+        paths = self.create_tempfiles([('test',
+                                        '[DEFAULT]\n'
+                                        'foo = 99\n')])
+
+        self.conf(['--config-file', paths[0]])
+        self.assertRaises(cfg.ConfigFileValueError, self.conf._get, 'foo')
+
+    def test_conf_file_port_only_min_below_min(self):
+        self.conf.register_opt(cfg.PortOpt('foo', min=1025))
+
+        paths = self.create_tempfiles([('test',
+                                        '[DEFAULT]\n'
+                                        'foo = 1024\n')])
+
+        self.conf(['--config-file', paths[0]])
+        self.assertRaises(cfg.ConfigFileValueError, self.conf._get, 'foo')
+
+    def test_conf_file_port_min_max_in_range(self):
+        self.conf.register_opt(cfg.PortOpt('foo', min=1025, max=6000))
+
+        paths = self.create_tempfiles([('test',
+                                        '[DEFAULT]\n'
+                                        'foo = 2500\n')])
+
+        self.conf(['--config-file', paths[0]])
+
+        self.assertTrue(hasattr(self.conf, 'foo'))
+        self.assertEqual(2500, self.conf.foo)
+
+    def test_conf_file_port_only_max_in_range(self):
+        self.conf.register_opt(cfg.PortOpt('foo', max=5000))
+
+        paths = self.create_tempfiles([('test',
+                                        '[DEFAULT]\n'
+                                        'foo = 45\n')])
+
+        self.conf(['--config-file', paths[0]])
+
+        self.assertTrue(hasattr(self.conf, 'foo'))
+        self.assertEqual(45, self.conf.foo)
+
+    def test_conf_file_port_only_min_in_range(self):
+        self.conf.register_opt(cfg.PortOpt('foo', min=35))
+
+        paths = self.create_tempfiles([('test',
+                                        '[DEFAULT]\n'
+                                        'foo = 45\n')])
+
+        self.conf(['--config-file', paths[0]])
+
+        self.assertTrue(hasattr(self.conf, 'foo'))
+        self.assertEqual(45, self.conf.foo)
+
+    def test_conf_file_port_min_greater_max(self):
+        self.assertRaises(ValueError, cfg.PortOpt, 'foo', min=55, max=15)
+
     def test_conf_file_multistr_default(self):
         self.conf.register_opt(cfg.MultiStrOpt('foo', default=['bar']))
 
@@ -4209,7 +4332,7 @@ class PortChoicesTestCase(BaseTestCase):
         self.assertRaises(SystemExit, self.conf, ['--port', '8181'])
 
     def test_choice_out_range(self):
-        self.assertRaisesRegexp(ValueError, 'values 65537 should',
+        self.assertRaisesRegexp(ValueError, 'out of bounds',
                                 cfg.PortOpt, 'port', choices=[80, 65537, 0])
 
     def test_conf_file_choice_value(self):

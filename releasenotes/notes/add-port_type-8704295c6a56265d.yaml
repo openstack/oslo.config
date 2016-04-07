@@ -1,0 +1,5 @@
+---
+features:
+  - Integer and Float now support *min*, *max* and *choices*. Choices must
+    respect *min* and *max* (if provided).
+  - Added Port type as an Integer in the closed interval [0, 65535].

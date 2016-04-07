@@ -1283,35 +1283,21 @@ class PortOpt(Opt):
     :param name: the option's name
     :param choices: Optional sequence of valid values.
     :param \*\*kwargs: arbitrary keyword arguments passed to :class:`Opt`
+    :param min: minimum value the port can take
+    :param max: maximum value the port can take
 
     .. versionadded:: 2.6
     .. versionchanged:: 3.2
        Added *choices* parameter.
     .. versionchanged:: 3.4
        Allow port number with 0.
+    .. versionchanged:: 3.16
+       Added *min* and *max* parameters.
     """
-    PORT_MIN = 0
-    PORT_MAX = 65535
 
-    def __init__(self, name, choices=None, **kwargs):
-
-        # choices and min/max are mutally exclusive for Integer type. So check
-        # if choice are in the range of min/max and only assign choices to
-        # Integer type.
-        if choices is not None:
-            invalid_choices = []
-            for choice in choices:
-                if not self.PORT_MIN <= choice <= self.PORT_MAX:
-                    invalid_choices.append(six.text_type(choice))
-            if invalid_choices:
-                raise ValueError("'Choices' values %(choices)s should be in "
-                                 "the range of %(min)d and %(max)d" %
-                                 {'choices': ', '.join(invalid_choices),
-                                  'min': self.PORT_MIN, 'max': self.PORT_MAX})
-            type = types.Integer(choices=choices, type_name='port value')
-        else:
-            type = types.Integer(min=self.PORT_MIN, max=self.PORT_MAX,
-                                 type_name='port value')
+    def __init__(self, name, min=None, max=None, choices=None, **kwargs):
+        type = types.Port(min=min, max=max, choices=choices,
+                          type_name='port value')
         super(PortOpt, self).__init__(name, type=type, **kwargs)
 
 
