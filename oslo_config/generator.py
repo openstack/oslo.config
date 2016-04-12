@@ -347,9 +347,9 @@ def on_load_failure_callback(*args, **kwargs):
     raise
 
 
-def _output_opts(f, group, namespaces):
-    f.format_group(group)
-    for (namespace, opts) in sorted(namespaces,
+def _output_opts(f, group, group_data):
+    f.format_group(group_data['object'] or group)
+    for (namespace, opts) in sorted(group_data['namespaces'],
                                     key=operator.itemgetter(0)):
         f.write('\n#\n# From %s\n#\n' % namespace)
         for opt in opts:
@@ -362,23 +362,36 @@ def _output_opts(f, group, namespaces):
                 f.write('# %s\n' % (err,))
 
 
-def _get_group_name(item):
-    group = item[0]
-    # The keys of the groups dictionary could be an OptGroup. Otherwise the
-    # help text of an OptGroup wouldn't be part of the generated sample
-    # file. It could also be just a plain group name without any further
-    # attributes. That's the reason why we have to differentiate here.
-    return group.name if isinstance(group, cfg.OptGroup) else group
-
-
 def _get_groups(conf_ns):
-    groups = {'DEFAULT': []}
+    """Invert a list of groups by namespace into a dict by group name.
+
+    :param conf_ns: a list of (namespace, [(<group>, [opt_1, opt_2])]) tuples,
+                    such as returned by _list_opts.
+    :returns: {<group_name>, {'object': <group_object>,
+                              'namespaces': [(<namespace>, <opts>)]}}
+
+    <group> may be a string or a group object.
+    <group_name> is always a string.
+    <group_object> will only be set if <group> was a group object in at least
+    one namespace.
+
+    Keying by group_name avoids adding duplicate group names in case a group is
+    added as both an OptGroup and as a str, but still makes the additional
+    OptGroup data available to the output code when possible.
+    """
+    groups = {'DEFAULT': {'object': None, 'namespaces': []}}
     for namespace, listing in conf_ns:
         for group, opts in listing:
             if not opts:
                 continue
-            namespaces = groups.setdefault(group or 'DEFAULT', [])
-            namespaces.append((namespace, opts))
+            group = group if group else 'DEFAULT'
+            is_optgroup = hasattr(group, 'name')
+            group_name = group.name if is_optgroup else group
+            if group_name not in groups:
+                groups[group_name] = {'object': None, 'namespaces': []}
+            if is_optgroup:
+                groups[group_name]['object'] = group
+            groups[group_name]['namespaces'].append((namespace, opts))
     return groups
 
 
@@ -404,9 +417,9 @@ def generate(conf):
     _output_opts(formatter, 'DEFAULT', groups.pop('DEFAULT'))
 
     # output all other config sections with groups in alphabetical order
-    for group, namespaces in sorted(groups.items(), key=_get_group_name):
+    for group, group_data in sorted(groups.items()):
         formatter.write('\n\n')
-        _output_opts(formatter, group, namespaces)
+        _output_opts(formatter, group, group_data)
 
 
 def main(args=None):

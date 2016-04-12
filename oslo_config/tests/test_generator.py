@@ -711,6 +711,78 @@ class GeneratorTestCase(base.BaseTestCase):
 # string with bad default (string value)
 #string_type_with_bad_default = 4096
 ''')),
+         ('str_opt_str_group',
+         dict(opts=[('test', [('foo',
+                               [opts['str_opt']]),
+                              (groups['foo'],
+                               [opts['int_opt']])]),
+                    ('foo', [('foo',
+                               [opts['bool_opt']])])],
+              expected='''[DEFAULT]
+
+
+[foo]
+# foo help
+
+#
+# From foo
+#
+
+# a boolean (boolean value)
+#bool_opt = false
+
+#
+# From test
+#
+
+# a string (string value)
+#str_opt = foo bar
+
+#
+# From test
+#
+
+# an integer (integer value)
+# Minimum value: 1
+# Maximum value: 20
+#int_opt = 10
+''')),
+         ('opt_str_opt_group',
+         dict(opts=[('test', [(groups['foo'],
+                               [opts['int_opt']]),
+                              ('foo',
+                               [opts['str_opt']])]),
+                    ('foo', [(groups['foo'],
+                              [opts['bool_opt']])])],
+              expected='''[DEFAULT]
+
+
+[foo]
+# foo help
+
+#
+# From foo
+#
+
+# a boolean (boolean value)
+#bool_opt = false
+
+#
+# From test
+#
+
+# an integer (integer value)
+# Minimum value: 1
+# Maximum value: 20
+#int_opt = 10
+
+#
+# From test
+#
+
+# a string (string value)
+#str_opt = foo bar
+''')),
     ]
 
     output_file_scenarios = [
@@ -870,19 +942,10 @@ class GeneratorAdditionalTestCase(base.BaseTestCase):
             cfg.BoolOpt('bool_opt', help='a boolean'),
             cfg.IntOpt('int_opt', help='an integer')]
 
-    def test_get_group_name(self):
-        name = "group1"
-        item = [name]
-        self.assertEqual(name, generator._get_group_name(item))
-
-    def test_get_group_name_as_optgroup(self):
-        name = "group2"
-        item = [cfg.OptGroup(name)]
-        self.assertEqual(name, generator._get_group_name(item))
-
     def test_get_groups_empty_ns(self):
         groups = generator._get_groups([])
-        self.assertEqual({'DEFAULT': []}, groups)
+        self.assertEqual({'DEFAULT': {'object': None, 'namespaces': []}},
+                         groups)
 
     def test_get_groups_single_ns(self):
         config = [("namespace1", [
