@@ -6,7 +6,7 @@ ChangeLog
 *.pyc
 *.log
 .tox
-.coverage
+.coverage*
 cover
 oslo.config.egg-info/
 build/
