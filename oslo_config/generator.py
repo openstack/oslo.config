@@ -171,9 +171,15 @@ class _OptFormatter(object):
         option_type = getattr(opt, 'type', None)
         opt_type = getattr(option_type, 'type_name', 'unknown value')
 
+        opt_prefix = ''
+        if (opt.deprecated_for_removal and
+                not opt.help.startswith('DEPRECATED')):
+            opt_prefix = 'DEPRECATED: '
+
         if opt.help:
-            help_text = u'%s (%s)' % (opt.help,
-                                      opt_type)
+            help_text = u'%s%s (%s)' % (opt_prefix,
+                                        opt.help,
+                                        opt_type)
         else:
             help_text = u'(%s)' % opt_type
         lines = self._format_help(help_text)

@@ -91,7 +91,7 @@ class GeneratorTestCase(base.BaseTestCase):
             deprecated_for_removal=True,
             deprecated_reason='This was supposed to work but it really, '
                               'really did not. Always buy house insurance.',
-            help='Turn off stove'),
+            help='DEPRECATED: Turn off stove'),
         'deprecated_group': cfg.StrOpt('bar',
                                        deprecated_group='group1',
                                        deprecated_name='foobar',
@@ -427,7 +427,7 @@ class GeneratorTestCase(base.BaseTestCase):
 # From test
 #
 
-# deprecated for removal (string value)
+# DEPRECATED: deprecated for removal (string value)
 # This option is deprecated for removal.
 # Its value may be silently ignored in the future.
 #bar = <None>
@@ -445,7 +445,7 @@ class GeneratorTestCase(base.BaseTestCase):
 # From test
 #
 
-# Turn off stove (boolean value)
+# DEPRECATED: Turn off stove (boolean value)
 # This option is deprecated for removal.
 # Its value may be silently ignored in the future.
 # Reason: This was supposed to work but it really, really did not.
