@@ -662,6 +662,10 @@ class Opt(object):
     :param deprecated_reason: indicates why this opt is planned for removal in
                               a future release. Silently ignored if
                               deprecated_for_removal is False
+    :param deprecated_since: indicates which release this opt was deprecated
+                             in. Accepts any string, though valid version
+                             strings are encouraged. Silently ignored if
+                             deprecated_for_removal is False
     :param mutable: True if this option may be reloaded
 
     An Opt object has no public methods, but has a number of public properties:
@@ -722,6 +726,9 @@ class Opt(object):
 
     .. versionchanged:: 3.5
        Added *mutable* parameter.
+
+    .. versionchanged:: 3.12
+       Added *deprecated_since* parameter.
     """
     multi = False
 
@@ -731,7 +738,7 @@ class Opt(object):
                  deprecated_name=None, deprecated_group=None,
                  deprecated_opts=None, sample_default=None,
                  deprecated_for_removal=False, deprecated_reason=None,
-                 mutable=False):
+                 deprecated_since=None, mutable=False):
         if name.startswith('_'):
             raise ValueError('illegal name %s with prefix _' % (name,))
         self.name = name
@@ -757,6 +764,7 @@ class Opt(object):
         self.required = required
         self.deprecated_for_removal = deprecated_for_removal
         self.deprecated_reason = deprecated_reason
+        self.deprecated_since = deprecated_since
         self._logged_deprecation = False
         if deprecated_name is not None:
             deprecated_name = deprecated_name.replace('-', '_')

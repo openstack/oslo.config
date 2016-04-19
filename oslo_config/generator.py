@@ -227,8 +227,14 @@ class _OptFormatter(object):
                          (d.group or group_name, d.name or opt.dest))
 
         if opt.deprecated_for_removal:
+            if opt.deprecated_since:
+                lines.append(
+                    '# This option is deprecated for removal since %s.\n' % (
+                        opt.deprecated_since))
+            else:
+                lines.append(
+                    '# This option is deprecated for removal.\n')
             lines.append(
-                '# This option is deprecated for removal.\n'
                 '# Its value may be silently ignored in the future.\n')
             if opt.deprecated_reason:
                 lines.extend(

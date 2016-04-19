@@ -290,11 +290,13 @@ class FormatGroupTest(base.BaseTestCase):
                 cfg.StrOpt('opt_name',
                            deprecated_for_removal=True,
                            deprecated_reason='because I said so',
+                           deprecated_since='13.0',
                            )
             ],
         )))
         self.assertIn('.. warning::', results)
         self.assertIn('because I said so', results)
+        self.assertIn('since 13.0', results)
 
     def test_mutable(self):
         results = '\n'.join(list(sphinxext._format_group(
