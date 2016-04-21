@@ -2058,10 +2058,12 @@ class ConfigOpts(collections.Mapping):
             default_config_files = find_config_files(project, prog)
 
         self._oparser = _CachedArgumentParser(prog=prog, usage=usage)
-        self._oparser.add_parser_argument(self._oparser,
-                                          '--version',
-                                          action='version',
-                                          version=version)
+
+        if version is not None:
+            self._oparser.add_parser_argument(self._oparser,
+                                              '--version',
+                                              action='version',
+                                              version=version)
 
         return prog, default_config_files
 
