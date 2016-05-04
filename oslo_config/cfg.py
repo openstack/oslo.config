@@ -2396,7 +2396,7 @@ class ConfigOpts(collections.Mapping):
             opt_info['override'] = override
 
     @__clear_cache
-    def set_default(self, name, default, group=None):
+    def set_default(self, name, default, group=None, enforce_type=False):
         """Override an opt's default value.
 
         Override the default value of given option. A command line or
@@ -2405,10 +2405,17 @@ class ConfigOpts(collections.Mapping):
         :param name: the name/dest of the opt
         :param default: the default value
         :param group: an option OptGroup object or group name
+        :param enforce_type: a boolean whether to convert the default
+         value to the option's type, None is *not* converted even
+         if enforce_type is True.
         :raises: NoSuchOptError, NoSuchGroupError
         """
         opt_info = self._get_opt_info(name, group)
-        opt_info['default'] = default
+        if enforce_type and default is not None:
+            opt_info['default'] = self._convert_value(default,
+                                                      opt_info['opt'])
+        else:
+            opt_info['default'] = default
 
     @__clear_cache
     def clear_override(self, name, group=None):

@@ -2666,15 +2666,6 @@ class OverridesTestCase(BaseTestCase):
         self.conf.clear_default('foo')
         self.assertEqual(self.conf.foo, 'foo')
 
-    def test_override_none(self):
-        self.conf.register_opt(cfg.StrOpt('foo', default='foo'))
-        self.conf([])
-        self.assertEqual(self.conf.foo, 'foo')
-        self.conf.set_override('foo', None)
-        self.assertIsNone(self.conf.foo)
-        self.conf.clear_override('foo')
-        self.assertEqual(self.conf.foo, 'foo')
-
     def test_no_default_override(self):
         self.conf.register_opt(cfg.StrOpt('foo'))
         self.conf([])
@@ -2693,6 +2684,23 @@ class OverridesTestCase(BaseTestCase):
         self.conf.clear_default('foo')
         self.assertEqual(self.conf.foo, 'foo')
 
+    def test_set_default_not_in_choices(self):
+        self.conf.register_group(cfg.OptGroup('f'))
+        self.conf.register_cli_opt(cfg.StrOpt('oo', choices=('a', 'b')),
+                                   group='f')
+        self.assertRaises(ValueError,
+                          self.conf.set_default, 'oo', 'c', 'f',
+                          enforce_type=True)
+
+    def test_enforce_type_default_override(self):
+        self.conf.register_opt(cfg.StrOpt('foo', default='foo'))
+        self.conf([])
+        self.assertEqual(self.conf.foo, 'foo')
+        self.conf.set_default('foo', 'bar', enforce_type=True)
+        self.assertEqual(self.conf.foo, 'bar')
+        self.conf.clear_default('foo')
+        self.assertEqual(self.conf.foo, 'foo')
+
     def test_override(self):
         self.conf.register_opt(cfg.StrOpt('foo'))
         self.conf.set_override('foo', 'bar')
@@ -2700,6 +2708,15 @@ class OverridesTestCase(BaseTestCase):
         self.assertEqual(self.conf.foo, 'bar')
         self.conf.clear_override('foo')
         self.assertIsNone(self.conf.foo)
+
+    def test_override_none(self):
+        self.conf.register_opt(cfg.StrOpt('foo', default='foo'))
+        self.conf([])
+        self.assertEqual(self.conf.foo, 'foo')
+        self.conf.set_override('foo', None)
+        self.assertIsNone(self.conf.foo)
+        self.conf.clear_override('foo')
+        self.assertEqual(self.conf.foo, 'foo')
 
     def test_group_no_default_override(self):
         self.conf.register_group(cfg.OptGroup('blaa'))
