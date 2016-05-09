@@ -4,7 +4,7 @@ Sphinx Oslo Sample Config Generation
 
 Included with oslo.config is a sphinx extension to generate a sample config
 file at the beginning of each sphinx build. To activate the extension add
-``oslo_config.sphinxgenconfig`` to the list of extensions in your sphinx
+``oslo_config.sphinxconfiggen`` to the list of extensions in your sphinx
 ``conf.py``.
 
 Then you just need to use the ``config_generator_config_file`` option to point
