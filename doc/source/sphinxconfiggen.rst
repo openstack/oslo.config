@@ -17,7 +17,7 @@ Output File Name
 
 By default the sphinx plugin will generate the sample config file and name the
 file sample.config. However, if for whatever reason you'd like the name to be
-more specific to the project name you can use the ``config_sample_basename``
+more specific to the project name you can use the ``sample_config_basename``
 config option to specify the project name. If it's set the output filename
 will be that value with a .conf.sample extension. For example if you set that
 to be nova the output filename will be nova.conf.sample. You can also put a
