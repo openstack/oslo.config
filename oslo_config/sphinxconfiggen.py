@@ -19,22 +19,46 @@ from oslo_config import generator
 
 def generate_sample(app):
 
-    def info(msg):
-        app.info('[%s] %s' % (__name__, msg))
-
     if not app.config.config_generator_config_file:
         app.warn("No config_generator_config_file is specified, "
                  "skipping sample config generation")
         return
 
+    # Decided to update the existing config option
+    # config_generator_config_file to support a value that is a list of
+    # tuples, containing the file names as (input, output).
+    # We need to retain support for the option referring to a single string,
+    # and using the sample_config_basename for the output file in that case.
+    # After we release support for both forms of the option, we can update
+    # projects to always use the list of tuples, then remove
+    # sample_config_basename and the support for config_generator_config_file
+    # being a single string.
+
+    if isinstance(app.config.config_generator_config_file, list):
+        for config_file, base_name in app.config.config_generator_config_file:
+            if base_name is None:
+                base_name = _get_default_basename(config_file)
+            _generate_sample(app, config_file, base_name)
+    else:
+        _generate_sample(app,
+                         app.config.config_generator_config_file,
+                         app.config.sample_config_basename)
+
+
+def _get_default_basename(config_file):
+    return os.path.splitext(os.path.basename(config_file))[0]
+
+
+def _generate_sample(app, config_file, base_name):
+
+    def info(msg):
+        app.info('[%s] %s' % (__name__, msg))
+
     # If we are given a file that isn't an absolute path, look for it
     # in the source directory if it doesn't exist.
     candidates = [
-        app.config.config_generator_config_file,
-        os.path.join(
-            app.srcdir,
-            app.config.config_generator_config_file,
-        ),
+        config_file,
+        os.path.join(app.srcdir, config_file,),
     ]
     for c in candidates:
         if os.path.isfile(c):
@@ -46,9 +70,8 @@ def generate_sample(app):
             "Could not find config_generator_config_file %r" %
             app.config.config_generator_config_file)
 
-    if app.config.sample_config_basename:
-        out_file = os.path.join(
-            app.srcdir, app.config.sample_config_basename) + '.conf.sample'
+    if base_name:
+        out_file = os.path.join(app.srcdir, base_name) + '.conf.sample'
         if not os.path.isdir(os.path.dirname(os.path.abspath(out_file))):
             os.mkdir(os.path.dirname(os.path.abspath(out_file)))
     else:
