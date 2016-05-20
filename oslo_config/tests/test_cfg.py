@@ -2170,6 +2170,14 @@ class ReRegisterOptTestCase(BaseTestCase):
         self.assertFalse(self.conf.register_opt(opt, group='blaa'))
 
 
+class RegisterOptNameTestCase(BaseTestCase):
+
+    def test_register_opt_with_disallow_name(self):
+        for name in cfg.ConfigOpts.disallow_names:
+            opt = cfg.StrOpt(name)
+            self.assertRaises(ValueError, self.conf.register_opt, opt)
+
+
 class TemplateSubstitutionTestCase(BaseTestCase):
 
     def _prep_test_str_sub(self, foo_default=None, bar_default=None):
