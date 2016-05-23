@@ -573,7 +573,6 @@ class HostnameTypeTests(TypeTestHelper, unittest.TestCase):
 
     def test_equal(self):
         self.assertEqual(types.Hostname(), types.Hostname())
-        self.assertEqual(types.Hostname(), types.Hostname())
 
     def test_not_equal_to_other_class(self):
         self.assertNotEqual(types.Hostname(), types.Integer())
