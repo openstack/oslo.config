@@ -154,7 +154,7 @@ def _format_group(app, namespace, group_name, group_obj, opt_list):
         if opt.deprecated_opts:
             for line in _list_table(
                     ['Group', 'Name'],
-                    ((d.group or 'DEFAULT',
+                    ((d.group or group_name,
                       d.name or opt.dest or 'UNSET')
                      for d in opt.deprecated_opts),
                     title='Deprecated Variations'):
