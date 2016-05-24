@@ -4354,7 +4354,10 @@ class DeprecationWarningTestScenarios(DeprecationWarningTestBase):
             self.assertEqual('baz', self.conf.other.foo)
         if self.deprecated:
             expected = (self._parser_class._deprecated_opt_message %
-                        ('bar', self.group, 'foo', self.group) + '\n')
+                        {'dep_option': 'bar',
+                         'dep_group': self.group,
+                         'option': 'foo',
+                         'group': self.group} + '\n')
         else:
             expected = ''
         self.assertEqual(expected, self.log_fixture.output)
@@ -4393,8 +4396,10 @@ class DeprecationWarningTests(DeprecationWarningTestBase):
     def assert_message_logged(self, deprecated_name, deprecated_group,
                               current_name, current_group):
         expected = (self._parser_class._deprecated_opt_message %
-                    (deprecated_name, deprecated_group,
-                     current_name, current_group)
+                    {'dep_option': deprecated_name,
+                     'dep_group': deprecated_group,
+                     'option': current_name,
+                     'group': current_group}
                     )
         self.assertEqual(expected + '\n', self.log_fixture.output)
 
@@ -4452,5 +4457,8 @@ class DeprecationWarningTests(DeprecationWarningTestBase):
         self.conf(['--config-file', paths[0]])
         self.assertEqual('baz', self.conf.other.foo)
         expected = (self._parser_class._deprecated_opt_message %
-                    ('bar', 'other', 'foo-bar', 'other') + '\n')
+                    {'dep_option': 'bar',
+                     'dep_group': 'other',
+                     'option': 'foo-bar',
+                     'group': 'other'} + '\n')
         self.assertEqual(expected, self.log_fixture.output)
