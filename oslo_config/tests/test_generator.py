@@ -1101,4 +1101,39 @@ class ChangeDefaultsTestCase(base.BaseTestCase):
         self.assertIs(orig_opt, the_opt)
 
 
+class RequiredOptionTestCase(base.BaseTestCase):
+
+    opts = [cfg.StrOpt('foo', help='foo option', default='fred'),
+            cfg.StrOpt('bar', help='bar option', required=True),
+            cfg.StrOpt('foo_bar', help='foobar'),
+            cfg.StrOpt('bars', help='bars foo', required=True)]
+
+    def test_required_option_order_single_ns(self):
+
+        config = [("namespace1", [
+                   ("alpha", self.opts)])]
+        groups = generator._get_groups(config)
+
+        fd, tmp_file = tempfile.mkstemp()
+        with open(tmp_file, 'w+') as f:
+            formatter = generator._OptFormatter(output_file=f)
+            generator._output_opts(formatter, 'alpha',
+                                   groups.pop('alpha'), True)
+        expected = '''[alpha]
+
+#
+# From namespace1
+#
+
+# bar option (string value)
+bar = <None>
+
+# bars foo (string value)
+bars = <None>
+'''
+        with open(tmp_file, 'r') as f:
+            actual = f.read()
+        self.assertEqual(expected, actual)
+
+
 GeneratorTestCase.generate_scenarios()
