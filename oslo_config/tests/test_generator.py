@@ -1005,6 +1005,35 @@ class GeneratorAdditionalTestCase(base.BaseTestCase):
             actual = f.read()
         self.assertEqual(expected, actual)
 
+    def _test_output_default_list_opt_with_string_value(self, default):
+        opt = cfg.ListOpt('list_opt', help='a list', default=default)
+        config = [("namespace1", [
+                   ("alpha", [opt])])]
+        groups = generator._get_groups(config)
+
+        fd, tmp_file = tempfile.mkstemp()
+        f = open(tmp_file, 'w+')
+        formatter = generator._OptFormatter(output_file=f)
+        expected = '''[alpha]
+
+#
+# From namespace1
+#
+
+# a list (list value)
+#list_opt = %(default)s
+''' % {'default': default}
+        generator._output_opts(formatter, 'alpha', groups.pop('alpha'))
+        f.close()
+        content = open(tmp_file).read()
+        self.assertEqual(expected, content)
+
+    def test_output_default_list_opt_with_string_value_multiple_entries(self):
+        self._test_output_default_list_opt_with_string_value('foo,bar')
+
+    def test_output_default_list_opt_with_string_value_single_entry(self):
+        self._test_output_default_list_opt_with_string_value('foo')
+
 
 class GeneratorMutableOptionTestCase(base.BaseTestCase):
 
