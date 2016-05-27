@@ -447,6 +447,8 @@ class List(ConfigType):
         )
 
     def _formatter(self, value):
+        if isinstance(value, six.string_types):
+            return value
         return ','.join(value)
 
 
