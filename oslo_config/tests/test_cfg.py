@@ -3257,6 +3257,9 @@ class FindFileTestCase(BaseTestCase):
         self.assertEqual(dir1, self.conf.config_dirs[0])
         self.assertEqual(dir2, self.conf.config_dirs[1])
 
+    def test_config_dirs_empty_list_when_nothing_parsed(self):
+        self.assertEqual([], self.conf.config_dirs)
+
     def test_find_policy_file_with_config_dir(self):
         dir = tempfile.mkdtemp()
         self.tempdirs.append(dir)

@@ -2481,6 +2481,8 @@ class ConfigOpts(collections.Mapping):
 
     @property
     def config_dirs(self):
+        if self._namespace is None:
+            return []
         return self._namespace._config_dirs
 
     def find_file(self, name):
