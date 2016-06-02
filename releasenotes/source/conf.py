@@ -190,7 +190,7 @@ html_static_path = ['_static']
 # html_file_suffix = None
 
 # Output file base name for HTML help builder.
-htmlhelp_basename = 'olso.configReleaseNotesdoc'
+htmlhelp_basename = 'oslo.configReleaseNotesdoc'
 
 
 # -- Options for LaTeX output ---------------------------------------------
@@ -210,8 +210,8 @@ latex_elements = {
 # (source start file, target name, title,
 #  author, documentclass [howto, manual, or own class]).
 latex_documents = [
-    ('index', 'olso.configReleaseNotes.tex',
-     u'olso.config Release Notes Documentation',
+    ('index', 'oslo.configReleaseNotes.tex',
+     u'oslo.config Release Notes Documentation',
      u'oslo.config Developers', 'manual'),
 ]
 
@@ -241,7 +241,7 @@ latex_documents = [
 # One entry per manual page. List of tuples
 # (source start file, name, description, authors, manual section).
 man_pages = [
-    ('index', 'olso.configreleasenotes',
+    ('index', 'oslo.configreleasenotes',
      u'oslo.config Release Notes Documentation',
      [u'oslo.config Developers'], 1)
 ]
@@ -258,7 +258,7 @@ man_pages = [
 texinfo_documents = [
     ('index', 'oslo.configReleaseNotes',
      u'oslo.config Release Notes Documentation',
-     u'oslo.config Developers', 'olso.configReleaseNotes',
+     u'oslo.config Developers', 'oslo.configReleaseNotes',
      'An OpenStack library for parsing configuration options from the command'
      ' line and configuration files.',
      'Miscellaneous'),
