@@ -2678,6 +2678,11 @@ class ConfigOpts(collections.Mapping):
             ret = tmpl.safe_substitute(
                 self.StrSubWrapper(self, group=group, namespace=namespace))
             return ret
+        elif isinstance(value, dict):
+            # Substitute template variables in both key and value
+            return {self._substitute(key, group=group, namespace=namespace):
+                    self._substitute(val, group=group, namespace=namespace)
+                    for key, val in value.items()}
         else:
             return value
 

@@ -2491,6 +2491,69 @@ class TemplateSubstitutionTestCase(BaseTestCase):
         self.assertEqual(self.conf.ba.foo, '4242')
         self.assertEqual(self.conf.ba.r, 4242)
 
+    def test_dict_sub_default_from_default(self):
+        self.conf.register_cli_opt(cfg.StrOpt('foo', default='floo'))
+        self.conf.register_cli_opt(cfg.StrOpt('bar', default='blaa'))
+        self.conf.register_cli_opt(cfg.DictOpt('dt', default={'$foo': '$bar'}))
+
+        self.conf([])
+
+        self.assertEqual(self.conf.dt['floo'], 'blaa')
+
+    def test_dict_sub_default_from_default_multi(self):
+        self.conf.register_cli_opt(cfg.StrOpt('foo', default='floo'))
+        self.conf.register_cli_opt(cfg.StrOpt('bar', default='blaa'))
+        self.conf.register_cli_opt(cfg.StrOpt('goo', default='gloo'))
+        self.conf.register_cli_opt(cfg.StrOpt('har', default='hlaa'))
+        self.conf.register_cli_opt(cfg.DictOpt('dt', default={'$foo': '$bar',
+                                                              '$goo': 'goo',
+                                                              'har': '$har',
+                                                              'key1': 'str',
+                                                              'key2': 12345}))
+
+        self.conf([])
+
+        self.assertEqual(self.conf.dt['floo'], 'blaa')
+        self.assertEqual(self.conf.dt['gloo'], 'goo')
+        self.assertEqual(self.conf.dt['har'], 'hlaa')
+        self.assertEqual(self.conf.dt['key1'], 'str')
+        self.assertEqual(self.conf.dt['key2'], 12345)
+
+    def test_dict_sub_default_from_default_recurse(self):
+        self.conf.register_cli_opt(cfg.StrOpt('foo', default='$foo2'))
+        self.conf.register_cli_opt(cfg.StrOpt('foo2', default='floo'))
+        self.conf.register_cli_opt(cfg.StrOpt('bar', default='$bar2'))
+        self.conf.register_cli_opt(cfg.StrOpt('bar2', default='blaa'))
+        self.conf.register_cli_opt(cfg.DictOpt('dt', default={'$foo': '$bar'}))
+
+        self.conf([])
+
+        self.assertEqual(self.conf.dt['floo'], 'blaa')
+
+    def test_dict_sub_default_from_arg(self):
+        self.conf.register_cli_opt(cfg.StrOpt('foo', default=None))
+        self.conf.register_cli_opt(cfg.StrOpt('bar', default=None))
+        self.conf.register_cli_opt(cfg.DictOpt('dt', default={'$foo': '$bar'}))
+
+        self.conf(['--foo', 'floo', '--bar', 'blaa'])
+
+        self.assertTrue(hasattr(self.conf, 'dt'))
+        self.assertEqual(self.conf.dt['floo'], 'blaa')
+
+    def test_dict_sub_default_from_config_file(self):
+        self.conf.register_cli_opt(cfg.StrOpt('foo', default='floo'))
+        self.conf.register_cli_opt(cfg.StrOpt('bar', default='blaa'))
+        self.conf.register_cli_opt(cfg.DictOpt('dt', default={}))
+
+        paths = self.create_tempfiles([('test',
+                                        '[DEFAULT]\n'
+                                        'dt = $foo:$bar\n')])
+
+        self.conf(['--config-file', paths[0]])
+
+        self.assertTrue(hasattr(self.conf, 'dt'))
+        self.assertEqual(self.conf.dt['floo'], 'blaa')
+
 
 class ConfigDirTestCase(BaseTestCase):
 
