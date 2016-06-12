@@ -1164,7 +1164,7 @@ class GeneratorRaiseErrorTestCase(base.BaseTestCase):
         fake_ep = FakeEP()
         self.conf = cfg.ConfigOpts()
         self.conf.register_opts(generator._generator_opts)
-        self.conf.set_default('namespace', fake_ep.name)
+        self.conf.set_default('namespace', [fake_ep.name])
         fake_eps = mock.Mock(return_value=[fake_ep])
         with mock.patch('pkg_resources.iter_entry_points', fake_eps):
             self.assertRaises(FakeException, generator.generate, self.conf)

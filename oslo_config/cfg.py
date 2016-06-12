@@ -455,7 +455,6 @@ import os
 import string
 import sys
 
-import debtcollector
 from debtcollector import removals
 import six
 
@@ -2609,8 +2608,12 @@ class ConfigOpts(collections.Mapping):
         __import__(module_str)
         self._get_group(group)
 
+    @removals.removed_kwarg('enforce_type', "The argument enforce_type has "
+                            "changed its default value to True and then will"
+                            " be removed completely.",
+                            version='3.24', removal_version='4.0')
     @__clear_cache
-    def set_override(self, name, override, group=None, enforce_type=False):
+    def set_override(self, name, override, group=None, enforce_type=True):
         """Override an opt value.
 
         Override the command line, config file and default values of a
@@ -2628,8 +2631,12 @@ class ConfigOpts(collections.Mapping):
         opt_info['override'] = self._get_enforced_type_value(
             opt_info['opt'], override, enforce_type)
 
+    @removals.removed_kwarg('enforce_type', "The argument enforce_type has "
+                            "changed its default value to True and then will"
+                            " be removed completely.",
+                            version='3.24', removal_version='4.0')
     @__clear_cache
-    def set_default(self, name, default, group=None, enforce_type=False):
+    def set_default(self, name, default, group=None, enforce_type=True):
         """Override an opt's default value.
 
         Override the default value of given option. A command line or
@@ -2655,13 +2662,6 @@ class ConfigOpts(collections.Mapping):
         except (ValueError, TypeError):
             if enforce_type:
                 raise
-            debtcollector.deprecate(
-                "The argument enforce_type is changing its "
-                "default value to True and then will be removed completely, "
-                "please fix the invalid %s value '%s' for option '%s'."
-                % (repr(opt.type), value, opt.name),
-                version=4.0
-            )
         if enforce_type:
             return converted
         else:
