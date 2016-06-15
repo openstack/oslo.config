@@ -29,6 +29,11 @@ from oslo_config import types
 load_tests = testscenarios.load_tests_apply_scenarios
 
 
+def custom_type(a):
+    """Something that acts like a type, but isn't known"""
+    return a
+
+
 class GeneratorTestCase(base.BaseTestCase):
 
     groups = {
@@ -158,9 +163,18 @@ class GeneratorTestCase(base.BaseTestCase):
         'string_type_with_bad_default': cfg.Opt('string_type_with_bad_default',
                                                 help='string with bad default',
                                                 default=4096),
+        'native_str_type': cfg.Opt('native_str_type',
+                                   help='native help',
+                                   type=str),
+        'native_int_type': cfg.Opt('native_int_type',
+                                   help='native help',
+                                   type=int),
+        'native_float_type': cfg.Opt('native_float_type',
+                                     help='native help',
+                                     type=float),
         'custom_type': cfg.Opt('custom_type',
                                help='custom help',
-                               type=type('string')),
+                               type=custom_type),
         'custom_type_name': cfg.Opt('custom_opt_type',
                                     type=types.Integer(type_name='port'
                                                        ' number'),
@@ -666,6 +680,39 @@ class GeneratorTestCase(base.BaseTestCase):
 
 # a string (string value)
 #str_opt = fooishbar
+''')),
+        ('native_str_type',
+         dict(opts=[('test', [(None, [opts['native_str_type']])])],
+              expected='''[DEFAULT]
+
+#
+# From test
+#
+
+# native help (string value)
+#native_str_type = <None>
+''')),
+        ('native_int_type',
+         dict(opts=[('test', [(None, [opts['native_int_type']])])],
+              expected='''[DEFAULT]
+
+#
+# From test
+#
+
+# native help (integer value)
+#native_int_type = <None>
+''')),
+        ('native_float_type',
+         dict(opts=[('test', [(None, [opts['native_float_type']])])],
+              expected='''[DEFAULT]
+
+#
+# From test
+#
+
+# native help (floating point value)
+#native_float_type = <None>
 ''')),
         ('multi_opt_sample_default',
          dict(opts=[('test', [(None, [opts['multi_opt_sample_default']])])],

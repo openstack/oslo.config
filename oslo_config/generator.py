@@ -108,6 +108,28 @@ def _format_defaults(opt):
     return results
 
 
+_TYPE_NAMES = {
+    str: 'string value',
+    int: 'integer value',
+    float: 'floating point value',
+}
+
+
+def _format_type_name(opt_type):
+    """Format the type name to use in describing an option"""
+    try:
+        return opt_type.type_name
+    except AttributeError:  # nosec
+        pass
+
+    try:
+        return _TYPE_NAMES[opt_type]
+    except KeyError:  # nosec
+        pass
+
+    return 'unknown value'
+
+
 class _OptFormatter(object):
 
     """Format configuration option descriptions to a file."""
@@ -171,9 +193,7 @@ class _OptFormatter(object):
         if not opt.help:
             LOG.warning(_LW('"%s" is missing a help string'), opt.dest)
 
-        option_type = getattr(opt, 'type', None)
-        opt_type = getattr(option_type, 'type_name', 'unknown value')
-
+        opt_type = _format_type_name(opt.type)
         opt_prefix = ''
         if (opt.deprecated_for_removal and
                 not opt.help.startswith('DEPRECATED')):
