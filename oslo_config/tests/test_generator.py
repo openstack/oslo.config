@@ -96,6 +96,10 @@ class GeneratorTestCase(base.BaseTestCase):
             deprecated_reason='This was supposed to work but it really, '
                               'really did not. Always buy house insurance.',
             help='DEPRECATED: Turn off stove'),
+        'deprecated_opt_with_deprecated_since': cfg.BoolOpt(
+            'tune_in',
+            deprecated_for_removal=True,
+            deprecated_since='13.0'),
         'deprecated_opt_with_deprecated_group': cfg.StrOpt(
             'bar', deprecated_name='foobar', deprecated_group='group1',
             help='deprecated'),

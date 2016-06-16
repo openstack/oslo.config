@@ -161,7 +161,11 @@ def _format_group(app, namespace, group_name, group_obj, opt_list):
                 yield _indent(line)
         if opt.deprecated_for_removal:
             yield _indent('.. warning::')
-            yield _indent('   This option is deprecated for removal.')
+            if opt.deprecated_since:
+                yield _indent('   This option is deprecated for removal '
+                              'since %s.' % opt.deprecated_since)
+            else:
+                yield _indent('   This option is deprecated for removal.')
             yield _indent('   Its value may be silently ignored ')
             yield _indent('   in the future.')
             yield ''
