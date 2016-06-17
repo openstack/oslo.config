@@ -494,6 +494,13 @@ class CliOptsTestCase(BaseTestCase):
         ('port_arg_deprecated_group_and_name',
          dict(opt_class=cfg.PortOpt, default=None,
               cli_args=['--old-oof=80'], value=80, deps=('oof', 'old'))),
+        ('uri_default',
+         dict(opt_class=cfg.URIOpt, default='http://example.com',
+              cli_args=[], value='http://example.com', deps=(None, None))),
+        ('uri_arg',
+         dict(opt_class=cfg.URIOpt, default=None,
+              cli_args=['--foo', 'http://example.com'],
+              value='http://example.com', deps=(None, None))),
         ('multistr_default',
          dict(opt_class=cfg.MultiStrOpt, default=['bar'], cli_args=[],
               value=['bar'], deps=(None, None))),
@@ -658,6 +665,17 @@ class PositionalTestCase(BaseTestCase):
 
     def test_positional_port_arg(self):
         self._do_pos_test(cfg.PortOpt, None, ['443'], 443)
+
+    def test_positional_uri_default(self):
+        self._do_pos_test(cfg.URIOpt, 'http://example.com', [],
+                          'http://example.com')
+
+    def test_positional_uri_none_default(self):
+        self._do_pos_test(cfg.URIOpt, None, [], None)
+
+    def test_positional_uri_arg(self):
+        self._do_pos_test(cfg.URIOpt, None, ['http://example.com'],
+                          'http://example.com')
 
     def test_positional_multistr_none_default(self):
         self._do_pos_test(cfg.MultiStrOpt, None, [], None)

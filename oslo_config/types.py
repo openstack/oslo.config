@@ -25,6 +25,7 @@ import warnings
 
 import abc
 import netaddr
+import rfc3986
 import six
 
 
@@ -652,6 +653,39 @@ class Hostname(ConfigType):
 
     def __eq__(self, other):
         return self.__class__ == other.__class__
+
+    def _formatter(self, value):
+        return value
+
+
+class URI(ConfigType):
+
+    """URI type
+
+    Represents URI. Value will be validated as RFC 3986.
+
+    :param type_name: Type name to be used in the sample config file.
+
+    """
+
+    def __init__(self, type_name='uri value'):
+        super(URI, self).__init__(type_name=type_name)
+
+    def __call__(self, value):
+        if not rfc3986.is_valid_uri(value, require_scheme=True,
+                                    require_authority=True):
+            raise ValueError('invalid URI: %r' % value)
+        self.value = value
+        return value
+
+    def __repr__(self):
+        return 'URI'
+
+    def __eq__(self, other):
+        return (
+            (self.__class__ == other.__class__) and
+            (self.value == other.value)
+        )
 
     def _formatter(self, value):
         return value

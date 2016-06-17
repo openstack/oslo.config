@@ -79,9 +79,8 @@ def _format_defaults(opt):
             default_str = str(opt.sample_default)
         elif opt.default is None:
             default_str = '<None>'
-        elif (isinstance(opt, cfg.StrOpt) or
-              isinstance(opt, cfg.IPOpt) or
-              isinstance(opt, cfg.HostnameOpt)):
+        elif (isinstance(opt, (cfg.StrOpt, cfg.IPOpt,
+                               cfg.HostnameOpt, cfg.URIOpt))):
             default_str = opt.default
         elif isinstance(opt, cfg.BoolOpt):
             default_str = str(opt.default).lower()
