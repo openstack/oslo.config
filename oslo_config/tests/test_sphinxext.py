@@ -341,6 +341,51 @@ class FormatGroupTest(base.BaseTestCase):
 
         ''').lstrip(), results)
 
+    def test_advanced(self):
+        results = '\n'.join(list(sphinxext._format_group(
+            app=mock.Mock(),
+            namespace=None,
+            group_name=None,
+            group_obj=None,
+            opt_list=[
+                cfg.StrOpt('opt_name',
+                           advanced=True),
+            ],
+        )))
+        self.assertEqual(textwrap.dedent('''
+        .. oslo.config:group:: DEFAULT
+
+        .. oslo.config:option:: opt_name
+
+          :Type: string
+          :Default: ``<None>``
+          :Advanced Option: intended for advanced users and not used
+          :by the majority of users, and might have a significant
+          :effect on stability and/or performance.
+
+        ''').lstrip(), results)
+
+    def test_not_advanced(self):
+        results = '\n'.join(list(sphinxext._format_group(
+            app=mock.Mock(),
+            namespace=None,
+            group_name=None,
+            group_obj=None,
+            opt_list=[
+                cfg.StrOpt('opt_name',
+                           advanced=False),
+            ],
+        )))
+        self.assertEqual(textwrap.dedent('''
+        .. oslo.config:group:: DEFAULT
+
+        .. oslo.config:option:: opt_name
+
+          :Type: string
+          :Default: ``<None>``
+
+        ''').lstrip(), results)
+
 
 class FormatOptionHelpTest(base.BaseTestCase):
 

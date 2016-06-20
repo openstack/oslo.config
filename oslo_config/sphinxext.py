@@ -139,6 +139,13 @@ def _format_group(app, namespace, group_name, group_obj, opt_list):
             else:
                 warnings.warn('Failed to fully format sample for %s: %s' %
                               (opt.dest, err))
+        if opt.advanced:
+            yield _indent(
+                ':Advanced Option: intended for advanced users and not used',)
+            yield _indent(
+                ':by the majority of users, and might have a significant',)
+            yield _indent(
+                ':effect on stability and/or performance.',)
         yield ''
 
         try:
