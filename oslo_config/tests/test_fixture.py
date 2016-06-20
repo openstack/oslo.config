@@ -29,6 +29,10 @@ class ConfigTestCase(base.BaseTestCase):
         config_fixture.setUp()
         config_fixture.register_opt(cfg.StrOpt(
             'testing_option', default='initial_value'))
+        config_fixture.register_opt(cfg.IntOpt(
+            'test2', min=0, default=5))
+        config_fixture.register_opt(cfg.StrOpt(
+            'test3', choices=['a', 'b'], default='a'))
         return config_fixture
 
     def test_overridden_value(self):
@@ -37,6 +41,19 @@ class ConfigTestCase(base.BaseTestCase):
         f.config(testing_option='changed_value')
         self.assertEqual('changed_value',
                          f.conf.get('testing_option'))
+
+    def test_overridden_value_with_enforce_type(self):
+        f = self._make_fixture()
+        self.assertEqual(5, f.conf.get('test2'))
+        self.assertEqual('a', f.conf.get('test3'))
+        # with enforce_type=False
+        f.config(test2=-1)
+        self.assertEqual(-1, f.conf.get('test2'))
+        f.config(test3='c')
+        self.assertEqual('c', f.conf.get('test3'))
+        # with enforce_type=True
+        self.assertRaises(ValueError, f.config, test2=-1, enforce_type=True)
+        self.assertRaises(ValueError, f.config, test3='c', enforce_type=True)
 
     def test_cleanup(self):
         f = self._make_fixture()
