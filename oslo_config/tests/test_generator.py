@@ -983,7 +983,7 @@ class IgnoreDoublesTestCase(base.BaseTestCase):
         ]
 
         slurped_opts = 0
-        for _, listing in generator._list_opts(None):
+        for _, listing in generator._list_opts(['namespace']):
             for _, opts in listing:
                 slurped_opts += len(opts)
         self.assertEqual(2, slurped_opts)
