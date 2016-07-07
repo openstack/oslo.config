@@ -21,6 +21,7 @@ Contents
    exceptions
    namespaces
    styleguide
+   mutable
    generator
    builtins
    sphinxext
