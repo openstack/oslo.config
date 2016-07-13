@@ -16,6 +16,7 @@ Option Definitions
 .. autoclass:: IPOpt
 .. autoclass:: PortOpt
 .. autoclass:: HostnameOpt
+.. autoclass:: URIOpt
 .. autoclass:: DeprecatedOpt
 .. autoclass:: SubCommandOpt
 .. autoclass:: OptGroup

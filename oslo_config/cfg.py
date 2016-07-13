@@ -59,6 +59,7 @@ Type                                  Option
 :class:`oslo_config.types.Dict`       :class:`oslo_config.cfg.DictOpt`
 :class:`oslo_config.types.IPAddress`  :class:`oslo_config.cfg.IPOpt`
 :class:`oslo_config.types.Hostname`   :class:`oslo_config.cfg.HostnameOpt`
+:class:`oslo_config.types.URI`        :class:`oslo_config.cfg.URIOpt`
 ====================================  ======
 
 For :class:`oslo_config.cfg.MultiOpt` the `item_type` parameter defines
