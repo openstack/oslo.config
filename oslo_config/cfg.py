@@ -1283,11 +1283,19 @@ class URIOpt(Opt):
 
     Option with ``type`` :class:`oslo_config.types.URI`
 
+    :param max_length: If positive integer, the value must be less than or
+                       equal to this parameter.
+
     .. versionadded:: 3.12
+
+    .. versionchanged:: 3.14
+       Added *max_length* parameter
     """
 
-    def __init__(self, name, **kwargs):
-        super(URIOpt, self).__init__(name, type=types.URI(), **kwargs)
+    def __init__(self, name, max_length=None, **kwargs):
+        super(URIOpt, self).__init__(name,
+                                     type=types.URI(max_length=max_length),
+                                     **kwargs)
 
 
 class MultiOpt(Opt):

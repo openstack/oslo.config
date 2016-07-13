@@ -4327,6 +4327,19 @@ class StrOptMaxLengthTestCase(BaseTestCase):
         self.assertRaises(SystemExit, self.conf, ['--foo', '123456'])
 
 
+class URIOptMaxLengthTestCase(BaseTestCase):
+
+    def test_uriopt_max_length_good(self):
+        self.conf.register_cli_opt(cfg.URIOpt('foo', max_length=30))
+        self.conf(['--foo', 'http://www.example.com'])
+        self.assertEqual('http://www.example.com', self.conf.foo)
+
+    def test_uriopt_max_length_bad(self):
+        self.conf.register_cli_opt(cfg.URIOpt('foo', max_length=30))
+        self.assertRaises(SystemExit, self.conf,
+                          ['--foo', 'http://www.example.com/versions'])
+
+
 class PrintHelpTestCase(base.BaseTestCase):
 
     def test_print_help_without_init(self):
