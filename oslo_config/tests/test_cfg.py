@@ -37,55 +37,55 @@ class ExceptionsTestCase(base.BaseTestCase):
 
     def test_error(self):
         msg = str(cfg.Error('foobar'))
-        self.assertEqual(msg, 'foobar')
+        self.assertEqual('foobar', msg)
 
     def test_args_already_parsed_error(self):
         msg = str(cfg.ArgsAlreadyParsedError('foobar'))
-        self.assertEqual(msg, 'arguments already parsed: foobar')
+        self.assertEqual('arguments already parsed: foobar', msg)
 
     def test_no_such_opt_error(self):
         msg = str(cfg.NoSuchOptError('foo'))
-        self.assertEqual(msg, 'no such option in group DEFAULT: foo')
+        self.assertEqual('no such option in group DEFAULT: foo', msg)
 
     def test_no_such_opt_error_with_group(self):
         msg = str(cfg.NoSuchOptError('foo', cfg.OptGroup('bar')))
-        self.assertEqual(msg, 'no such option in group bar: foo')
+        self.assertEqual('no such option in group bar: foo', msg)
 
     def test_no_such_group_error(self):
         msg = str(cfg.NoSuchGroupError('bar'))
-        self.assertEqual(msg, 'no such group: bar')
+        self.assertEqual('no such group: bar', msg)
 
     def test_duplicate_opt_error(self):
         msg = str(cfg.DuplicateOptError('foo'))
-        self.assertEqual(msg, 'duplicate option: foo')
+        self.assertEqual('duplicate option: foo', msg)
 
     def test_required_opt_error(self):
         msg = str(cfg.RequiredOptError('foo'))
-        self.assertEqual(msg, 'value required for option: foo')
+        self.assertEqual('value required for option: foo', msg)
 
     def test_required_opt_error_with_group(self):
         msg = str(cfg.RequiredOptError('foo', cfg.OptGroup('bar')))
-        self.assertEqual(msg, 'value required for option: bar.foo')
+        self.assertEqual('value required for option: bar.foo', msg)
 
     def test_template_substitution_error(self):
         msg = str(cfg.TemplateSubstitutionError('foobar'))
-        self.assertEqual(msg, 'template substitution error: foobar')
+        self.assertEqual('template substitution error: foobar', msg)
 
     def test_config_files_not_found_error(self):
         msg = str(cfg.ConfigFilesNotFoundError(['foo', 'bar']))
-        self.assertEqual(msg, 'Failed to find some config files: foo,bar')
+        self.assertEqual('Failed to find some config files: foo,bar', msg)
 
     def test_config_files_permission_denied_error(self):
         msg = str(cfg.ConfigFilesPermissionDeniedError(['foo', 'bar']))
-        self.assertEqual(msg, 'Failed to open some config files: foo,bar')
+        self.assertEqual('Failed to open some config files: foo,bar', msg)
 
     def test_config_dir_not_found_error(self):
         msg = str(cfg.ConfigDirNotFoundError('foobar'))
-        self.assertEqual(msg, 'Failed to read config file directory: foobar')
+        self.assertEqual('Failed to read config file directory: foobar', msg)
 
     def test_config_file_parse_error(self):
         msg = str(cfg.ConfigFileParseError('foo', 'foobar'))
-        self.assertEqual(msg, 'Failed to parse foo: foobar')
+        self.assertEqual('Failed to parse foo: foobar', msg)
 
 
 class BaseTestCase(base.BaseTestCase):
@@ -209,8 +209,8 @@ class DefaultConfigFilesTestCase(BaseTestCase):
         self.conf(args=['--config-file-foo', 'foo.conf'],
                   default_config_files=[paths[0]])
 
-        self.assertEqual(self.conf.config_file, [paths[0]])
-        self.assertEqual(self.conf.foo, 'bar')
+        self.assertEqual([paths[0]], self.conf.config_file)
+        self.assertEqual('bar', self.conf.foo)
 
     def test_do_not_use_default_multi_arg(self):
         self.conf.register_opt(cfg.StrOpt('foo'))
@@ -219,8 +219,8 @@ class DefaultConfigFilesTestCase(BaseTestCase):
         self.conf(args=['--config-file', paths[0]],
                   default_config_files=['bar.conf'])
 
-        self.assertEqual(self.conf.config_file, [paths[0]])
-        self.assertEqual(self.conf.foo, 'bar')
+        self.assertEqual([paths[0]], self.conf.config_file)
+        self.assertEqual('bar', self.conf.foo)
 
     def test_do_not_use_default_single_arg(self):
         self.conf.register_opt(cfg.StrOpt('foo'))
@@ -229,12 +229,12 @@ class DefaultConfigFilesTestCase(BaseTestCase):
         self.conf(args=['--config-file=' + paths[0]],
                   default_config_files=['bar.conf'])
 
-        self.assertEqual(self.conf.config_file, [paths[0]])
-        self.assertEqual(self.conf.foo, 'bar')
+        self.assertEqual([paths[0]], self.conf.config_file)
+        self.assertEqual('bar', self.conf.foo)
 
     def test_no_default_config_file(self):
         self.conf(args=[])
-        self.assertEqual(self.conf.config_file, [])
+        self.assertEqual([], self.conf.config_file)
 
     def test_find_default_config_file(self):
         paths = self.create_tempfiles([('def', '[DEFAULT]')])
@@ -244,14 +244,14 @@ class DefaultConfigFilesTestCase(BaseTestCase):
                         lambda project, prog: paths))
 
         self.conf(args=[], default_config_files=None)
-        self.assertEqual(self.conf.config_file, paths)
+        self.assertEqual(paths, self.conf.config_file)
 
     def test_default_config_file(self):
         paths = self.create_tempfiles([('def', '[DEFAULT]')])
 
         self.conf(args=[], default_config_files=paths)
 
-        self.assertEqual(self.conf.config_file, paths)
+        self.assertEqual(paths, self.conf.config_file)
 
     def test_default_config_file_with_value(self):
         self.conf.register_cli_opt(cfg.StrOpt('foo'))
@@ -260,8 +260,8 @@ class DefaultConfigFilesTestCase(BaseTestCase):
 
         self.conf(args=[], default_config_files=paths)
 
-        self.assertEqual(self.conf.config_file, paths)
-        self.assertEqual(self.conf.foo, 'bar')
+        self.assertEqual(paths, self.conf.config_file)
+        self.assertEqual('bar', self.conf.foo)
 
     def test_default_config_file_priority(self):
         self.conf.register_cli_opt(cfg.StrOpt('foo'))
@@ -270,8 +270,8 @@ class DefaultConfigFilesTestCase(BaseTestCase):
 
         self.conf(args=['--foo=blaa'], default_config_files=paths)
 
-        self.assertEqual(self.conf.config_file, paths)
-        self.assertEqual(self.conf.foo, 'blaa')
+        self.assertEqual(paths, self.conf.config_file)
+        self.assertEqual('blaa', self.conf.foo)
 
 
 class CliOptsTestCase(BaseTestCase):
@@ -548,7 +548,7 @@ class CliOptsTestCase(BaseTestCase):
         self.conf(self.cli_args)
 
         self.assertTrue(hasattr(self.conf, 'foo'))
-        self.assertEqual(self.conf.foo, self.value)
+        self.assertEqual(self.value, self.conf.foo)
 
 
 class CliSpecialOptsTestCase(BaseTestCase):
@@ -579,7 +579,7 @@ class CliSpecialOptsTestCase(BaseTestCase):
 
         self.conf(['--config-file', paths[0], '--config-file', paths[1]])
 
-        self.assertEqual(self.conf.config_file, paths)
+        self.assertEqual(paths, self.conf.config_file)
 
 
 class PositionalTestCase(BaseTestCase):
@@ -592,7 +592,7 @@ class PositionalTestCase(BaseTestCase):
         self.conf(cli_args)
 
         self.assertTrue(hasattr(self.conf, 'foo'))
-        self.assertEqual(self.conf.foo, value)
+        self.assertEqual(value, self.conf.foo)
 
     def test_positional_str_none_default(self):
         self._do_pos_test(cfg.StrOpt, None, [], None)
@@ -700,7 +700,7 @@ class PositionalTestCase(BaseTestCase):
         self.conf(['bar'])
 
         self.assertTrue(hasattr(self.conf, 'foo'))
-        self.assertEqual(self.conf.foo, 'bar')
+        self.assertEqual('bar', self.conf.foo)
 
     def test_missing_required_cli_opt(self):
         self.conf.register_cli_opt(
@@ -779,7 +779,7 @@ class ConfigFileOptsTestCase(BaseTestCase):
 
         self.conf(['--config-file', paths[0]])
         self.assertTrue(hasattr(self.conf, 'newfoo'))
-        self.assertEqual(self.conf.newfoo, result)
+        self.assertEqual(result, self.conf.newfoo)
 
     def _do_dname_test_use(self, opt_class, value, result):
         self._do_deprecated_test(opt_class, value, result, 'oldfoo',
@@ -817,7 +817,7 @@ class ConfigFileOptsTestCase(BaseTestCase):
         self.conf(['--config-file', paths[0]])
 
         self.assertTrue(hasattr(self.conf, 'foo'))
-        self.assertEqual(self.conf.foo, 'bar')
+        self.assertEqual('bar', self.conf.foo)
 
     def test_conf_file_str_value(self):
         self.conf.register_opt(cfg.StrOpt('foo'))
@@ -827,7 +827,7 @@ class ConfigFileOptsTestCase(BaseTestCase):
         self.conf(['--config-file', paths[0]])
 
         self.assertTrue(hasattr(self.conf, 'foo'))
-        self.assertEqual(self.conf.foo, 'bar')
+        self.assertEqual('bar', self.conf.foo)
 
     def test_conf_file_str_value_override(self):
         self.conf.register_cli_opt(cfg.StrOpt('foo'))
@@ -844,7 +844,7 @@ class ConfigFileOptsTestCase(BaseTestCase):
                    '--config-file', paths[1]])
 
         self.assertTrue(hasattr(self.conf, 'foo'))
-        self.assertEqual(self.conf.foo, 'baaar')
+        self.assertEqual('baaar', self.conf.foo)
 
     def test_conf_file_str_value_override_use_deprecated(self):
         """last option should always win, even if last uses deprecated."""
@@ -864,7 +864,7 @@ class ConfigFileOptsTestCase(BaseTestCase):
 
         self.assertTrue(hasattr(self.conf, 'newfoo'))
         self.assertFalse(hasattr(self.conf, 'oldfoo'))
-        self.assertEqual(self.conf.newfoo, 'last')
+        self.assertEqual('last', self.conf.newfoo)
 
     def test_conf_file_str_use_dname(self):
         self._do_dname_test_use(cfg.StrOpt, 'value1', 'value1')
@@ -894,7 +894,7 @@ class ConfigFileOptsTestCase(BaseTestCase):
 
         self.conf(['--config-file', paths[0]])
         self.assertTrue(hasattr(self.conf, 'foo'))
-        self.assertEqual(self.conf.foo, 'bar')
+        self.assertEqual('bar', self.conf.foo)
 
     def test_conf_file_bool_default_none(self):
         self.conf.register_opt(cfg.BoolOpt('foo'))
@@ -1015,12 +1015,12 @@ class ConfigFileOptsTestCase(BaseTestCase):
         self.conf(['--config-file', paths[0]])
 
         self.assertTrue(hasattr(self.conf, 'foo'))
-        self.assertEqual(self.conf.foo, 666)
+        self.assertEqual(666, self.conf.foo)
 
     def test_conf_file_int_string_default_type(self):
         self.conf.register_opt(cfg.IntOpt('foo', default='666'))
         self.conf([])
-        self.assertEqual(self.conf.foo, 666)
+        self.assertEqual(666, self.conf.foo)
 
     def test_conf_file_int_value(self):
         self.conf.register_opt(cfg.IntOpt('foo'))
@@ -1032,7 +1032,7 @@ class ConfigFileOptsTestCase(BaseTestCase):
         self.conf(['--config-file', paths[0]])
 
         self.assertTrue(hasattr(self.conf, 'foo'))
-        self.assertEqual(self.conf.foo, 666)
+        self.assertEqual(666, self.conf.foo)
 
     def test_conf_file_int_value_override(self):
         self.conf.register_cli_opt(cfg.IntOpt('foo'))
@@ -1049,7 +1049,7 @@ class ConfigFileOptsTestCase(BaseTestCase):
                    '--config-file', paths[1]])
 
         self.assertTrue(hasattr(self.conf, 'foo'))
-        self.assertEqual(self.conf.foo, 666)
+        self.assertEqual(666, self.conf.foo)
 
     def test_conf_file_int_min_max(self):
         self.conf.register_opt(cfg.IntOpt('foo', min=1, max=5))
@@ -1094,7 +1094,7 @@ class ConfigFileOptsTestCase(BaseTestCase):
         self.conf(['--config-file', paths[0]])
 
         self.assertTrue(hasattr(self.conf, 'foo'))
-        self.assertEqual(self.conf.foo, 6.66)
+        self.assertEqual(6.66, self.conf.foo)
 
     def test_conf_file_float_default_wrong_type(self):
         self.assertRaises(cfg.DefaultValueError, cfg.FloatOpt, 'foo',
@@ -1110,7 +1110,7 @@ class ConfigFileOptsTestCase(BaseTestCase):
         self.conf(['--config-file', paths[0]])
 
         self.assertTrue(hasattr(self.conf, 'foo'))
-        self.assertEqual(self.conf.foo, 6.66)
+        self.assertEqual(6.66, self.conf.foo)
 
     def test_conf_file_float_value_override(self):
         self.conf.register_cli_opt(cfg.FloatOpt('foo'))
@@ -1127,7 +1127,7 @@ class ConfigFileOptsTestCase(BaseTestCase):
                    '--config-file', paths[1]])
 
         self.assertTrue(hasattr(self.conf, 'foo'))
-        self.assertEqual(self.conf.foo, 6.66)
+        self.assertEqual(6.66, self.conf.foo)
 
     def test_conf_file_float_use_dname(self):
         self._do_dname_test_use(cfg.FloatOpt, '66.54', 66.54)
@@ -1159,7 +1159,7 @@ class ConfigFileOptsTestCase(BaseTestCase):
         self.conf(['--config-file', paths[0]])
 
         self.assertTrue(hasattr(self.conf, 'foo'))
-        self.assertEqual(self.conf.foo, ['bar'])
+        self.assertEqual(['bar'], self.conf.foo)
 
     def test_conf_file_list_default_wrong_type(self):
         self.assertRaises(cfg.DefaultValueError, cfg.ListOpt, 'foo',
@@ -1175,7 +1175,7 @@ class ConfigFileOptsTestCase(BaseTestCase):
         self.conf(['--config-file', paths[0]])
 
         self.assertTrue(hasattr(self.conf, 'foo'))
-        self.assertEqual(self.conf.foo, ['bar'])
+        self.assertEqual(['bar'], self.conf.foo)
 
     def test_conf_file_list_value_override(self):
         self.conf.register_cli_opt(cfg.ListOpt('foo'))
@@ -1192,7 +1192,7 @@ class ConfigFileOptsTestCase(BaseTestCase):
                    '--config-file', paths[1]])
 
         self.assertTrue(hasattr(self.conf, 'foo'))
-        self.assertEqual(self.conf.foo, ['b', 'a', 'r'])
+        self.assertEqual(['b', 'a', 'r'], self.conf.foo)
 
     def test_conf_file_list_item_type(self):
         self.conf.register_cli_opt(cfg.ListOpt('foo',
@@ -1217,7 +1217,7 @@ class ConfigFileOptsTestCase(BaseTestCase):
                                                default="[1,2]",
                                                bounds=True))
         self.conf([])
-        self.assertEqual(self.conf.foo, [1, 2])
+        self.assertEqual([1, 2], self.conf.foo)
 
     def test_conf_file_list_use_dname(self):
         self._do_dname_test_use(cfg.ListOpt, 'a,b,c', ['a', 'b', 'c'])
@@ -1275,7 +1275,7 @@ class ConfigFileOptsTestCase(BaseTestCase):
         self.conf(['--config-file', paths[0]])
 
         self.assertTrue(hasattr(self.conf, 'foo'))
-        self.assertEqual(self.conf.foo, {'key': 'bar'})
+        self.assertEqual({'key': 'bar'}, self.conf.foo)
 
     def test_conf_file_dict_value(self):
         self.conf.register_opt(cfg.DictOpt('foo'))
@@ -1287,7 +1287,7 @@ class ConfigFileOptsTestCase(BaseTestCase):
         self.conf(['--config-file', paths[0]])
 
         self.assertTrue(hasattr(self.conf, 'foo'))
-        self.assertEqual(self.conf.foo, {'key': 'bar'})
+        self.assertEqual({'key': 'bar'}, self.conf.foo)
 
     def test_conf_file_dict_colon_in_value(self):
         self.conf.register_opt(cfg.DictOpt('foo'))
@@ -1299,7 +1299,7 @@ class ConfigFileOptsTestCase(BaseTestCase):
         self.conf(['--config-file', paths[0]])
 
         self.assertTrue(hasattr(self.conf, 'foo'))
-        self.assertEqual(self.conf.foo, {'key': 'bar:baz'})
+        self.assertEqual({'key': 'bar:baz'}, self.conf.foo)
 
     def test_conf_file_dict_value_no_colon(self):
         self.conf.register_opt(cfg.DictOpt('foo'))
@@ -1343,7 +1343,7 @@ class ConfigFileOptsTestCase(BaseTestCase):
 
         self.assertTrue(hasattr(self.conf, 'foo'))
 
-        self.assertEqual(self.conf.foo, {'key3': 'bar3'})
+        self.assertEqual({'key3': 'bar3'}, self.conf.foo)
 
     def test_conf_file_dict_deprecated(self):
         self.conf.register_opt(cfg.DictOpt('newfoo', deprecated_name='oldfoo'))
@@ -1355,7 +1355,7 @@ class ConfigFileOptsTestCase(BaseTestCase):
 
         self.conf(['--config-file', paths[0]])
         self.assertTrue(hasattr(self.conf, 'newfoo'))
-        self.assertEqual(self.conf.newfoo, {'key2': 'bar2'})
+        self.assertEqual({'key2': 'bar2'}, self.conf.newfoo)
 
     def test_conf_file_dict_value_override(self):
         self.conf.register_cli_opt(cfg.DictOpt('foo'))
@@ -1372,7 +1372,7 @@ class ConfigFileOptsTestCase(BaseTestCase):
                    '--config-file', paths[1]])
 
         self.assertTrue(hasattr(self.conf, 'foo'))
-        self.assertEqual(self.conf.foo, {'k1': 'v1', 'k2': 'v2'})
+        self.assertEqual({'k1': 'v1', 'k2': 'v2'}, self.conf.foo)
 
     def test_conf_file_dict_use_dname(self):
         self._do_dname_test_use(cfg.DictOpt,
@@ -1467,7 +1467,7 @@ class ConfigFileOptsTestCase(BaseTestCase):
         self.conf(['--config-file', paths[0]])
 
         self.assertTrue(hasattr(self.conf, 'foo'))
-        self.assertEqual(self.conf.foo, ['bar'])
+        self.assertEqual(['bar'], self.conf.foo)
 
     def test_conf_file_multistr_value(self):
         self.conf.register_opt(cfg.MultiStrOpt('foo'))
@@ -1479,7 +1479,7 @@ class ConfigFileOptsTestCase(BaseTestCase):
         self.conf(['--config-file', paths[0]])
 
         self.assertTrue(hasattr(self.conf, 'foo'))
-        self.assertEqual(self.conf.foo, ['bar'])
+        self.assertEqual(['bar'], self.conf.foo)
 
     def test_conf_file_multistr_values_append_deprecated(self):
         self.conf.register_cli_opt(cfg.MultiStrOpt('foo',
@@ -1499,7 +1499,7 @@ class ConfigFileOptsTestCase(BaseTestCase):
 
         self.assertTrue(hasattr(self.conf, 'foo'))
 
-        self.assertEqual(self.conf.foo, ['bar0', 'bar1', 'bar2', 'bar3'])
+        self.assertEqual(['bar0', 'bar1', 'bar2', 'bar3'], self.conf.foo)
 
     def test_conf_file_multistr_values_append(self):
         self.conf.register_cli_opt(cfg.MultiStrOpt('foo'))
@@ -1518,7 +1518,7 @@ class ConfigFileOptsTestCase(BaseTestCase):
 
         self.assertTrue(hasattr(self.conf, 'foo'))
 
-        self.assertEqual(self.conf.foo, ['bar0', 'bar1', 'bar2', 'bar3'])
+        self.assertEqual(['bar0', 'bar1', 'bar2', 'bar3'], self.conf.foo)
 
     def test_conf_file_multistr_deprecated(self):
         self.conf.register_opt(
@@ -1531,7 +1531,7 @@ class ConfigFileOptsTestCase(BaseTestCase):
 
         self.conf(['--config-file', paths[0]])
         self.assertTrue(hasattr(self.conf, 'newfoo'))
-        self.assertEqual(self.conf.newfoo, ['bar1', 'bar2'])
+        self.assertEqual(['bar1', 'bar2'], self.conf.newfoo)
 
     def test_conf_file_multiple_opts(self):
         self.conf.register_opts([cfg.StrOpt('foo'), cfg.StrOpt('bar')])
@@ -1544,9 +1544,9 @@ class ConfigFileOptsTestCase(BaseTestCase):
         self.conf(['--config-file', paths[0]])
 
         self.assertTrue(hasattr(self.conf, 'foo'))
-        self.assertEqual(self.conf.foo, 'bar')
+        self.assertEqual('bar', self.conf.foo)
         self.assertTrue(hasattr(self.conf, 'bar'))
-        self.assertEqual(self.conf.bar, 'foo')
+        self.assertEqual('foo', self.conf.bar)
 
     def test_conf_file_raw_value(self):
         self.conf.register_opt(cfg.StrOpt('foo'))
@@ -1558,7 +1558,7 @@ class ConfigFileOptsTestCase(BaseTestCase):
         self.conf(['--config-file', paths[0]])
 
         self.assertTrue(hasattr(self.conf, 'foo'))
-        self.assertEqual(self.conf.foo, 'bar-%08x')
+        self.assertEqual('bar-%08x', self.conf.foo)
 
     def test_conf_file_sorted_group(self):
         # Create enough groups for the sorted problem to appear
@@ -1572,7 +1572,7 @@ class ConfigFileOptsTestCase(BaseTestCase):
 
         self.conf(['--config-file', paths[0]])
 
-        self.assertEqual(self.conf.group1.opt1, 'foo')
+        self.assertEqual('foo', self.conf.group1.opt1)
 
 
 class ConfigFileReloadTestCase(BaseTestCase):
@@ -1589,13 +1589,13 @@ class ConfigFileReloadTestCase(BaseTestCase):
 
         self.conf(['--config-file', paths[0]])
         self.assertTrue(hasattr(self.conf, 'foo'))
-        self.assertEqual(self.conf.foo, 'baar')
+        self.assertEqual('baar', self.conf.foo)
 
         shutil.copy(paths[1], paths[0])
 
         self.conf.reload_config_files()
         self.assertTrue(hasattr(self.conf, 'foo'))
-        self.assertEqual(self.conf.foo, 'baaar')
+        self.assertEqual('baaar', self.conf.foo)
 
     def test_conf_files_reload_default(self):
         self.conf.register_cli_opt(cfg.StrOpt('foo1'))
@@ -1617,18 +1617,18 @@ class ConfigFileReloadTestCase(BaseTestCase):
 
         self.conf(args=[], default_config_files=paths)
         self.assertTrue(hasattr(self.conf, 'foo1'))
-        self.assertEqual(self.conf.foo1, 'default1')
+        self.assertEqual('default1', self.conf.foo1)
         self.assertTrue(hasattr(self.conf, 'foo2'))
-        self.assertEqual(self.conf.foo2, 'default2')
+        self.assertEqual('default2', self.conf.foo2)
 
         shutil.copy(paths_change[0], paths[0])
         shutil.copy(paths_change[1], paths[1])
 
         self.conf.reload_config_files()
         self.assertTrue(hasattr(self.conf, 'foo1'))
-        self.assertEqual(self.conf.foo1, 'change_default1')
+        self.assertEqual('change_default1', self.conf.foo1)
         self.assertTrue(hasattr(self.conf, 'foo2'))
-        self.assertEqual(self.conf.foo2, 'change_default2')
+        self.assertEqual('change_default2', self.conf.foo2)
 
     def test_conf_files_reload_file_not_found(self):
         self.conf.register_cli_opt(cfg.StrOpt('foo', required=True))
@@ -1638,13 +1638,13 @@ class ConfigFileReloadTestCase(BaseTestCase):
 
         self.conf(['--config-file', paths[0]])
         self.assertTrue(hasattr(self.conf, 'foo'))
-        self.assertEqual(self.conf.foo, 'baar')
+        self.assertEqual('baar', self.conf.foo)
 
         os.remove(paths[0])
 
         self.conf.reload_config_files()
         self.assertTrue(hasattr(self.conf, 'foo'))
-        self.assertEqual(self.conf.foo, 'baar')
+        self.assertEqual('baar', self.conf.foo)
 
     def test_conf_files_reload_error(self):
         self.conf.register_cli_opt(cfg.StrOpt('foo', required=True))
@@ -1660,17 +1660,17 @@ class ConfigFileReloadTestCase(BaseTestCase):
 
         self.conf(['--config-file', paths[0]])
         self.assertTrue(hasattr(self.conf, 'foo'))
-        self.assertEqual(self.conf.foo, 'test1')
+        self.assertEqual('test1', self.conf.foo)
         self.assertTrue(hasattr(self.conf, 'foo1'))
-        self.assertEqual(self.conf.foo1, 'test11')
+        self.assertEqual('test11', self.conf.foo1)
 
         shutil.copy(paths[1], paths[0])
 
         self.conf.reload_config_files()
         self.assertTrue(hasattr(self.conf, 'foo'))
-        self.assertEqual(self.conf.foo, 'test1')
+        self.assertEqual('test1', self.conf.foo)
         self.assertTrue(hasattr(self.conf, 'foo1'))
-        self.assertEqual(self.conf.foo1, 'test11')
+        self.assertEqual('test11', self.conf.foo1)
 
 
 class ConfigFileMutateTestCase(BaseTestCase):
@@ -1700,7 +1700,7 @@ class ConfigFileMutateTestCase(BaseTestCase):
         self.conf.register_cli_opt(cfg.StrOpt('foo'))
         self._test_conf_files_mutate()
         self.assertTrue(hasattr(self.conf, 'foo'))
-        self.assertEqual(self.conf.foo, 'old_foo')
+        self.assertEqual('old_foo', self.conf.foo)
 
     def test_conf_files_mutate_foo(self):
         """Test that a mutable opt can be reloaded."""
@@ -1708,7 +1708,7 @@ class ConfigFileMutateTestCase(BaseTestCase):
         self.conf.register_cli_opt(cfg.StrOpt('foo', mutable=True))
         self._test_conf_files_mutate()
         self.assertTrue(hasattr(self.conf, 'foo'))
-        self.assertEqual(self.conf.foo, 'new_foo')
+        self.assertEqual('new_foo', self.conf.foo)
 
     def test_conf_files_mutate_group(self):
         """Test that mutable opts in groups can be reloaded."""
@@ -1717,7 +1717,7 @@ class ConfigFileMutateTestCase(BaseTestCase):
         self._test_conf_files_mutate()
         self.assertTrue(hasattr(self.conf, 'group'))
         self.assertTrue(hasattr(self.conf.group, 'boo'))
-        self.assertEqual(self.conf.group.boo, 'new_boo')
+        self.assertEqual('new_boo', self.conf.group.boo)
 
     def test_warn_immutability(self):
         self.log_fixture = self.useFixture(fixtures.FakeLogger())
@@ -1750,7 +1750,7 @@ class ConfigFileMutateTestCase(BaseTestCase):
         result = [0]
 
         def foo(conf, foo_fresh):
-            self.assertEqual(self.conf, conf)
+            self.assertEqual(conf, self.conf)
             self.assertEqual(fresh, foo_fresh)
             result[0] += 1
 
@@ -1816,7 +1816,7 @@ class OptGroupsTestCase(BaseTestCase):
 
         self.assertTrue(hasattr(self.conf, 'blaa'))
         self.assertTrue(hasattr(self.conf.blaa, 'foo'))
-        self.assertEqual(self.conf.blaa.foo, 'bar')
+        self.assertEqual('bar', self.conf.blaa.foo)
 
     def test_autocreate_group_by_name(self):
         self.conf.register_cli_opt(cfg.StrOpt('foo'), group='blaa')
@@ -1825,7 +1825,7 @@ class OptGroupsTestCase(BaseTestCase):
 
         self.assertTrue(hasattr(self.conf, 'blaa'))
         self.assertTrue(hasattr(self.conf.blaa, 'foo'))
-        self.assertEqual(self.conf.blaa.foo, 'bar')
+        self.assertEqual('bar', self.conf.blaa.foo)
 
     def test_autocreate_group_by_group(self):
         group = cfg.OptGroup(name='blaa', title='Blaa options')
@@ -1835,7 +1835,7 @@ class OptGroupsTestCase(BaseTestCase):
 
         self.assertTrue(hasattr(self.conf, 'blaa'))
         self.assertTrue(hasattr(self.conf.blaa, 'foo'))
-        self.assertEqual(self.conf.blaa.foo, 'bar')
+        self.assertEqual('bar', self.conf.blaa.foo)
 
     def test_autocreate_title(self):
         blaa_group = cfg.OptGroup('blaa')
@@ -1849,7 +1849,7 @@ class OptGroupsTestCase(BaseTestCase):
 
         self.assertTrue(hasattr(self.conf, 'blaa'))
         self.assertTrue(hasattr(self.conf.blaa, 'foo'))
-        self.assertEqual(self.conf.blaa.foo, 'bar')
+        self.assertEqual('bar', self.conf.blaa.foo)
 
     def test_arg_group_with_default(self):
         self.conf.register_group(cfg.OptGroup('blaa'))
@@ -1860,7 +1860,7 @@ class OptGroupsTestCase(BaseTestCase):
 
         self.assertTrue(hasattr(self.conf, 'blaa'))
         self.assertTrue(hasattr(self.conf.blaa, 'foo'))
-        self.assertEqual(self.conf.blaa.foo, 'bar')
+        self.assertEqual('bar', self.conf.blaa.foo)
 
     def test_arg_group_with_conf_and_group_opts(self):
         self.conf.register_cli_opt(cfg.StrOpt('conf'), group='blaa')
@@ -1870,9 +1870,9 @@ class OptGroupsTestCase(BaseTestCase):
 
         self.assertTrue(hasattr(self.conf, 'blaa'))
         self.assertTrue(hasattr(self.conf.blaa, 'conf'))
-        self.assertEqual(self.conf.blaa.conf, 'foo')
+        self.assertEqual('foo', self.conf.blaa.conf)
         self.assertTrue(hasattr(self.conf.blaa, 'group'))
-        self.assertEqual(self.conf.blaa.group, 'bar')
+        self.assertEqual('bar', self.conf.blaa.group)
 
     def test_arg_group_in_config_file(self):
         self.conf.register_group(cfg.OptGroup('blaa'))
@@ -1886,7 +1886,7 @@ class OptGroupsTestCase(BaseTestCase):
 
         self.assertTrue(hasattr(self.conf, 'blaa'))
         self.assertTrue(hasattr(self.conf.blaa, 'foo'))
-        self.assertEqual(self.conf.blaa.foo, 'bar')
+        self.assertEqual('bar', self.conf.blaa.foo)
 
     def test_arg_group_in_config_file_with_deprecated_name(self):
         self.conf.register_group(cfg.OptGroup('blaa'))
@@ -1901,7 +1901,7 @@ class OptGroupsTestCase(BaseTestCase):
 
         self.assertTrue(hasattr(self.conf, 'blaa'))
         self.assertTrue(hasattr(self.conf.blaa, 'foo'))
-        self.assertEqual(self.conf.blaa.foo, 'bar')
+        self.assertEqual('bar', self.conf.blaa.foo)
 
     def test_arg_group_in_config_file_with_deprecated_group(self):
         self.conf.register_group(cfg.OptGroup('blaa'))
@@ -1916,7 +1916,7 @@ class OptGroupsTestCase(BaseTestCase):
 
         self.assertTrue(hasattr(self.conf, 'blaa'))
         self.assertTrue(hasattr(self.conf.blaa, 'foo'))
-        self.assertEqual(self.conf.blaa.foo, 'bar')
+        self.assertEqual('bar', self.conf.blaa.foo)
 
     def test_arg_group_in_config_file_with_deprecated_group_and_name(self):
         self.conf.register_group(cfg.OptGroup('blaa'))
@@ -1932,7 +1932,7 @@ class OptGroupsTestCase(BaseTestCase):
 
         self.assertTrue(hasattr(self.conf, 'blaa'))
         self.assertTrue(hasattr(self.conf.blaa, 'foo'))
-        self.assertEqual(self.conf.blaa.foo, 'bar')
+        self.assertEqual('bar', self.conf.blaa.foo)
 
     def test_arg_group_in_config_file_override_deprecated_name(self):
         self.conf.register_group(cfg.OptGroup('blaa'))
@@ -1948,7 +1948,7 @@ class OptGroupsTestCase(BaseTestCase):
 
         self.assertTrue(hasattr(self.conf, 'blaa'))
         self.assertTrue(hasattr(self.conf.blaa, 'foo'))
-        self.assertEqual(self.conf.blaa.foo, 'bar')
+        self.assertEqual('bar', self.conf.blaa.foo)
 
     def test_arg_group_in_config_file_override_deprecated_group(self):
         self.conf.register_group(cfg.OptGroup('blaa'))
@@ -1965,7 +1965,7 @@ class OptGroupsTestCase(BaseTestCase):
 
         self.assertTrue(hasattr(self.conf, 'blaa'))
         self.assertTrue(hasattr(self.conf.blaa, 'foo'))
-        self.assertEqual(self.conf.blaa.foo, 'bar')
+        self.assertEqual('bar', self.conf.blaa.foo)
 
     def test_arg_group_in_config_file_override_deprecated_group_and_name(self):
         self.conf.register_group(cfg.OptGroup('blaa'))
@@ -1983,7 +1983,7 @@ class OptGroupsTestCase(BaseTestCase):
 
         self.assertTrue(hasattr(self.conf, 'blaa'))
         self.assertTrue(hasattr(self.conf.blaa, 'foo'))
-        self.assertEqual(self.conf.blaa.foo, 'bar')
+        self.assertEqual('bar', self.conf.blaa.foo)
 
     def test_arg_group_in_config_file_with_capital_name(self):
         self.conf.register_group(cfg.OptGroup('blaa'))
@@ -1998,7 +1998,7 @@ class OptGroupsTestCase(BaseTestCase):
         self.assertFalse(hasattr(self.conf, 'BLAA'))
         self.assertTrue(hasattr(self.conf, 'blaa'))
         self.assertTrue(hasattr(self.conf.blaa, 'foo'))
-        self.assertEqual(self.conf.blaa.foo, 'bar')
+        self.assertEqual('bar', self.conf.blaa.foo)
 
     def test_arg_group_in_config_file_with_capital_name_on_legacy_code(self):
         self.conf.register_group(cfg.OptGroup('BLAA'))
@@ -2013,7 +2013,7 @@ class OptGroupsTestCase(BaseTestCase):
         self.assertFalse(hasattr(self.conf, 'blaa'))
         self.assertTrue(hasattr(self.conf, 'BLAA'))
         self.assertTrue(hasattr(self.conf.BLAA, 'foo'))
-        self.assertEqual(self.conf.BLAA.foo, 'bar')
+        self.assertEqual('bar', self.conf.BLAA.foo)
 
 
 class MappingInterfaceTestCase(BaseTestCase):
@@ -2026,8 +2026,8 @@ class MappingInterfaceTestCase(BaseTestCase):
         self.assertTrue('foo' in self.conf)
         self.assertTrue('config_file' in self.conf)
         self.assertEqual(len(self.conf), 3)
-        self.assertEqual(self.conf['foo'], 'bar')
-        self.assertEqual(self.conf.get('foo'), 'bar')
+        self.assertEqual('bar', self.conf['foo'])
+        self.assertEqual('bar', self.conf.get('foo'))
         self.assertTrue('bar' in list(self.conf.values()))
 
     def test_mapping_interface_with_group(self):
@@ -2039,10 +2039,10 @@ class MappingInterfaceTestCase(BaseTestCase):
         self.assertTrue('blaa' in self.conf)
         self.assertTrue('foo' in list(self.conf['blaa']))
         self.assertEqual(len(self.conf['blaa']), 1)
-        self.assertEqual(self.conf['blaa']['foo'], 'bar')
-        self.assertEqual(self.conf['blaa'].get('foo'), 'bar')
+        self.assertEqual('bar', self.conf['blaa']['foo'])
+        self.assertEqual('bar', self.conf['blaa'].get('foo'))
         self.assertTrue('bar' in self.conf['blaa'].values())
-        self.assertEqual(self.conf.blaa, self.conf['blaa'])
+        self.assertEqual(self.conf['blaa'], self.conf.blaa)
 
 
 class OptNameSeparatorTestCast(BaseTestCase):
@@ -2204,7 +2204,7 @@ class TemplateSubstitutionTestCase(BaseTestCase):
 
     def _assert_str_sub(self):
         self.assertTrue(hasattr(self.conf, 'bar'))
-        self.assertEqual(self.conf.bar, 'blaa')
+        self.assertEqual('blaa', self.conf.bar)
 
     def test_str_sub_default_from_default(self):
         self._prep_test_str_sub(foo_default='blaa', bar_default='$foo')
@@ -2308,7 +2308,7 @@ class TemplateSubstitutionTestCase(BaseTestCase):
         self.conf(['--config-file', paths[0]])
 
         self.assertTrue(hasattr(self.conf, 'bar'))
-        self.assertEqual(self.conf.bar, 'foo-somethin$k2')
+        self.assertEqual('foo-somethin$k2', self.conf.bar)
 
     def test_str_sub_with_backslash_escape_char(self):
         self._prep_test_str_sub()
@@ -2320,7 +2320,7 @@ class TemplateSubstitutionTestCase(BaseTestCase):
         self.conf(['--config-file', paths[0]])
 
         self.assertTrue(hasattr(self.conf, 'bar'))
-        self.assertEqual(self.conf.bar, 'foo-somethin$k2')
+        self.assertEqual('foo-somethin$k2', self.conf.bar)
 
     def test_str_sub_group_from_default(self):
         self.conf.register_cli_opt(cfg.StrOpt('foo', default='blaa'))
@@ -2331,7 +2331,7 @@ class TemplateSubstitutionTestCase(BaseTestCase):
 
         self.assertTrue(hasattr(self.conf, 'ba'))
         self.assertTrue(hasattr(self.conf.ba, 'r'))
-        self.assertEqual(self.conf.ba.r, 'blaa')
+        self.assertEqual('blaa', self.conf.ba.r)
 
     def test_str_sub_set_default(self):
         self._prep_test_str_sub()
@@ -2357,7 +2357,7 @@ class TemplateSubstitutionTestCase(BaseTestCase):
 
     def _assert_int_sub(self):
         self.assertTrue(hasattr(self.conf, 'bar'))
-        self.assertEqual(self.conf.bar, 123)
+        self.assertEqual(123, self.conf.bar)
 
     def test_sub_default_from_default(self):
         self._prep_test_str_int_sub(foo_default='123', bar_default='$foo')
@@ -2460,8 +2460,8 @@ class TemplateSubstitutionTestCase(BaseTestCase):
 
         self.assertTrue(hasattr(self.conf, 'ba'))
         self.assertTrue(hasattr(self.conf.ba, 'r'))
-        self.assertEqual(self.conf.foo, '123')
-        self.assertEqual(self.conf.ba.r, 123)
+        self.assertEqual('123', self.conf.foo)
+        self.assertEqual(123, self.conf.ba.r)
 
     def test_sub_group_from_default_deprecated(self):
         self.conf.register_group(cfg.OptGroup('ba'))
@@ -2473,9 +2473,9 @@ class TemplateSubstitutionTestCase(BaseTestCase):
 
         self.assertTrue(hasattr(self.conf, 'ba'))
         self.assertTrue(hasattr(self.conf.ba, 'foo'))
-        self.assertEqual(self.conf.ba.foo, '123')
+        self.assertEqual('123', self.conf.ba.foo)
         self.assertTrue(hasattr(self.conf.ba, 'r'))
-        self.assertEqual(self.conf.ba.r, 123)
+        self.assertEqual(123, self.conf.ba.r)
 
     def test_sub_group_from_args_deprecated(self):
         self.conf.register_group(cfg.OptGroup('ba'))
@@ -2488,8 +2488,8 @@ class TemplateSubstitutionTestCase(BaseTestCase):
         self.assertTrue(hasattr(self.conf, 'ba'))
         self.assertTrue(hasattr(self.conf.ba, 'foo'))
         self.assertTrue(hasattr(self.conf.ba, 'r'))
-        self.assertEqual(self.conf.ba.foo, '4242')
-        self.assertEqual(self.conf.ba.r, 4242)
+        self.assertEqual('4242', self.conf.ba.foo)
+        self.assertEqual(4242, self.conf.ba.r)
 
     def test_sub_group_from_configfile_deprecated(self):
         self.conf.register_group(cfg.OptGroup('ba'))
@@ -2506,8 +2506,8 @@ class TemplateSubstitutionTestCase(BaseTestCase):
         self.assertTrue(hasattr(self.conf, 'ba'))
         self.assertTrue(hasattr(self.conf.ba, 'foo'))
         self.assertTrue(hasattr(self.conf.ba, 'r'))
-        self.assertEqual(self.conf.ba.foo, '4242')
-        self.assertEqual(self.conf.ba.r, 4242)
+        self.assertEqual('4242', self.conf.ba.foo)
+        self.assertEqual(4242, self.conf.ba.r)
 
     def test_dict_sub_default_from_default(self):
         self.conf.register_cli_opt(cfg.StrOpt('foo', default='floo'))
@@ -2516,7 +2516,7 @@ class TemplateSubstitutionTestCase(BaseTestCase):
 
         self.conf([])
 
-        self.assertEqual(self.conf.dt['floo'], 'blaa')
+        self.assertEqual('blaa', self.conf.dt['floo'])
 
     def test_dict_sub_default_from_default_multi(self):
         self.conf.register_cli_opt(cfg.StrOpt('foo', default='floo'))
@@ -2531,11 +2531,11 @@ class TemplateSubstitutionTestCase(BaseTestCase):
 
         self.conf([])
 
-        self.assertEqual(self.conf.dt['floo'], 'blaa')
-        self.assertEqual(self.conf.dt['gloo'], 'goo')
-        self.assertEqual(self.conf.dt['har'], 'hlaa')
-        self.assertEqual(self.conf.dt['key1'], 'str')
-        self.assertEqual(self.conf.dt['key2'], 12345)
+        self.assertEqual('blaa', self.conf.dt['floo'])
+        self.assertEqual('goo', self.conf.dt['gloo'])
+        self.assertEqual('hlaa', self.conf.dt['har'])
+        self.assertEqual('str', self.conf.dt['key1'])
+        self.assertEqual(12345, self.conf.dt['key2'])
 
     def test_dict_sub_default_from_default_recurse(self):
         self.conf.register_cli_opt(cfg.StrOpt('foo', default='$foo2'))
@@ -2546,7 +2546,7 @@ class TemplateSubstitutionTestCase(BaseTestCase):
 
         self.conf([])
 
-        self.assertEqual(self.conf.dt['floo'], 'blaa')
+        self.assertEqual('blaa', self.conf.dt['floo'])
 
     def test_dict_sub_default_from_arg(self):
         self.conf.register_cli_opt(cfg.StrOpt('foo', default=None))
@@ -2556,7 +2556,7 @@ class TemplateSubstitutionTestCase(BaseTestCase):
         self.conf(['--foo', 'floo', '--bar', 'blaa'])
 
         self.assertTrue(hasattr(self.conf, 'dt'))
-        self.assertEqual(self.conf.dt['floo'], 'blaa')
+        self.assertEqual('blaa', self.conf.dt['floo'])
 
     def test_dict_sub_default_from_config_file(self):
         self.conf.register_cli_opt(cfg.StrOpt('foo', default='floo'))
@@ -2570,7 +2570,7 @@ class TemplateSubstitutionTestCase(BaseTestCase):
         self.conf(['--config-file', paths[0]])
 
         self.assertTrue(hasattr(self.conf, 'dt'))
-        self.assertEqual(self.conf.dt['floo'], 'blaa')
+        self.assertEqual('blaa', self.conf.dt['floo'])
 
 
 class ConfigDirTestCase(BaseTestCase):
@@ -2602,10 +2602,10 @@ class ConfigDirTestCase(BaseTestCase):
                    '--config-dir', os.path.dirname(paths[0])])
 
         self.assertTrue(hasattr(self.conf, 'foo'))
-        self.assertEqual(self.conf.foo, 'bar-02')
+        self.assertEqual('bar-02', self.conf.foo)
         self.assertTrue(hasattr(self.conf, 'snafu'))
         self.assertTrue(hasattr(self.conf.snafu, 'bell'))
-        self.assertEqual(self.conf.snafu.bell, 'whistle-02')
+        self.assertEqual('whistle-02', self.conf.snafu.bell)
 
     def test_config_dir_multistr(self):
         # Demonstrate that values for multistr options found in
@@ -2663,10 +2663,10 @@ class ConfigDirTestCase(BaseTestCase):
                    '--config-file', paths[2], ])
 
         self.assertTrue(hasattr(self.conf, 'foo'))
-        self.assertEqual(self.conf.foo, 'bar-03')
+        self.assertEqual('bar-03', self.conf.foo)
         self.assertTrue(hasattr(self.conf, 'snafu'))
         self.assertTrue(hasattr(self.conf.snafu, 'bell'))
-        self.assertEqual(self.conf.snafu.bell, 'whistle-03')
+        self.assertEqual('whistle-03', self.conf.snafu.bell)
 
     def test_config_dir_default_file_precedence(self):
         snafu_group = cfg.OptGroup('snafu')
@@ -2700,10 +2700,10 @@ class ConfigDirTestCase(BaseTestCase):
                   default_config_files=[paths[1], paths[2]])
 
         self.assertTrue(hasattr(self.conf, 'foo'))
-        self.assertEqual(self.conf.foo, 'bar-02')
+        self.assertEqual('bar-02', self.conf.foo)
         self.assertTrue(hasattr(self.conf, 'snafu'))
         self.assertTrue(hasattr(self.conf.snafu, 'bell'))
-        self.assertEqual(self.conf.snafu.bell, 'whistle-11')
+        self.assertEqual('whistle-11', self.conf.snafu.bell)
 
     def test_config_dir_doesnt_exist(self):
         tmpdir = '/tmp/foo'
@@ -2729,19 +2729,19 @@ class ReparseTestCase(BaseTestCase):
 
         self.assertTrue(hasattr(self.conf, 'blaa'))
         self.assertTrue(hasattr(self.conf.blaa, 'foo'))
-        self.assertEqual(self.conf.blaa.foo, 'b')
+        self.assertEqual('b', self.conf.blaa.foo)
 
         self.conf(['--blaa-foo', 'a'])
 
         self.assertTrue(hasattr(self.conf, 'blaa'))
         self.assertTrue(hasattr(self.conf.blaa, 'foo'))
-        self.assertEqual(self.conf.blaa.foo, 'a')
+        self.assertEqual('a', self.conf.blaa.foo)
 
         self.conf([])
 
         self.assertTrue(hasattr(self.conf, 'blaa'))
         self.assertTrue(hasattr(self.conf.blaa, 'foo'))
-        self.assertEqual(self.conf.blaa.foo, 'r')
+        self.assertEqual('r', self.conf.blaa.foo)
 
 
 class OverridesTestCase(BaseTestCase):
@@ -2749,29 +2749,29 @@ class OverridesTestCase(BaseTestCase):
     def test_default_none(self):
         self.conf.register_opt(cfg.StrOpt('foo', default='foo'))
         self.conf([])
-        self.assertEqual(self.conf.foo, 'foo')
+        self.assertEqual('foo', self.conf.foo)
         self.conf.set_default('foo', None)
         self.assertIsNone(self.conf.foo)
         self.conf.clear_default('foo')
-        self.assertEqual(self.conf.foo, 'foo')
+        self.assertEqual('foo', self.conf.foo)
 
     def test_no_default_override(self):
         self.conf.register_opt(cfg.StrOpt('foo'))
         self.conf([])
         self.assertIsNone(self.conf.foo)
         self.conf.set_default('foo', 'bar')
-        self.assertEqual(self.conf.foo, 'bar')
+        self.assertEqual('bar', self.conf.foo)
         self.conf.clear_default('foo')
         self.assertIsNone(self.conf.foo)
 
     def test_default_override(self):
         self.conf.register_opt(cfg.StrOpt('foo', default='foo'))
         self.conf([])
-        self.assertEqual(self.conf.foo, 'foo')
+        self.assertEqual('foo', self.conf.foo)
         self.conf.set_default('foo', 'bar')
-        self.assertEqual(self.conf.foo, 'bar')
+        self.assertEqual('bar', self.conf.foo)
         self.conf.clear_default('foo')
-        self.assertEqual(self.conf.foo, 'foo')
+        self.assertEqual('foo', self.conf.foo)
 
     def test_set_default_not_in_choices(self):
         self.conf.register_group(cfg.OptGroup('f'))
@@ -2784,28 +2784,28 @@ class OverridesTestCase(BaseTestCase):
     def test_enforce_type_default_override(self):
         self.conf.register_opt(cfg.StrOpt('foo', default='foo'))
         self.conf([])
-        self.assertEqual(self.conf.foo, 'foo')
+        self.assertEqual('foo', self.conf.foo)
         self.conf.set_default('foo', 'bar', enforce_type=True)
-        self.assertEqual(self.conf.foo, 'bar')
+        self.assertEqual('bar', self.conf.foo)
         self.conf.clear_default('foo')
-        self.assertEqual(self.conf.foo, 'foo')
+        self.assertEqual('foo', self.conf.foo)
 
     def test_override(self):
         self.conf.register_opt(cfg.StrOpt('foo'))
         self.conf.set_override('foo', 'bar')
         self.conf([])
-        self.assertEqual(self.conf.foo, 'bar')
+        self.assertEqual('bar', self.conf.foo)
         self.conf.clear_override('foo')
         self.assertIsNone(self.conf.foo)
 
     def test_override_none(self):
         self.conf.register_opt(cfg.StrOpt('foo', default='foo'))
         self.conf([])
-        self.assertEqual(self.conf.foo, 'foo')
+        self.assertEqual('foo', self.conf.foo)
         self.conf.set_override('foo', None)
         self.assertIsNone(self.conf.foo)
         self.conf.clear_override('foo')
-        self.assertEqual(self.conf.foo, 'foo')
+        self.assertEqual('foo', self.conf.foo)
 
     def test_group_no_default_override(self):
         self.conf.register_group(cfg.OptGroup('blaa'))
@@ -2813,7 +2813,7 @@ class OverridesTestCase(BaseTestCase):
         self.conf([])
         self.assertIsNone(self.conf.blaa.foo)
         self.conf.set_default('foo', 'bar', group='blaa')
-        self.assertEqual(self.conf.blaa.foo, 'bar')
+        self.assertEqual('bar', self.conf.blaa.foo)
         self.conf.clear_default('foo', group='blaa')
         self.assertIsNone(self.conf.blaa.foo)
 
@@ -2821,11 +2821,11 @@ class OverridesTestCase(BaseTestCase):
         self.conf.register_group(cfg.OptGroup('blaa'))
         self.conf.register_opt(cfg.StrOpt('foo', default='foo'), group='blaa')
         self.conf([])
-        self.assertEqual(self.conf.blaa.foo, 'foo')
+        self.assertEqual('foo', self.conf.blaa.foo)
         self.conf.set_default('foo', 'bar', group='blaa')
-        self.assertEqual(self.conf.blaa.foo, 'bar')
+        self.assertEqual('bar', self.conf.blaa.foo)
         self.conf.clear_default('foo', group='blaa')
-        self.assertEqual(self.conf.blaa.foo, 'foo')
+        self.assertEqual('foo', self.conf.blaa.foo)
 
     def test_group_override(self):
         self.conf.register_group(cfg.OptGroup('blaa'))
@@ -2833,7 +2833,7 @@ class OverridesTestCase(BaseTestCase):
         self.assertIsNone(self.conf.blaa.foo)
         self.conf.set_override('foo', 'bar', group='blaa')
         self.conf([])
-        self.assertEqual(self.conf.blaa.foo, 'bar')
+        self.assertEqual('bar', self.conf.blaa.foo)
         self.conf.clear_override('foo', group='blaa')
         self.assertIsNone(self.conf.blaa.foo)
 
@@ -2863,7 +2863,7 @@ class OverridesTestCase(BaseTestCase):
         self.conf.register_opt(cfg.StrOpt('foo'))
         self.conf.set_override('foo', True, enforce_type=True)
         self.conf([])
-        self.assertEqual(self.conf.foo, 'True')
+        self.assertEqual('True', self.conf.foo)
         self.conf.clear_override('foo')
         self.assertIsNone(self.conf.foo)
 
@@ -2918,8 +2918,8 @@ class ResetAndClearTestCase(BaseTestCase):
 
         self.conf(['--foo', 'foo', '--blaa-bar', 'bar'])
 
-        self.assertEqual(self.conf.foo, 'foo')
-        self.assertEqual(self.conf.blaa.bar, 'bar')
+        self.assertEqual('foo', self.conf.foo)
+        self.assertEqual('bar', self.conf.blaa.bar)
 
         self.conf.clear()
 
@@ -2935,13 +2935,13 @@ class ResetAndClearTestCase(BaseTestCase):
 
         self.conf(['--foo', 'foofoo'])
 
-        self.assertEqual(self.conf.foo, 'foofoo')
-        self.assertEqual(self.conf.blaa.bar, 'bar')
+        self.assertEqual('foofoo', self.conf.foo)
+        self.assertEqual('bar', self.conf.blaa.bar)
 
         self.conf.clear()
 
-        self.assertEqual(self.conf.foo, 'foo')
-        self.assertEqual(self.conf.blaa.bar, 'bar')
+        self.assertEqual('foo', self.conf.foo)
+        self.assertEqual('bar', self.conf.blaa.bar)
 
         self.conf.reset()
 
@@ -3048,7 +3048,7 @@ class RequiredOptsTestCase(BaseTestCase):
 
         self.conf(['--config-file', paths[0]])
         self.assertTrue(hasattr(self.conf, 'foo'))
-        self.assertEqual(self.conf.foo, 'bar')
+        self.assertEqual('bar', self.conf.foo)
 
     def test_required_cli_opt(self):
         self.conf.register_cli_opt(cfg.StrOpt('foo', required=True))
@@ -3056,7 +3056,7 @@ class RequiredOptsTestCase(BaseTestCase):
         self.conf(['--foo', 'bar'])
 
         self.assertTrue(hasattr(self.conf, 'foo'))
-        self.assertEqual(self.conf.foo, 'bar')
+        self.assertEqual('bar', self.conf.foo)
 
     def test_required_cli_opt_with_dash(self):
         self.conf.register_cli_opt(cfg.StrOpt('foo-bar', required=True))
@@ -3064,7 +3064,7 @@ class RequiredOptsTestCase(BaseTestCase):
         self.conf(['--foo-bar', 'baz'])
 
         self.assertTrue(hasattr(self.conf, 'foo_bar'))
-        self.assertEqual(self.conf.foo_bar, 'baz')
+        self.assertEqual('baz', self.conf.foo_bar)
 
     def test_missing_required_opt(self):
         self.conf.register_opt(cfg.StrOpt('foo', required=True))
@@ -3085,7 +3085,7 @@ class RequiredOptsTestCase(BaseTestCase):
         self.conf(['--config-file', paths[0]])
         self.assertTrue(hasattr(self.conf, 'blaa'))
         self.assertTrue(hasattr(self.conf.blaa, 'foo'))
-        self.assertEqual(self.conf.blaa.foo, 'bar')
+        self.assertEqual('bar', self.conf.blaa.foo)
 
     def test_required_cli_group_opt(self):
         self.conf.register_group(cfg.OptGroup('blaa'))
@@ -3096,7 +3096,7 @@ class RequiredOptsTestCase(BaseTestCase):
 
         self.assertTrue(hasattr(self.conf, 'blaa'))
         self.assertTrue(hasattr(self.conf.blaa, 'foo'))
-        self.assertEqual(self.conf.blaa.foo, 'bar')
+        self.assertEqual('bar', self.conf.blaa.foo)
 
     def test_missing_required_group_opt(self):
         self.conf.register_group(cfg.OptGroup('blaa'))
@@ -3116,7 +3116,7 @@ class RequiredOptsTestCase(BaseTestCase):
         self.conf([])
 
         self.assertTrue(hasattr(self.conf, 'foo'))
-        self.assertEqual(self.conf.foo, 'bar')
+        self.assertEqual('bar', self.conf.foo)
 
     def test_required_opt_with_override(self):
         self.conf.register_cli_opt(cfg.StrOpt('foo', required=True))
@@ -3125,7 +3125,7 @@ class RequiredOptsTestCase(BaseTestCase):
         self.conf([])
 
         self.assertTrue(hasattr(self.conf, 'foo'))
-        self.assertEqual(self.conf.foo, 'bar')
+        self.assertEqual('bar', self.conf.foo)
 
 
 class SadPathTestCase(BaseTestCase):
@@ -3310,7 +3310,7 @@ class FindFileTestCase(BaseTestCase):
         self.conf([])
 
         self.assertIsNone(self.conf.find_file('foo.json'))
-        self.assertEqual(self.conf.find_file('policy.json'), policy_file)
+        self.assertEqual(policy_file, self.conf.find_file('policy.json'))
 
     def test_find_policy_file_with_config_file(self):
         dir = tempfile.mkdtemp()
@@ -3324,7 +3324,7 @@ class FindFileTestCase(BaseTestCase):
 
         self.conf(['--config-file', paths[0]])
 
-        self.assertEqual(self.conf.find_file('policy.json'), paths[1])
+        self.assertEqual(paths[1], self.conf.find_file('policy.json'))
 
     def test_find_policy_file_with_multiple_config_dirs(self):
         dir1 = tempfile.mkdtemp()
@@ -3354,7 +3354,7 @@ class FindFileTestCase(BaseTestCase):
 
         self.conf(['--config-dir', dir, '--config-dir', dir2])
 
-        self.assertEqual(self.conf.find_file('policy.json'), path)
+        self.assertEqual(path, self.conf.find_file('policy.json'))
 
 
 class OptDumpingTestCase(BaseTestCase):
@@ -3594,7 +3594,7 @@ class NamespaceTestCase(BaseTestCase):
 
         self.read('[DEFAULT]\n'
                   'foo = file1\n')
-        self.assertEqual(self.ns._get_cli_value([key]), 'file1')
+        self.assertEqual('file1', self.ns._get_cli_value([key]))
 
     def test_single_file(self):
         self.read('[DEFAULT]\n'
@@ -3665,7 +3665,7 @@ class TildeExpansionTestCase(BaseTestCase):
             'os.path.exists',
             lambda p: p == tmpfile))
 
-        self.assertEqual(self.conf.find_file(tmpbase), tmpfile)
+        self.assertEqual(tmpfile, self.conf.find_file(tmpbase))
 
     def test_config_dir_tilde(self):
         homedir = os.path.expanduser('~')
@@ -3707,8 +3707,8 @@ class SubCommandTestCase(BaseTestCase):
         self.conf(['a', '10'])
         self.assertTrue(hasattr(self.conf.cmd, 'name'))
         self.assertTrue(hasattr(self.conf.cmd, 'bar'))
-        self.assertEqual(self.conf.cmd.name, 'a')
-        self.assertEqual(self.conf.cmd.bar, 10)
+        self.assertEqual('a', self.conf.cmd.name)
+        self.assertEqual(10, self.conf.cmd.bar)
 
     def test_sub_command_with_parent(self):
         def add_parsers(subparsers):
@@ -3722,8 +3722,8 @@ class SubCommandTestCase(BaseTestCase):
         self.conf(['a', '10'])
         self.assertTrue(hasattr(self.conf.cmd, 'name'))
         self.assertTrue(hasattr(self.conf.cmd, 'bar'))
-        self.assertEqual(self.conf.cmd.name, 'a')
-        self.assertEqual(self.conf.cmd.bar, 10)
+        self.assertEqual('a', self.conf.cmd.name)
+        self.assertEqual(10, self.conf.cmd.bar)
 
     def test_sub_command_with_dest(self):
         def add_parsers(subparsers):
@@ -3733,7 +3733,7 @@ class SubCommandTestCase(BaseTestCase):
             cfg.SubCommandOpt('cmd', dest='command', handler=add_parsers))
         self.assertTrue(hasattr(self.conf, 'command'))
         self.conf(['a'])
-        self.assertEqual(self.conf.command.name, 'a')
+        self.assertEqual('a', self.conf.command.name)
 
     def test_sub_command_with_group(self):
         def add_parsers(subparsers):
@@ -3747,8 +3747,8 @@ class SubCommandTestCase(BaseTestCase):
         self.conf(['a', '--bar', 'Z'])
         self.assertTrue(hasattr(self.conf.blaa.cmd, 'name'))
         self.assertTrue(hasattr(self.conf.blaa.cmd, 'bar'))
-        self.assertEqual(self.conf.blaa.cmd.name, 'a')
-        self.assertEqual(self.conf.blaa.cmd.bar, 'Z')
+        self.assertEqual('a', self.conf.blaa.cmd.name)
+        self.assertEqual('Z', self.conf.blaa.cmd.bar)
 
     def test_sub_command_not_cli(self):
         self.conf.register_opt(cfg.SubCommandOpt('cmd'))
@@ -3767,16 +3767,16 @@ class SubCommandTestCase(BaseTestCase):
         self.conf(['--foo=bar', 'a'])
 
         self.assertTrue(hasattr(self.conf.cmd, 'name'))
-        self.assertEqual(self.conf.cmd.name, 'a')
+        self.assertEqual('a', self.conf.cmd.name)
         self.assertTrue(hasattr(self.conf, 'foo'))
-        self.assertEqual(self.conf.foo, 'bar')
+        self.assertEqual('bar', self.conf.foo)
 
         self.conf.clear()
         self.conf.unregister_opt(foo_opt)
         self.conf(['a'])
 
         self.assertTrue(hasattr(self.conf.cmd, 'name'))
-        self.assertEqual(self.conf.cmd.name, 'a')
+        self.assertEqual('a', self.conf.cmd.name)
         self.assertFalse(hasattr(self.conf, 'foo'))
 
     def test_sub_command_no_handler(self):
@@ -3834,14 +3834,14 @@ class SetDefaultsTestCase(BaseTestCase):
         self.conf.register_opts(opts)
         cfg.set_defaults(opts, foo='bar')
         self.conf([])
-        self.assertEqual(self.conf.foo, 'bar')
+        self.assertEqual('bar', self.conf.foo)
 
     def test_change_default(self):
         opts = [cfg.StrOpt('foo', default='foo')]
         self.conf.register_opts(opts)
         cfg.set_defaults(opts, foo='bar')
         self.conf([])
-        self.assertEqual(self.conf.foo, 'bar')
+        self.assertEqual('bar', self.conf.foo)
 
     def test_change_default_many(self):
         opts = [cfg.StrOpt('foo', default='foo'),
@@ -3849,8 +3849,8 @@ class SetDefaultsTestCase(BaseTestCase):
         self.conf.register_opts(opts)
         cfg.set_defaults(opts, foo='bar', foo2='bar2')
         self.conf([])
-        self.assertEqual(self.conf.foo, 'bar')
-        self.assertEqual(self.conf.foo2, 'bar2')
+        self.assertEqual('bar', self.conf.foo)
+        self.assertEqual('bar2', self.conf.foo2)
 
     def test_group_default_to_none(self):
         opts = [cfg.StrOpt('foo', default='foo')]
@@ -3864,14 +3864,14 @@ class SetDefaultsTestCase(BaseTestCase):
         self.conf.register_opts(opts, group='blaa')
         cfg.set_defaults(opts, foo='bar')
         self.conf([])
-        self.assertEqual(self.conf.blaa.foo, 'bar')
+        self.assertEqual('bar', self.conf.blaa.foo)
 
     def test_group_change_default(self):
         opts = [cfg.StrOpt('foo', default='foo')]
         self.conf.register_opts(opts, group='blaa')
         cfg.set_defaults(opts, foo='bar')
         self.conf([])
-        self.assertEqual(self.conf.blaa.foo, 'bar')
+        self.assertEqual('bar', self.conf.blaa.foo)
 
 
 class DeprecatedOptionsTestCase(BaseTestCase):
@@ -3901,7 +3901,7 @@ class MultipleDeprecatedOptionsTestCase(BaseTestCase):
                                         'oldfoo = bar\n')])
 
         self.conf(['--config-file', paths[0]])
-        self.assertEqual(self.conf.blaa.foo, 'bar')
+        self.assertEqual('bar', self.conf.blaa.foo)
 
     def test_conf_file_override_use_deprecated_opts(self):
         self.conf.register_group(cfg.OptGroup('blaa'))
@@ -3914,7 +3914,7 @@ class MultipleDeprecatedOptionsTestCase(BaseTestCase):
                                         'oldfoo = bar\n')])
 
         self.conf(['--config-file', paths[0]])
-        self.assertEqual(self.conf.blaa.foo, 'bar')
+        self.assertEqual('bar', self.conf.blaa.foo)
 
     def test_conf_file_override_use_deprecated_multi_opts(self):
         self.conf.register_group(cfg.OptGroup('blaa'))
@@ -3928,7 +3928,7 @@ class MultipleDeprecatedOptionsTestCase(BaseTestCase):
                                         'oldfoo2 = bar\n')])
 
         self.conf(['--config-file', paths[0]])
-        self.assertEqual(self.conf.blaa.foo, 'bar')
+        self.assertEqual('bar', self.conf.blaa.foo)
 
 
 class MultipleDeprecatedCliOptionsTestCase(BaseTestCase):
@@ -3945,7 +3945,7 @@ class MultipleDeprecatedCliOptionsTestCase(BaseTestCase):
                                         'oldfoo = bar\n')])
 
         self.conf(['--config-file', paths[0]])
-        self.assertEqual(self.conf.blaa.foo, 'bar')
+        self.assertEqual('bar', self.conf.blaa.foo)
 
     def test_conf_file_override_use_deprecated_opts(self):
         self.conf.register_group(cfg.OptGroup('blaa'))
@@ -3958,7 +3958,7 @@ class MultipleDeprecatedCliOptionsTestCase(BaseTestCase):
                                         'oldfoo = bar\n')])
 
         self.conf(['--config-file', paths[0]])
-        self.assertEqual(self.conf.blaa.foo, 'bar')
+        self.assertEqual('bar', self.conf.blaa.foo)
 
     def test_conf_file_override_use_deprecated_multi_opts(self):
         self.conf.register_group(cfg.OptGroup('blaa'))
@@ -3972,7 +3972,7 @@ class MultipleDeprecatedCliOptionsTestCase(BaseTestCase):
                                         'oldfoo2 = bar\n')])
 
         self.conf(['--config-file', paths[0]])
-        self.assertEqual(self.conf.blaa.foo, 'bar')
+        self.assertEqual('bar', self.conf.blaa.foo)
 
     def test_conf_file_common_deprecated_group(self):
         self.conf.register_group(cfg.OptGroup('foo'))
@@ -3990,8 +3990,8 @@ class MultipleDeprecatedCliOptionsTestCase(BaseTestCase):
                                         'foo = bla\n')])
 
         self.conf(['--config-file', paths[0]])
-        self.assertEqual(self.conf.foo.common_opt, 'bla')
-        self.assertEqual(self.conf.bar.common_opt, 'bla')
+        self.assertEqual('bla', self.conf.foo.common_opt)
+        self.assertEqual('bla', self.conf.bar.common_opt)
 
         paths = self.create_tempfiles([('test',
                                         '[DEFAULT]\n'
@@ -4000,8 +4000,8 @@ class MultipleDeprecatedCliOptionsTestCase(BaseTestCase):
                                         'common_opt = blabla\n')])
 
         self.conf(['--config-file', paths[0]])
-        self.assertEqual(self.conf.foo.common_opt, 'bla')
-        self.assertEqual(self.conf.bar.common_opt, 'blabla')
+        self.assertEqual('bla', self.conf.foo.common_opt)
+        self.assertEqual('blabla', self.conf.bar.common_opt)
 
         paths = self.create_tempfiles([('test',
                                         '[foo]\n'
@@ -4010,8 +4010,8 @@ class MultipleDeprecatedCliOptionsTestCase(BaseTestCase):
                                         'common_opt = blabla\n')])
 
         self.conf(['--config-file', paths[0]])
-        self.assertEqual(self.conf.foo.common_opt, 'bla')
-        self.assertEqual(self.conf.bar.common_opt, 'blabla')
+        self.assertEqual('bla', self.conf.foo.common_opt)
+        self.assertEqual('blabla', self.conf.bar.common_opt)
 
 
 class ChoicesTestCase(BaseTestCase):
@@ -4021,13 +4021,13 @@ class ChoicesTestCase(BaseTestCase):
                                    default='http',
                                    choices=['http', 'https', 'ftp']))
         self.conf([])
-        self.assertEqual(self.conf.protocol, 'http')
+        self.assertEqual('http', self.conf.protocol)
 
     def test_choice_good(self):
         self.conf.register_cli_opt(cfg.StrOpt('foo',
                                    choices=['bar1', 'bar2']))
         self.conf(['--foo', 'bar1'])
-        self.assertEqual(self.conf.foo, 'bar1')
+        self.assertEqual('bar1', self.conf.foo)
 
     def test_choice_bad(self):
         self.conf.register_cli_opt(cfg.StrOpt('foo',
@@ -4043,7 +4043,7 @@ class ChoicesTestCase(BaseTestCase):
         self.conf(['--config-file', paths[0]])
 
         self.assertTrue(hasattr(self.conf, 'foo'))
-        self.assertEqual(self.conf.foo, 'bar1')
+        self.assertEqual('bar1', self.conf.foo)
 
     def test_conf_file_choice_empty_value(self):
         self.conf.register_opt(cfg.StrOpt('foo',
@@ -4054,7 +4054,7 @@ class ChoicesTestCase(BaseTestCase):
         self.conf(['--config-file', paths[0]])
 
         self.assertTrue(hasattr(self.conf, 'foo'))
-        self.assertEqual(self.conf.foo, '')
+        self.assertEqual('', self.conf.foo)
 
     def test_conf_file_choice_none_value(self):
         self.conf.register_opt(cfg.StrOpt('foo',
@@ -4095,7 +4095,7 @@ class ChoicesTestCase(BaseTestCase):
                    '--config-file', paths[1]])
 
         self.assertTrue(hasattr(self.conf, 'foo'))
-        self.assertEqual(self.conf.foo, 'baaar')
+        self.assertEqual('baaar', self.conf.foo)
 
     def test_conf_file_choice_bad_default(self):
         self.assertRaises(cfg.DefaultValueError, cfg.StrOpt, 'foo',
@@ -4109,19 +4109,19 @@ class PortChoicesTestCase(BaseTestCase):
                                    default=455,
                                    choices=[80, 455]))
         self.conf([])
-        self.assertEqual(self.conf.port, 455)
+        self.assertEqual(455, self.conf.port)
 
     def test_choice_good_with_list(self):
         self.conf.register_cli_opt(cfg.PortOpt('port',
                                    choices=[80, 8080]))
         self.conf(['--port', '80'])
-        self.assertEqual(self.conf.port, 80)
+        self.assertEqual(80, self.conf.port)
 
     def test_choice_good_with_tuple(self):
         self.conf.register_cli_opt(cfg.PortOpt('port',
                                    choices=(80, 8080)))
         self.conf(['--port', '80'])
-        self.assertEqual(self.conf.port, 80)
+        self.assertEqual(80, self.conf.port)
 
     def test_choice_bad(self):
         self.conf.register_cli_opt(cfg.PortOpt('port',
@@ -4141,7 +4141,7 @@ class PortChoicesTestCase(BaseTestCase):
         self.conf(['--config-file', paths[0]])
 
         self.assertTrue(hasattr(self.conf, 'port'))
-        self.assertEqual(self.conf.port, 80)
+        self.assertEqual(80, self.conf.port)
 
     def test_conf_file_bad_choice_value(self):
         self.conf.register_opt(cfg.PortOpt('port',
@@ -4170,7 +4170,7 @@ class PortChoicesTestCase(BaseTestCase):
                    '--config-file', paths[1]])
 
         self.assertTrue(hasattr(self.conf, 'port'))
-        self.assertEqual(self.conf.port, 8080)
+        self.assertEqual(8080, self.conf.port)
 
     def test_conf_file_choice_bad_default(self):
         self.assertRaises(cfg.DefaultValueError, cfg.PortOpt, 'port',
@@ -4183,11 +4183,11 @@ class RegexTestCase(BaseTestCase):
         self.conf.register_cli_opt(cfg.StrOpt('foo',
                                               regex='foo|bar'))
         self.conf(['--foo', 'bar'])
-        self.assertEqual(self.conf.foo, 'bar')
+        self.assertEqual('bar', self.conf.foo)
         self.conf(['--foo', 'foo'])
-        self.assertEqual(self.conf.foo, 'foo')
+        self.assertEqual('foo', self.conf.foo)
         self.conf(['--foo', 'foobar'])
-        self.assertEqual(self.conf.foo, 'foobar')
+        self.assertEqual('foobar', self.conf.foo)
 
     def test_regex_bad(self):
         self.conf.register_cli_opt(cfg.StrOpt('foo',
@@ -4202,7 +4202,7 @@ class RegexTestCase(BaseTestCase):
 
         self.conf(['--config-file', paths[0]])
         self.assertTrue(hasattr(self.conf, 'foo'))
-        self.assertEqual(self.conf.foo, 'bar')
+        self.assertEqual('bar', self.conf.foo)
 
     def test_conf_file_regex_bad_value(self):
         self.conf.register_opt(cfg.StrOpt('foo',
@@ -4227,13 +4227,13 @@ class QuotesTestCase(BaseTestCase):
         self.conf.register_cli_opt(cfg.StrOpt('foo',
                                               quotes=True))
         self.conf(['--foo', '"foobar1"'])
-        self.assertEqual(self.conf.foo, 'foobar1')
+        self.assertEqual('foobar1', self.conf.foo)
         self.conf(['--foo', "'foobar2'"])
-        self.assertEqual(self.conf.foo, 'foobar2')
+        self.assertEqual('foobar2', self.conf.foo)
         self.conf(['--foo', 'foobar3'])
-        self.assertEqual(self.conf.foo, 'foobar3')
+        self.assertEqual('foobar3', self.conf.foo)
         self.conf(['--foo', 'foobar4"'])
-        self.assertEqual(self.conf.foo, 'foobar4"')
+        self.assertEqual('foobar4"', self.conf.foo)
 
     def test_quotes_bad(self):
         self.conf.register_cli_opt(cfg.StrOpt('foo',
@@ -4251,7 +4251,7 @@ class QuotesTestCase(BaseTestCase):
 
         self.conf(['--config-file', paths[0]])
         self.assertTrue(hasattr(self.conf, 'foo'))
-        self.assertEqual(self.conf.foo, 'bar')
+        self.assertEqual('bar', self.conf.foo)
 
     def test_conf_file_quotes_bad_value(self):
         self.conf.register_opt(cfg.StrOpt('foo',
@@ -4275,22 +4275,22 @@ class IgnoreCaseTestCase(BaseTestCase):
                                                        'bar2',
                                                        'BAR3']))
         self.conf(['--foo', 'bAr1'])
-        self.assertEqual(self.conf.foo, 'bAr1')
+        self.assertEqual('bAr1', self.conf.foo)
         self.conf(['--foo', 'BaR2'])
-        self.assertEqual(self.conf.foo, 'BaR2')
+        self.assertEqual('BaR2', self.conf.foo)
         self.conf(['--foo', 'baR3'])
-        self.assertEqual(self.conf.foo, 'baR3')
+        self.assertEqual('baR3', self.conf.foo)
 
     def test_ignore_case_with_regex(self):
         self.conf.register_cli_opt(cfg.StrOpt('foo',
                                               ignore_case=True,
                                               regex='fOO|bar'))
         self.conf(['--foo', 'foo'])
-        self.assertEqual(self.conf.foo, 'foo')
+        self.assertEqual('foo', self.conf.foo)
         self.conf(['--foo', 'Bar'])
-        self.assertEqual(self.conf.foo, 'Bar')
+        self.assertEqual('Bar', self.conf.foo)
         self.conf(['--foo', 'FOObar'])
-        self.assertEqual(self.conf.foo, 'FOObar')
+        self.assertEqual('FOObar', self.conf.foo)
 
     def test_conf_file_ignore_case_with_choices(self):
         self.conf.register_opt(cfg.StrOpt('foo',
@@ -4301,7 +4301,7 @@ class IgnoreCaseTestCase(BaseTestCase):
 
         self.conf(['--config-file', paths[0]])
         self.assertTrue(hasattr(self.conf, 'foo'))
-        self.assertEqual(self.conf.foo, 'bAr2')
+        self.assertEqual('bAr2', self.conf.foo)
 
     def test_conf_file_ignore_case_with_regex(self):
         self.conf.register_opt(cfg.StrOpt('foo',
@@ -4312,7 +4312,7 @@ class IgnoreCaseTestCase(BaseTestCase):
 
         self.conf(['--config-file', paths[0]])
         self.assertTrue(hasattr(self.conf, 'foo'))
-        self.assertEqual(self.conf.foo, 'BaR')
+        self.assertEqual('BaR', self.conf.foo)
 
 
 class StrOptMaxLengthTestCase(BaseTestCase):
@@ -4320,7 +4320,7 @@ class StrOptMaxLengthTestCase(BaseTestCase):
     def test_stropt_max_length_good(self):
         self.conf.register_cli_opt(cfg.StrOpt('foo', max_length=5))
         self.conf(['--foo', '12345'])
-        self.assertEqual(self.conf.foo, '12345')
+        self.assertEqual('12345', self.conf.foo)
 
     def test_stropt_max_length_bad(self):
         self.conf.register_cli_opt(cfg.StrOpt('foo', max_length=5))

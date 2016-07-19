@@ -322,13 +322,13 @@ class ExposeTestCase(BaseTestCase):
         self.conf.set_override('foo', 'bar')
 
         self.assertTrue(hasattr(self.conf, 'foo'))
-        self.assertEqual(self.conf.foo, 'bar')
+        self.assertEqual('bar', self.conf.foo)
         self.assertFalse(hasattr(self.fconf, 'foo'))
 
         self.fconf.expose_opt('foo')
         self.assertTrue(hasattr(self.conf, 'foo'))
         self.assertTrue(hasattr(self.fconf, 'foo'))
-        self.assertEqual(self.fconf.foo, 'bar')
+        self.assertEqual('bar', self.fconf.foo)
 
     def test_expose_opt_with_group(self):
         self.assertFalse(hasattr(self.conf, 'foo'))
@@ -338,13 +338,13 @@ class ExposeTestCase(BaseTestCase):
         self.conf.set_override('foo', 'bar', group='group')
 
         self.assertTrue(hasattr(self.conf.group, 'foo'))
-        self.assertEqual(self.conf.group.foo, 'bar')
+        self.assertEqual('bar', self.conf.group.foo)
         self.assertFalse(hasattr(self.fconf, 'group'))
 
         self.fconf.expose_opt('foo', group='group')
         self.assertTrue(hasattr(self.conf.group, 'foo'))
         self.assertTrue(hasattr(self.fconf.group, 'foo'))
-        self.assertEqual(self.fconf.group.foo, 'bar')
+        self.assertEqual('bar', self.fconf.group.foo)
 
     def test_expose_group(self):
         self.conf.register_opts([cfg.StrOpt('foo'),
