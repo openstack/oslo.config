@@ -1150,6 +1150,85 @@ class ConfigFileOptsTestCase(BaseTestCase):
     def test_conf_file_float_ignore_dgroup_and_dname(self):
         self._do_dgroup_and_dname_test_ignore(cfg.FloatOpt, '64.54', 64.54)
 
+    def test_conf_file_float_min_max_above_max(self):
+        self.conf.register_opt(cfg.FloatOpt('foo', min=1.1, max=5.5))
+
+        paths = self.create_tempfiles([('test',
+                                        '[DEFAULT]\n'
+                                        'foo = 10.5\n')])
+
+        self.conf(['--config-file', paths[0]])
+        self.assertRaises(cfg.ConfigFileValueError, self.conf._get, 'foo')
+
+    def test_conf_file_float_only_max_above_max(self):
+        self.conf.register_opt(cfg.FloatOpt('foo', max=5.5))
+
+        paths = self.create_tempfiles([('test',
+                                        '[DEFAULT]\n'
+                                        'foo = 10.5\n')])
+
+        self.conf(['--config-file', paths[0]])
+        self.assertRaises(cfg.ConfigFileValueError, self.conf._get, 'foo')
+
+    def test_conf_file_float_min_max_below_min(self):
+        self.conf.register_opt(cfg.FloatOpt('foo', min=1.1, max=5.5))
+
+        paths = self.create_tempfiles([('test',
+                                        '[DEFAULT]\n'
+                                        'foo = 0.5\n')])
+
+        self.conf(['--config-file', paths[0]])
+        self.assertRaises(cfg.ConfigFileValueError, self.conf._get, 'foo')
+
+    def test_conf_file_float_only_min_below_min(self):
+        self.conf.register_opt(cfg.FloatOpt('foo', min=1.1))
+
+        paths = self.create_tempfiles([('test',
+                                        '[DEFAULT]\n'
+                                        'foo = 0.5\n')])
+
+        self.conf(['--config-file', paths[0]])
+        self.assertRaises(cfg.ConfigFileValueError, self.conf._get, 'foo')
+
+    def test_conf_file_float_min_max_in_range(self):
+        self.conf.register_opt(cfg.FloatOpt('foo', min=1.1, max=5.5))
+
+        paths = self.create_tempfiles([('test',
+                                        '[DEFAULT]\n'
+                                        'foo = 4.5\n')])
+
+        self.conf(['--config-file', paths[0]])
+
+        self.assertTrue(hasattr(self.conf, 'foo'))
+        self.assertEqual(4.5, self.conf.foo)
+
+    def test_conf_file_float_only_max_in_range(self):
+        self.conf.register_opt(cfg.FloatOpt('foo', max=5.5))
+
+        paths = self.create_tempfiles([('test',
+                                        '[DEFAULT]\n'
+                                        'foo = 4.5\n')])
+
+        self.conf(['--config-file', paths[0]])
+
+        self.assertTrue(hasattr(self.conf, 'foo'))
+        self.assertEqual(4.5, self.conf.foo)
+
+    def test_conf_file_float_only_min_in_range(self):
+        self.conf.register_opt(cfg.FloatOpt('foo', min=3.5))
+
+        paths = self.create_tempfiles([('test',
+                                        '[DEFAULT]\n'
+                                        'foo = 4.5\n')])
+
+        self.conf(['--config-file', paths[0]])
+
+        self.assertTrue(hasattr(self.conf, 'foo'))
+        self.assertEqual(4.5, self.conf.foo)
+
+    def test_conf_file_float_min_greater_max(self):
+        self.assertRaises(ValueError, cfg.FloatOpt, 'foo', min=5.5, max=1.5)
+
     def test_conf_file_list_default(self):
         self.conf.register_opt(cfg.ListOpt('foo', default=['bar']))
 

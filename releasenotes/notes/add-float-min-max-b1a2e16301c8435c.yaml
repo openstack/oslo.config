@@ -1,0 +1,3 @@
+---
+features:
+  - Added minimum and maximum value limits to FloatOpt.

@@ -1156,13 +1156,20 @@ class FloatOpt(Opt):
     """Option with Float type
 
     Option with ``type`` :class:`oslo_config.types.Float`
+    :param min: minimum value the float can take
+    :param max: maximum value the float can take
 
     :param name: the option's name
     :param \*\*kwargs: arbitrary keyword arguments passed to :class:`Opt`
+
+    .. versionchanged:: 3.14
+
+       Added *min* and *max* parameters.
     """
 
-    def __init__(self, name, **kwargs):
-        super(FloatOpt, self).__init__(name, type=types.Float(), **kwargs)
+    def __init__(self, name, min=None, max=None, **kwargs):
+        super(FloatOpt, self).__init__(name, type=types.Float(min, max),
+                                       **kwargs)
 
 
 class ListOpt(Opt):
