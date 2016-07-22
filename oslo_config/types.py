@@ -243,7 +243,99 @@ class Boolean(ConfigType):
         return str(value).lower()
 
 
-class Integer(ConfigType):
+class Number(ConfigType):
+
+    """Number class, base for Integer and Float.
+
+    :param min: Optional check that value is greater than or equal to min.
+                Mutually exclusive with 'choices'.
+    :param max: Optional check that value is less than or equal to max.
+                Mutually exclusive with 'choices'.
+    :param type_name: Type name to be used in the sample config file.
+    :param choices: Optional sequence of valid values. Mutually exclusive
+                    with 'min/max'.
+    :param num_type: the type of number used for casting (i.e int, float)
+
+    .. versionadded:: 3.14
+    """
+
+    def __init__(self, num_type, type_name,
+                 min=None, max=None, choices=None):
+        super(Number, self).__init__(type_name=type_name)
+
+        # Validate the choices and limits
+        if choices is not None:
+            if min is not None or max is not None:
+                raise ValueError("'choices' and 'min/max' cannot both be "
+                                 "specified")
+        else:
+            if min is not None and max is not None and max < min:
+                raise ValueError('Max value is less than min value')
+
+        self.min = min
+        self.max = max
+        self.choices = choices
+        self.num_type = num_type
+
+    def __call__(self, value):
+        if not isinstance(value, self.num_type):
+            s = str(value).strip()
+            if s == '':
+                value = None
+            else:
+                value = self.num_type(value)
+
+        if value is not None:
+            if self.choices is not None:
+                self._check_choices(value)
+            else:
+                self._check_range(value)
+
+        return value
+
+    def _check_choices(self, value):
+        if value in self.choices:
+            return
+        else:
+            raise ValueError('Valid values are %r, but found %g' % (
+                             self.choices, value))
+
+    def _check_range(self, value):
+        if self.min is not None and value < self.min:
+            raise ValueError('Should be greater than or equal to %g' %
+                             self.min)
+        if self.max is not None and value > self.max:
+            raise ValueError('Should be less than or equal to %g' % self.max)
+
+    def __repr__(self):
+        props = []
+        if self.choices is not None:
+            props.append("choices=%r" % (self.choices,))
+        else:
+            if self.min is not None:
+                props.append('min=%g' % self.min)
+            if self.max is not None:
+                props.append('max=%g' % self.max)
+
+        if props:
+            return self.__class__.__name__ + '(%s)' % ', '.join(props)
+        return self.__class__.__name__
+
+    def __eq__(self, other):
+        return (
+            (self.__class__ == other.__class__) and
+            (self.min == other.min) and
+            (self.max == other.max) and
+            (set(self.choices) == set(other.choices) if
+             self.choices and other.choices else
+             self.choices == other.choices)
+        )
+
+    def _formatter(self, value):
+        return str(value)
+
+
+class Integer(Number):
 
     """Integer type.
 
@@ -270,104 +362,29 @@ class Integer(ConfigType):
 
     def __init__(self, min=None, max=None, type_name='integer value',
                  choices=None):
-        super(Integer, self).__init__(type_name=type_name)
-        if choices is not None:
-            if min is not None or max is not None:
-                raise ValueError("'choices' and 'min/max' cannot both be "
-                                 "specified")
-        else:
-            if min is not None and max is not None and max < min:
-                raise ValueError('Max value is less than min value')
-        self.min = min
-        self.max = max
-        self.choices = choices
-
-    def __call__(self, value):
-        if not isinstance(value, int):
-            s = str(value).strip()
-            if s == '':
-                value = None
-            else:
-                value = int(value)
-
-        if value is not None:
-            if self.choices is not None:
-                self._check_choices(value)
-            else:
-                self._check_range(value)
-
-        return value
-
-    def _check_choices(self, value):
-        if value in self.choices:
-            return
-        else:
-            raise ValueError('Valid values are %r, but found %d' % (
-                             self.choices, value))
-
-    def _check_range(self, value):
-        if self.min is not None and value < self.min:
-            raise ValueError('Should be greater than or equal to %d' %
-                             self.min)
-        if self.max is not None and value > self.max:
-            raise ValueError('Should be less than or equal to %d' % self.max)
-
-    def __repr__(self):
-        props = []
-        if self.choices is not None:
-            props.append("choices=%r" % (self.choices,))
-        else:
-            if self.min is not None:
-                props.append('min=%d' % self.min)
-            if self.max is not None:
-                props.append('max=%d' % self.max)
-
-        if props:
-            return 'Integer(%s)' % ', '.join(props)
-        return 'Integer'
-
-    def __eq__(self, other):
-        return (
-            (self.__class__ == other.__class__) and
-            (self.min == other.min) and
-            (self.max == other.max) and
-            (set(self.choices) == set(other.choices) if
-             self.choices and other.choices else
-             self.choices == other.choices)
-        )
-
-    def _formatter(self, value):
-        return str(value)
+        super(Integer, self).__init__(int, type_name, min=min, max=max,
+                                      choices=choices)
 
 
-class Float(ConfigType):
+class Float(Number):
 
     """Float type.
 
     :param type_name: Type name to be used in the sample config file.
+    :param min: Optional check that value is greater than or equal to min.
+    :param max: Optional check that value is less than or equal to max.
 
     .. versionchanged:: 2.7
 
        Added *type_name* parameter.
+
+    .. versionchanged:: 3.14
+
+       Added *min* and *max* parameters.
     """
 
-    def __init__(self, type_name='floating point value'):
-        super(Float, self).__init__(type_name=type_name)
-
-    def __call__(self, value):
-        if isinstance(value, float):
-            return value
-
-        return float(value)
-
-    def __repr__(self):
-        return 'Float'
-
-    def __eq__(self, other):
-        return self.__class__ == other.__class__
-
-    def _formatter(self, value):
-        return str(value)
+    def __init__(self, min=None, max=None, type_name='floating point value'):
+        super(Float, self).__init__(float, type_name, min=min, max=max)
 
 
 class List(ConfigType):
