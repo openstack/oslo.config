@@ -45,15 +45,15 @@ class ExceptionsTestCase(base.BaseTestCase):
 
     def test_no_such_opt_error(self):
         msg = str(cfg.NoSuchOptError('foo'))
-        self.assertEqual('no such option in group DEFAULT: foo', msg)
+        self.assertEqual('no such option foo in group [DEFAULT]', msg)
 
     def test_no_such_opt_error_with_group(self):
         msg = str(cfg.NoSuchOptError('foo', cfg.OptGroup('bar')))
-        self.assertEqual('no such option in group bar: foo', msg)
+        self.assertEqual('no such option foo in group [bar]', msg)
 
     def test_no_such_group_error(self):
         msg = str(cfg.NoSuchGroupError('bar'))
-        self.assertEqual('no such group: bar', msg)
+        self.assertEqual('no such group [bar]', msg)
 
     def test_duplicate_opt_error(self):
         msg = str(cfg.DuplicateOptError('foo'))
@@ -61,11 +61,12 @@ class ExceptionsTestCase(base.BaseTestCase):
 
     def test_required_opt_error(self):
         msg = str(cfg.RequiredOptError('foo'))
-        self.assertEqual('value required for option: foo', msg)
+        self.assertEqual('value required for option foo in group [DEFAULT]',
+                         msg)
 
     def test_required_opt_error_with_group(self):
         msg = str(cfg.RequiredOptError('foo', cfg.OptGroup('bar')))
-        self.assertEqual('value required for option: bar.foo', msg)
+        self.assertEqual('value required for option foo in group [bar]', msg)
 
     def test_template_substitution_error(self):
         msg = str(cfg.TemplateSubstitutionError('foobar'))
