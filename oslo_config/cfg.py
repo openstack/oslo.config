@@ -363,7 +363,6 @@ command line arguments using the SubCommandOpt class:
 import argparse
 import collections
 import copy
-from debtcollector import removals
 import errno
 import functools
 import glob
@@ -373,6 +372,7 @@ import os
 import string
 import sys
 
+from debtcollector import removals
 import six
 from six import moves
 
