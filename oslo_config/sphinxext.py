@@ -25,6 +25,7 @@ from sphinx.util.nodes import nested_parse_with_titles
 
 from oslo_config import cfg
 from oslo_config import generator
+import oslo_i18n
 
 import six
 
@@ -432,5 +433,14 @@ class ConfigDomain(Domain):
 
 
 def setup(app):
+    # NOTE(dhellmann): Try to turn off lazy translation from oslo_i18n
+    # so any translated help text or deprecation messages associated
+    # with configuration options are treated as regular strings
+    # instead of Message objects. Unfortunately this is a bit
+    # order-dependent, and so it's still possible that importing code
+    # from another module such as through the autodoc features, or
+    # even through the plugin scanner, will turn lazy evaluation back
+    # on.
+    oslo_i18n.enable_lazy(False)
     app.add_directive('show-options', ShowOptionsDirective)
     app.add_domain(ConfigDomain)
