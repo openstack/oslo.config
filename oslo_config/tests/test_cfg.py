@@ -2986,6 +2986,14 @@ class OverridesTestCase(BaseTestCase):
         self.conf.clear_override('foo')
         self.assertIsNone(self.conf.foo)
 
+    def test_enforce_type_List_override(self):
+        self.conf.register_opt(cfg.ListOpt('foo'))
+        self.conf.set_override('foo', ['aa', 'bb'], enforce_type=True)
+        self.conf([])
+        self.assertEqual(['aa', 'bb'], self.conf.foo)
+        self.conf.clear_override('foo')
+        self.assertIsNone(self.conf.foo)
+
 
 class ResetAndClearTestCase(BaseTestCase):
 
