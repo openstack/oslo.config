@@ -567,7 +567,8 @@ def find_config_files(project=None, prog=None, extension='.conf'):
     """Return a list of default configuration files.
 
     :param project: an optional project name
-    :param prog: the program name, defaulting to the basename of sys.argv[0]
+    :param prog: the program name, defaulting to the basename of
+        sys.argv[0], without extension .py
     :param extension: the type of the config file
 
     We default to two config files: [${project}.conf, ${prog}.conf]
@@ -590,6 +591,8 @@ def find_config_files(project=None, prog=None, extension='.conf'):
     """
     if prog is None:
         prog = os.path.basename(sys.argv[0])
+        if prog.endswith(".py"):
+            prog = prog[:-3]
 
     cfg_dirs = _get_config_dirs(project)
 
@@ -2096,6 +2099,8 @@ class ConfigOpts(collections.Mapping):
 
         if prog is None:
             prog = os.path.basename(sys.argv[0])
+            if prog.endswith(".py"):
+                prog = prog[:-3]
 
         if default_config_files is None:
             default_config_files = find_config_files(project, prog)
@@ -2182,7 +2187,8 @@ class ConfigOpts(collections.Mapping):
 
         :param args: command line arguments (defaults to sys.argv[1:])
         :param project: the toplevel project name, used to locate config files
-        :param prog: the name of the program (defaults to sys.argv[0] basename)
+        :param prog: the name of the program (defaults to sys.argv[0]
+            basename, without extension .py)
         :param version: the program version (for --version)
         :param usage: a usage string (%prog will be expanded)
         :param default_config_files: config files to use by default
