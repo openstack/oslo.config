@@ -1219,4 +1219,50 @@ bars = <None>
         self.assertEqual(expected, actual)
 
 
+class AdvancedOptionsTestCase(base.BaseTestCase):
+
+    opts = [cfg.StrOpt('foo', help='foo option', default='fred'),
+            cfg.StrOpt('bar', help='bar option', advanced=True),
+            cfg.StrOpt('foo_bar', help='foobar'),
+            cfg.BoolOpt('bars', help='bars foo', default=True, advanced=True)]
+
+    def test_advanced_option_order_single_ns(self):
+
+        config = [("namespace1", [
+                   ("alpha", self.opts)])]
+        groups = generator._get_groups(config)
+
+        fd, tmp_file = tempfile.mkstemp()
+        with open(tmp_file, 'w+') as f:
+            formatter = generator._OptFormatter(output_file=f)
+            generator._output_opts(formatter, 'alpha', groups.pop('alpha'))
+        expected = '''[alpha]
+
+#
+# From namespace1
+#
+
+# foo option (string value)
+#foo = fred
+
+# foobar (string value)
+#foo_bar = <None>
+
+# bar option (string value)
+# Advanced Option: intended for advanced users and not used
+# by the majority of users, and might have a significant
+# effect on stability and/or performance.
+#bar = <None>
+
+# bars foo (boolean value)
+# Advanced Option: intended for advanced users and not used
+# by the majority of users, and might have a significant
+# effect on stability and/or performance.
+#bars = true
+'''
+        with open(tmp_file, 'r') as f:
+            actual = f.read()
+        self.assertEqual(expected, actual)
+
+
 GeneratorTestCase.generate_scenarios()

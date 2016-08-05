@@ -259,6 +259,13 @@ class _OptFormatter(object):
                 lines.extend(
                     self._format_help('Reason: ' + opt.deprecated_reason))
 
+        if opt.advanced:
+            lines.append(
+                '# Advanced Option: intended for advanced users and not used\n'
+                '# by the majority of users, and might have a significant\n'
+                '# effect on stability and/or performance.\n'
+            )
+
         if hasattr(opt.type, 'format_defaults'):
             defaults = opt.type.format_defaults(opt.default,
                                                 opt.sample_default)
@@ -389,7 +396,7 @@ def _output_opts(f, group, group_data, minimal=False):
     for (namespace, opts) in sorted(group_data['namespaces'],
                                     key=operator.itemgetter(0)):
         f.write('\n#\n# From %s\n#\n' % namespace)
-        for opt in opts:
+        for opt in sorted(opts, key=operator.attrgetter('advanced')):
             try:
                 if minimal and not opt.required:
                     pass

@@ -358,6 +358,43 @@ command line arguments using the SubCommandOpt class:
     >>> conf.action.name, conf.action.id
     ('list', '10')
 
+Advanced Option
+---------------
+
+Use if you need to label an option as advanced in sample files, indicating the
+option is not normally used by the majority of users and might have a
+significant effect on stability and/or performance::
+
+    from oslo_config import cfg
+
+    opts = [
+        cfg.StrOpt('option1', default='default_value',
+                    advanced=True, help='This is help '
+                    'text.'),
+        cfg.PortOpt('option2', default='default_value',
+                     help='This is help text.'),
+    ]
+
+    CONF = cfg.CONF
+    CONF.register_opts(opts)
+
+This will result in the option being pushed to the bottom of the
+namespace and labeled as advanced in the sample files, with a notation
+about possible effects::
+
+    [DEFAULT]
+    ...
+    # This is help text. (string value)
+    # option2 = default_value
+    ...
+    <pushed to bottom of section>
+    ...
+    # This is help text. (string value)
+    # Advanced Option: intended for advanced users and not used
+    # by the majority of users, and might have a significant
+    # effect on stability and/or performance.
+    # option1 = default_value
+
 """
 
 import argparse
@@ -666,6 +703,8 @@ class Opt(object):
                              strings are encouraged. Silently ignored if
                              deprecated_for_removal is False
     :param mutable: True if this option may be reloaded
+    :param advanced: a bool True/False value if this option has advanced usage
+                             and is not normally used by the majority of users
 
     An Opt object has no public methods, but has a number of public properties:
 
@@ -708,6 +747,10 @@ class Opt(object):
 
         a string explaining how the option's value is used
 
+    .. py:attribute:: advanced
+
+        in sample files, a bool value indicating the option is advanced
+
     .. versionchanged:: 1.2
        Added *deprecated_opts* parameter.
 
@@ -728,6 +771,9 @@ class Opt(object):
 
     .. versionchanged:: 3.12
        Added *deprecated_since* parameter.
+
+    .. versionchanged:: 3.15
+       Added *advanced* parameter and attribute.
     """
     multi = False
 
@@ -737,7 +783,7 @@ class Opt(object):
                  deprecated_name=None, deprecated_group=None,
                  deprecated_opts=None, sample_default=None,
                  deprecated_for_removal=False, deprecated_reason=None,
-                 deprecated_since=None, mutable=False):
+                 deprecated_since=None, mutable=False, advanced=False):
         if name.startswith('_'):
             raise ValueError('illegal name %s with prefix _' % (name,))
         self.name = name
@@ -775,6 +821,7 @@ class Opt(object):
         self._check_default()
 
         self.mutable = mutable
+        self.advanced = advanced
 
     def _default_is_ref(self):
         """Check if default is a reference to another var."""
