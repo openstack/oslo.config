@@ -27,6 +27,7 @@ import abc
 import netaddr
 import rfc3986
 import six
+from six.moves import range as compat_range
 
 
 @six.add_metaclass(abc.ABCMeta)
@@ -469,6 +470,62 @@ class List(ConfigType):
         if isinstance(value, six.string_types):
             return value
         return ','.join(value)
+
+
+class Range(ConfigType):
+
+    """Range type.
+
+    Represents a range of integers. A range is identified by an integer both
+    sides of a '-' character. Negatives are allowed. A single number is also a
+    valid range.
+
+    :param min: Optional check that lower bound is greater than or equal to
+                min.
+    :param max: Optional check that upper bound is less than or equal to max.
+    :param inclusive: True if the right bound is to be included in the range.
+    :param type_name: Type name to be used in the sample config file.
+
+    .. versionadded:: 3.16
+    """
+
+    def __init__(self, min=None, max=None, inclusive=True,
+                 type_name='range value'):
+        super(Range, self).__init__(type_name)
+        self.min = min
+        self.max = max
+        self.inclusive = inclusive
+
+    def __call__(self, value):
+        value = str(value)
+        num = "0|-?[1-9][0-9]*"
+        m = re.match("^(%s)(?:-(%s))?$" % (num, num), value)
+        if not m:
+            raise ValueError('Invalid Range: %s' % value)
+        left = int(m.group(1))
+        right = int(left if m.group(2) is None else m.group(2))
+
+        if left < right:
+            left = Integer(min=self.min)(left)
+            right = Integer(max=self.max)(right)
+            step = 1
+        else:
+            left = Integer(max=self.max)(left)
+            right = Integer(min=self.min)(right)
+            step = -1
+        if self.inclusive:
+            right += step
+        return compat_range(left, right, step)
+
+    def __eq__(self, other):
+        return (
+            (self.__class__ == other.__class__) and
+            (self.min == other.min) and
+            (self.max == other.max)
+        )
+
+    def _formatter(self, value):
+        return value
 
 
 class Dict(ConfigType):
