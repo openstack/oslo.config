@@ -996,7 +996,8 @@ class ConfigFileOptsTestCase(BaseTestCase):
                    '--config-file', paths[1]])
 
         self.assertTrue(hasattr(self.conf, 'newfoo'))
-        self.assertFalse(hasattr(self.conf, 'oldfoo'))
+        # TODO(mtreinish): Add a check for the log message
+        self.assertTrue(hasattr(self.conf, 'oldfoo'))
         self.assertEqual('last', self.conf.newfoo)
 
     def test_conf_file_str_use_dname(self):
@@ -2435,7 +2436,8 @@ class OptNameSeparatorTestCast(BaseTestCase):
                                           deprecated_name=self.opt_name))
 
         self.assertTrue(hasattr(self.conf, 'foobar'))
-        self.assertFalse(hasattr(self.conf, self.opt_dest))
+        # TODO(mtreinish): Add a check on the log message
+        self.assertTrue(hasattr(self.conf, self.opt_dest))
         self.assertFalse(hasattr(self.conf, self.broken_opt_dest))
         self.assertIn('foobar', self.conf)
         self.assertNotIn(self.opt_dest, self.conf)
@@ -2471,7 +2473,8 @@ class OptNameSeparatorTestCast(BaseTestCase):
                                           deprecated_opts=oldopts))
 
         self.assertTrue(hasattr(self.conf, 'foobar'))
-        self.assertFalse(hasattr(self.conf, self.opt_dest))
+        # TODO(mtreinish): Add check for the log message
+        self.assertTrue(hasattr(self.conf, self.opt_dest))
         self.assertFalse(hasattr(self.conf, self.broken_opt_dest))
         self.assertIn('foobar', self.conf)
         self.assertNotIn(self.opt_dest, self.conf)
