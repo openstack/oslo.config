@@ -687,6 +687,32 @@ class IPv6AddressTypeTests(IPAddressTypeTests):
         self.assertInvalid('192.168.0.1')
 
 
+class HostAddressTypeTests(TypeTestHelper, unittest.TestCase):
+    type = types.HostAddress()
+
+    def test_invalid_host_addresses(self):
+        self.assertInvalid('-1')
+        self.assertInvalid('_foo')
+        self.assertInvalid('3.14')
+        self.assertInvalid('10.0')
+        self.assertInvalid('host..name')
+        self.assertInvalid('org.10')
+        self.assertInvalid('0.0.00')
+
+    def test_valid_host_addresses(self):
+        self.assertConvertedValue('foo.bar', 'foo.bar')
+        self.assertConvertedValue('192.168.0.1', '192.168.0.1')
+        self.assertConvertedValue('abcd:ef::1', 'abcd:ef::1')
+        self.assertConvertedValue('home-site-here.org.com',
+                                  'home-site-here.org.com')
+        self.assertConvertedValue('3com.com', '3com.com')
+        self.assertConvertedValue('10.org', '10.org')
+        self.assertConvertedValue('cell1.nova.site1', 'cell1.nova.site1')
+        self.assertConvertedValue('ab-c.com', 'ab-c.com')
+        self.assertConvertedValue('abc.com-org', 'abc.com-org')
+        self.assertConvertedValue('abc.0-0', 'abc.0-0')
+
+
 class HostnameTypeTests(TypeTestHelper, unittest.TestCase):
     type = types.Hostname()
 
@@ -726,6 +752,12 @@ class HostnameTypeTests(TypeTestHelper, unittest.TestCase):
         self.assertInvalid(".host.name.com")
         self.assertInvalid("no spaces")
 
+    def test_invalid_hostnames_with_numeric_characters(self):
+        self.assertInvalid("10.0.0.0")
+        self.assertInvalid("3.14")
+        self.assertInvalid("org.10")
+        self.assertInvalid('0.0.00')
+
     def test_no_start_end_hyphens(self):
         self.assertInvalid("-host.com")
         self.assertInvalid("-hostname.com-")
@@ -739,9 +771,13 @@ class HostnameTypeTests(TypeTestHelper, unittest.TestCase):
         self.assertConvertedEqual('cell1.nova.site1')
         self.assertConvertedEqual('site01001')
         self.assertConvertedEqual('home-site-here.org.com')
-        self.assertConvertedEqual('192.168.0.1')
-        self.assertConvertedEqual('1.1.1')
         self.assertConvertedEqual('localhost')
+        self.assertConvertedEqual('3com.com')
+        self.assertConvertedEqual('10.org')
+        self.assertConvertedEqual('10ab.10ab')
+        self.assertConvertedEqual('ab-c.com')
+        self.assertConvertedEqual('abc.com-org')
+        self.assertConvertedEqual('abc.0-0')
 
     def test_max_segment_size(self):
         self.assertConvertedEqual('host.%s.com' % ('x' * 63))
