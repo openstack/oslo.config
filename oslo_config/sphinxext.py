@@ -73,6 +73,8 @@ _TYPE_DESCRIPTIONS = {
     cfg.ListOpt: 'list',
     cfg.DictOpt: 'dict',
     cfg.MultiStrOpt: 'multi-valued',
+    cfg.IPOpt: 'ip address',
+    cfg.PortOpt: 'port number',
     cfg._ConfigFileOpt: 'list of filenames',
     cfg._ConfigDirOpt: 'list of directory names',
 }
