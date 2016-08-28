@@ -75,6 +75,8 @@ _TYPE_DESCRIPTIONS = {
     cfg.MultiStrOpt: 'multi-valued',
     cfg.IPOpt: 'ip address',
     cfg.PortOpt: 'port number',
+    cfg.HostnameOpt: 'hostname',
+    cfg.URIOpt: 'URI',
     cfg._ConfigFileOpt: 'list of filenames',
     cfg._ConfigDirOpt: 'list of directory names',
 }
