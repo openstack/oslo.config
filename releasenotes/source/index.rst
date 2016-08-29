@@ -8,3 +8,4 @@
     unreleased
     liberty
     mitaka
+    newton
