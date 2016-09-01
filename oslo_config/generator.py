@@ -39,17 +39,27 @@ import stevedore.named  # noqa
 LOG = logging.getLogger(__name__)
 
 _generator_opts = [
-    cfg.StrOpt('output-file',
-               help='Path of the file to write to. Defaults to stdout.'),
-    cfg.IntOpt('wrap-width',
-               default=70,
-               help='The maximum length of help lines.'),
-    cfg.MultiStrOpt('namespace',
-                    required=True,
-                    help='Option namespace under "oslo.config.opts" in which '
-                         'to query for options.'),
-    cfg.BoolOpt('minimal', default=False,
-                help='Generate a minimal required configuration.'),
+    cfg.StrOpt(
+        'output-file',
+        help='Path of the file to write to. Defaults to stdout.'),
+    cfg.IntOpt(
+        'wrap-width',
+        default=70,
+        help='The maximum length of help lines.'),
+    cfg.MultiStrOpt(
+        'namespace',
+        required=True,
+        help='Option namespace under "oslo.config.opts" in which to query '
+        'for options.'),
+    cfg.BoolOpt(
+        'minimal',
+        default=False,
+        help='Generate a minimal required configuration.'),
+    cfg.BoolOpt(
+        'summarize',
+        default=False,
+        help='Only output summaries of help text to config files. Retain '
+        'longer help text for Sphinx documents.'),
 ]
 
 
@@ -173,6 +183,7 @@ class _OptFormatter(object):
         """Format the description of a group header to the output file
 
         :param group_or_groupname: a cfg.OptGroup instance or a name of group
+        :returns: a formatted group description string
         """
         if isinstance(group_or_groupname, cfg.OptGroup):
             group = group_or_groupname
@@ -184,10 +195,14 @@ class _OptFormatter(object):
             lines = ['[%s]\n' % groupname]
         self.writelines(lines)
 
-    def format(self, opt, group_name, minimal=False):
+    def format(self, opt, group_name, minimal=False, summarize=False):
         """Format a description of an option to the output file.
 
         :param opt: a cfg.Opt instance
+        :param group_name: name of the group to which the opt is assigned
+        :param minimal: enable option by default, marking it as required
+        :param summarize: output a summarized description of the opt
+        :returns: a formatted opt description string
         """
         if not opt.help:
             LOG.warning(_LW('"%s" is missing a help string'), opt.dest)
@@ -199,8 +214,19 @@ class _OptFormatter(object):
             opt_prefix = 'DEPRECATED: '
 
         if opt.help:
+            # an empty line signifies a new paragraph. We only want the
+            # summary line
+            if summarize:
+                _split = opt.help.split('\n\n')
+                opt_help = _split[0].rstrip(':').rstrip('.')
+                if len(_split) > 1:
+                    opt_help += '. For more information, refer to the '
+                    opt_help += 'documentation.'
+            else:
+                opt_help = opt.help
+
             help_text = u'%s%s (%s)' % (opt_prefix,
-                                        opt.help,
+                                        opt_help,
                                         opt_type)
         else:
             help_text = u'(%s)' % opt_type
@@ -392,7 +418,7 @@ def on_load_failure_callback(*args, **kwargs):
     raise
 
 
-def _output_opts(f, group, group_data, minimal=False):
+def _output_opts(f, group, group_data, minimal=False, summarize=False):
     f.format_group(group_data['object'] or group)
     for (namespace, opts) in sorted(group_data['namespaces'],
                                     key=operator.itemgetter(0)):
@@ -403,7 +429,7 @@ def _output_opts(f, group, group_data, minimal=False):
                     pass
                 else:
                     f.write('\n')
-                    f.format(opt, group, minimal)
+                    f.format(opt, group, minimal, summarize)
             except Exception as err:
                 f.write('# Warning: Failed to format sample for %s\n' %
                         (opt.dest,))
@@ -462,12 +488,14 @@ def generate(conf):
     groups = _get_groups(_list_opts(conf.namespace))
 
     # Output the "DEFAULT" section as the very first section
-    _output_opts(formatter, 'DEFAULT', groups.pop('DEFAULT'), conf.minimal)
+    _output_opts(formatter, 'DEFAULT', groups.pop('DEFAULT'), conf.minimal,
+                 conf.summarize)
 
     # output all other config sections with groups in alphabetical order
     for group, group_data in sorted(groups.items()):
         formatter.write('\n\n')
-        _output_opts(formatter, group, group_data, conf.minimal)
+        _output_opts(formatter, group, group_data, conf.minimal,
+                     conf.summarize)
 
 
 def main(args=None):

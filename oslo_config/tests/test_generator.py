@@ -1200,8 +1200,10 @@ class RequiredOptionTestCase(base.BaseTestCase):
         fd, tmp_file = tempfile.mkstemp()
         with open(tmp_file, 'w+') as f:
             formatter = generator._OptFormatter(output_file=f)
-            generator._output_opts(formatter, 'alpha',
-                                   groups.pop('alpha'), True)
+            generator._output_opts(formatter,
+                                   'alpha',
+                                   groups.pop('alpha'),
+                                   minimal=True)
         expected = '''[alpha]
 
 #
@@ -1213,6 +1215,69 @@ bar = <None>
 
 # bars foo (string value)
 bars = <None>
+'''
+        with open(tmp_file, 'r') as f:
+            actual = f.read()
+        self.assertEqual(expected, actual)
+
+
+class SummarizedOptionsTestCase(base.BaseTestCase):
+    """Validate 'summarize' config option.
+
+    The 'summarize' switch ensures only summaries of each configuration
+    option are output.
+    """
+
+    opts = [
+        cfg.StrOpt(
+            'foo',
+            default='fred',
+            help="""This is the summary line for a config option.
+
+I can provide a lot more detail here, but I may not want to bloat my
+config file. In this scenario, I can use the 'summarize' config option
+to ensure only a summary of the option is output to the config file.
+However, the Sphinx-generated documentation, hosted online, remains
+unchanged.
+
+Hopefully this works.
+"""),
+        cfg.StrOpt(
+            'bar',
+            required=True,
+            help="""This is a less carefully formatted configuration
+option, where the author has not broken their description into a brief
+summary line and larger description. Watch this person's commit
+messages!""")]
+
+    def test_summarized_option_order_single_ns(self):
+
+        config = [('namespace1', [('alpha', self.opts)])]
+        groups = generator._get_groups(config)
+
+        fd, tmp_file = tempfile.mkstemp()
+        with open(tmp_file, 'w+') as f:
+            formatter = generator._OptFormatter(output_file=f)
+            generator._output_opts(formatter,
+                                   'alpha',
+                                   groups.pop('alpha'),
+                                   summarize=True)
+        expected = '''[alpha]
+
+#
+# From namespace1
+#
+
+# This is the summary line for a config option. For more information,
+# refer to the documentation. (string value)
+#foo = fred
+
+# This is a less carefully formatted configuration
+# option, where the author has not broken their description into a
+# brief
+# summary line and larger description. Watch this person's commit
+# messages! (string value)
+#bar = <None>
 '''
         with open(tmp_file, 'r') as f:
             actual = f.read()
