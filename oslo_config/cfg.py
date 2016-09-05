@@ -409,6 +409,7 @@ import os
 import string
 import sys
 
+import debtcollector
 from debtcollector import removals
 import six
 from six import moves
@@ -2479,11 +2480,8 @@ class ConfigOpts(collections.Mapping):
         :raises: NoSuchOptError, NoSuchGroupError
         """
         opt_info = self._get_opt_info(name, group)
-        if enforce_type and override is not None:
-            opt_info['override'] = self._convert_value(override,
-                                                       opt_info['opt'])
-        else:
-            opt_info['override'] = override
+        opt_info['override'] = self._get_enforced_type_value(
+            opt_info['opt'], override, enforce_type)
 
     @__clear_cache
     def set_default(self, name, default, group=None, enforce_type=False):
@@ -2501,11 +2499,28 @@ class ConfigOpts(collections.Mapping):
         :raises: NoSuchOptError, NoSuchGroupError
         """
         opt_info = self._get_opt_info(name, group)
-        if enforce_type and default is not None:
-            opt_info['default'] = self._convert_value(default,
-                                                      opt_info['opt'])
+        opt_info['default'] = self._get_enforced_type_value(
+            opt_info['opt'], default, enforce_type)
+
+    def _get_enforced_type_value(self, opt, value, enforce_type):
+        if value is None:
+            return None
+        try:
+            converted = self._convert_value(value, opt)
+        except (ValueError, TypeError):
+            if enforce_type:
+                raise
+            debtcollector.deprecate(
+                "The argument enforce_type is changing its "
+                "default value to True and then will be removed completely, "
+                "please fix the invalid %s value '%s' for option '%s'."
+                % (repr(opt.type), value, opt.name),
+                version=4.0
+            )
+        if enforce_type:
+            return converted
         else:
-            opt_info['default'] = default
+            return value
 
     @__clear_cache
     def clear_override(self, name, group=None):
