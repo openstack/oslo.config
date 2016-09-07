@@ -2909,7 +2909,8 @@ class ConfigDirTestCase(BaseTestCase):
         self.assertEqual('whistle-11', self.conf.snafu.bell)
 
     def test_config_dir_doesnt_exist(self):
-        tmpdir = '/tmp/foo'
+        tmpdir = tempfile.mkdtemp()
+        os.rmdir(tmpdir)
 
         self.assertRaises(cfg.ConfigDirNotFoundError,
                           self.conf,
