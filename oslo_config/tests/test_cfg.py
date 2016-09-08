@@ -3086,6 +3086,15 @@ class OverridesTestCase(BaseTestCase):
         self.conf.clear_override('foo')
         self.assertIsNone(self.conf.foo)
 
+    def test_no_enforce_type_str_override(self):
+        self.conf.register_opt(cfg.StrOpt('foo'))
+        self.conf.set_override('foo', True, enforce_type=False)
+        self.conf([])
+        # Ensure we don't change the provided type by mistake
+        self.assertEqual(True, self.conf.foo)
+        self.conf.clear_override('foo')
+        self.assertIsNone(self.conf.foo)
+
     @mock.patch('debtcollector.deprecate')
     def test_deprecation_wrong_type_override(self, deprecate):
         self.conf.register_opt(cfg.IntOpt('foo'))
