@@ -63,6 +63,10 @@ class StringTypeTests(TypeTestHelper, unittest.TestCase):
         self.type_instance = types.String(choices=['foo', 'bar'])
         self.assertConvertedValue('foo', 'foo')
 
+    def test_listed_value_tuple(self):
+        self.type_instance = types.String(choices=('foo', 'bar'))
+        self.assertConvertedValue('foo', 'foo')
+
     def test_unlisted_value(self):
         self.type_instance = types.String(choices=['foo', 'bar'])
         self.assertInvalid('baz')
@@ -92,6 +96,10 @@ class StringTypeTests(TypeTestHelper, unittest.TestCase):
         t = types.String(choices=['foo', 'bar'])
         self.assertEqual('String(choices=[\'foo\', \'bar\'])', repr(t))
 
+    def test_repr_with_choices_tuple(self):
+        t = types.String(choices=('foo', 'bar'))
+        self.assertEqual('String(choices=(\'foo\', \'bar\'))', repr(t))
+
     def test_equal(self):
         self.assertTrue(types.String() == types.String())
 
@@ -107,7 +115,9 @@ class StringTypeTests(TypeTestHelper, unittest.TestCase):
     def test_not_equal_with_different_choices(self):
         t1 = types.String(choices=['foo', 'bar'])
         t2 = types.String(choices=['foo', 'baz'])
+        t3 = types.String(choices=('foo', 'baz'))
         self.assertFalse(t1 == t2)
+        self.assertFalse(t1 == t3)
 
     def test_equal_with_equal_quote_falgs(self):
         t1 = types.String(quotes=True)
@@ -270,6 +280,10 @@ class IntegerTypeTests(TypeTestHelper, unittest.TestCase):
         t = types.Integer(choices=[80, 457])
         self.assertEqual('Integer(choices=[80, 457])', repr(t))
 
+    def test_repr_with_choices_tuple(self):
+        t = types.Integer(choices=(80, 457))
+        self.assertEqual('Integer(choices=(80, 457))', repr(t))
+
     def test_equal(self):
         self.assertTrue(types.Integer() == types.Integer())
 
@@ -287,7 +301,9 @@ class IntegerTypeTests(TypeTestHelper, unittest.TestCase):
     def test_equal_with_same_choices(self):
         t1 = types.Integer(choices=[80, 457])
         t2 = types.Integer(choices=[457, 80])
+        t3 = types.Integer(choices=(457, 80))
         self.assertTrue(t1 == t2)
+        self.assertTrue(t1 == t3)
 
     def test_not_equal(self):
         self.assertFalse(types.Integer(min=123) == types.Integer(min=456))
@@ -802,6 +818,10 @@ class PortTypeTests(TypeTestHelper, unittest.TestCase):
         t = types.Port(choices=[80, 457])
         self.assertEqual('Port(choices=[80, 457])', repr(t))
 
+    def test_repr_with_choices_tuple(self):
+        t = types.Port(choices=(80, 457))
+        self.assertEqual('Port(choices=(80, 457))', repr(t))
+
     def test_choices(self):
         t = types.Port(choices=[80, 457])
         self.assertRaises(ValueError, t, 1)
@@ -830,7 +850,9 @@ class PortTypeTests(TypeTestHelper, unittest.TestCase):
     def test_equal_with_same_choices(self):
         t1 = types.Port(choices=[80, 457])
         t2 = types.Port(choices=[457, 80])
+        t3 = types.Port(choices=(457, 80))
         self.assertTrue(t1 == t2)
+        self.assertTrue(t1 == t3)
 
     def test_not_equal(self):
         self.assertFalse(types.Port(min=123) == types.Port(min=456))
