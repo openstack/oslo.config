@@ -157,8 +157,8 @@ class String(ConfigType):
 
     def __repr__(self):
         details = []
-        if self.choices:
-            details.append("choices=%r" % self.choices)
+        if self.choices is not None:
+            details.append("choices={!r}".format(self.choices))
         if self.regex:
             details.append("regex=%r" % self.regex.pattern)
         if details:
@@ -297,7 +297,7 @@ class Number(ConfigType):
     def __repr__(self):
         props = []
         if self.choices is not None:
-            props.append("choices=%r" % (self.choices,))
+            props.append("choices={!r}".format(self.choices))
         else:
             if self.min is not None:
                 props.append('min=%g' % self.min)
