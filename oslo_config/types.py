@@ -757,19 +757,23 @@ class URI(ConfigType):
 
     Represents URI. Value will be validated as RFC 3986.
 
-    :param type_name: Type name to be used in the sample config file.
     :param max_length: Optional integer. If a positive value is specified,
                        a maximum length of an option value must be less than
                        or equal to this parameter. Otherwise no length check
                        will be done.
+    :param schemes: List of valid schemes.
+    :param type_name: Type name to be used in the sample config file.
 
     .. versionchanged:: 3.14
        Added *max_length* parameter.
+    .. versionchanged:: 3.18
+       Added *schemes* parameter.
     """
 
-    def __init__(self, max_length=None, type_name='uri value'):
+    def __init__(self, max_length=None, schemes=None, type_name='uri value'):
         super(URI, self).__init__(type_name=type_name)
         self.max_length = max_length
+        self.schemes = schemes
 
     def __call__(self, value):
         if not rfc3986.is_valid_uri(value, require_scheme=True,
@@ -779,6 +783,13 @@ class URI(ConfigType):
         if self.max_length is not None and len(value) > self.max_length:
             raise ValueError("Value '%s' exceeds maximum length %d" %
                              (value, self.max_length))
+
+        if self.schemes:
+            scheme = rfc3986.uri_reference(value).scheme
+            if scheme not in self.schemes:
+                raise ValueError("URI scheme '%s' not in %s" %
+                                 (scheme, self.schemes))
+
         self.value = value
         return value
 
