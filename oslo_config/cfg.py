@@ -52,9 +52,9 @@ Type                                  Option
 :class:`oslo_config.types.String`     - :class:`oslo_config.cfg.StrOpt`
                                       - :class:`oslo_config.cfg.SubCommandOpt`
 :class:`oslo_config.types.Boolean`    :class:`oslo_config.cfg.BoolOpt`
-:class:`oslo_config.types.Integer`    - :class:`oslo_config.cfg.IntOpt`
-                                      - :class:`oslo_config.cfg.PortOpt`
+:class:`oslo_config.types.Integer`    :class:`oslo_config.cfg.IntOpt`
 :class:`oslo_config.types.Float`      :class:`oslo_config.cfg.FloatOpt`
+:class:`oslo_config.types.Port`       :class:`oslo_config.cfg.PortOpt`
 :class:`oslo_config.types.List`       :class:`oslo_config.cfg.ListOpt`
 :class:`oslo_config.types.Dict`       :class:`oslo_config.cfg.DictOpt`
 :class:`oslo_config.types.IPAddress`  :class:`oslo_config.cfg.IPOpt`
