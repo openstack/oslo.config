@@ -1370,17 +1370,19 @@ class URIOpt(Opt):
 
     :param max_length: If positive integer, the value must be less than or
                        equal to this parameter.
+    :param schemes: list of valid URI schemes
 
     .. versionadded:: 3.12
 
     .. versionchanged:: 3.14
        Added *max_length* parameter
+    .. versionchanged:: 3.18
+       Added *schemes* parameter
     """
 
-    def __init__(self, name, max_length=None, **kwargs):
-        super(URIOpt, self).__init__(name,
-                                     type=types.URI(max_length=max_length),
-                                     **kwargs)
+    def __init__(self, name, max_length=None, schemes=None, **kwargs):
+        type = types.URI(max_length=max_length, schemes=schemes)
+        super(URIOpt, self).__init__(name, type=type, **kwargs)
 
 
 class MultiOpt(Opt):

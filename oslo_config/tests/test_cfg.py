@@ -4590,6 +4590,23 @@ class URIOptMaxLengthTestCase(BaseTestCase):
                           ['--foo', 'http://www.example.com/versions'])
 
 
+class URIOptSchemesTestCase(BaseTestCase):
+
+    def test_uriopt_schemes_good(self):
+        self.conf.register_cli_opt(cfg.URIOpt('foo', schemes=['http', 'ftp']))
+        self.conf(['--foo', 'http://www.example.com'])
+        self.assertEqual('http://www.example.com', self.conf.foo)
+        self.conf(['--foo', 'ftp://example.com/archives'])
+        self.assertEqual('ftp://example.com/archives', self.conf.foo)
+
+    def test_uriopt_schemes_bad(self):
+        self.conf.register_cli_opt(cfg.URIOpt('foo', schemes=['http', 'ftp']))
+        self.assertRaises(SystemExit, self.conf,
+                          ['--foo', 'https://www.example.com'])
+        self.assertRaises(SystemExit, self.conf,
+                          ['--foo', 'file://www.example.com'])
+
+
 class PrintHelpTestCase(base.BaseTestCase):
 
     def test_print_help_without_init(self):
