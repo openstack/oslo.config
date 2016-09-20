@@ -1370,7 +1370,7 @@ class URIOpt(Opt):
 
     :param max_length: If positive integer, the value must be less than or
                        equal to this parameter.
-    :param schemes: list of valid URI schemes
+    :param schemes: list of valid URI schemes, e.g. 'https', 'ftp', 'git'
 
     .. versionadded:: 3.12
 
