@@ -161,6 +161,8 @@ for example glance-api.conf and glance-common.conf::
       [DEFAULT]
       bind_host = 0.0.0.0
 
+Lines in a configuration file should not start with whitespace. A
+configuration file also supports comments, which must start with '#' or ';'.
 Option values in config files and those on the command line are parsed
 in order. The same option (includes deprecated option name and current
 option name) can appear many times, in config files or on the command line.
