@@ -2127,8 +2127,9 @@ class _CachedArgumentParser(argparse.ArgumentParser):
                 try:
                     container.add_argument(*argument['args'],
                                            **argument['kwargs'])
-                except argparse.ArgumentError as e:
-                    raise DuplicateOptError(e)
+                except argparse.ArgumentError:
+                    options = ','.join(argument['args'])
+                    raise DuplicateOptError(options)
         self._args_cache = {}
 
     def parse_args(self, args=None, namespace=None):
