@@ -131,8 +131,8 @@ class UsageTestCase(BaseTestCase):
         f = moves.StringIO()
         self.conf([])
         self.conf.print_usage(file=f)
-        self.assertTrue('usage: test FOO BAR' in f.getvalue())
-        self.assertTrue('optional:' not in f.getvalue())
+        self.assertIn('usage: test FOO BAR', f.getvalue())
+        self.assertNotIn('optional:', f.getvalue())
 
 
 class HelpTestCase(BaseTestCase):
@@ -141,9 +141,9 @@ class HelpTestCase(BaseTestCase):
         f = moves.StringIO()
         self.conf([])
         self.conf.print_help(file=f)
-        self.assertTrue('usage: test FOO BAR' in f.getvalue())
-        self.assertTrue('optional' in f.getvalue())
-        self.assertTrue('-h, --help' in f.getvalue())
+        self.assertIn('usage: test FOO BAR', f.getvalue())
+        self.assertIn('optional', f.getvalue())
+        self.assertIn('-h, --help', f.getvalue())
 
     def test_print_sorted_help(self):
         f = moves.StringIO()
@@ -557,10 +557,10 @@ class CliSpecialOptsTestCase(BaseTestCase):
     def test_help(self):
         self.useFixture(fixtures.MonkeyPatch('sys.stdout', moves.StringIO()))
         self.assertRaises(SystemExit, self.conf, ['--help'])
-        self.assertTrue('FOO BAR' in sys.stdout.getvalue())
-        self.assertTrue('--version' in sys.stdout.getvalue())
-        self.assertTrue('--help' in sys.stdout.getvalue())
-        self.assertTrue('--config-file' in sys.stdout.getvalue())
+        self.assertIn('FOO BAR', sys.stdout.getvalue())
+        self.assertIn('--version', sys.stdout.getvalue())
+        self.assertIn('--help', sys.stdout.getvalue())
+        self.assertIn('--config-file', sys.stdout.getvalue())
 
     def test_version(self):
         # In Python 3.4+, argparse prints the version on stdout; before 3.4, it
@@ -572,7 +572,7 @@ class CliSpecialOptsTestCase(BaseTestCase):
         self.useFixture(fixtures.MonkeyPatch("sys.%s" % stream_name,
                                              moves.StringIO()))
         self.assertRaises(SystemExit, self.conf, ['--version'])
-        self.assertTrue('1.0' in getattr(sys, stream_name).getvalue())
+        self.assertIn('1.0', getattr(sys, stream_name).getvalue())
 
     def test_config_file(self):
         paths = self.create_tempfiles([('1', '[DEFAULT]'),
@@ -2226,12 +2226,12 @@ class MappingInterfaceTestCase(BaseTestCase):
 
         self.conf(['--foo', 'bar'])
 
-        self.assertTrue('foo' in self.conf)
-        self.assertTrue('config_file' in self.conf)
+        self.assertIn('foo', self.conf)
+        self.assertIn('config_file', self.conf)
         self.assertEqual(len(self.conf), 3)
         self.assertEqual('bar', self.conf['foo'])
         self.assertEqual('bar', self.conf.get('foo'))
-        self.assertTrue('bar' in list(self.conf.values()))
+        self.assertIn('bar', list(self.conf.values()))
 
     def test_mapping_interface_with_group(self):
         self.conf.register_group(cfg.OptGroup('blaa'))
@@ -2239,12 +2239,12 @@ class MappingInterfaceTestCase(BaseTestCase):
 
         self.conf(['--blaa-foo', 'bar'])
 
-        self.assertTrue('blaa' in self.conf)
-        self.assertTrue('foo' in list(self.conf['blaa']))
+        self.assertIn('blaa', self.conf)
+        self.assertIn('foo', list(self.conf['blaa']))
         self.assertEqual(len(self.conf['blaa']), 1)
         self.assertEqual('bar', self.conf['blaa']['foo'])
         self.assertEqual('bar', self.conf['blaa'].get('foo'))
-        self.assertTrue('bar' in self.conf['blaa'].values())
+        self.assertIn('bar', self.conf['blaa'].values())
         self.assertEqual(self.conf['blaa'], self.conf.blaa)
 
 
@@ -3440,8 +3440,8 @@ class SadPathTestCase(BaseTestCase):
 
         self.assertRaises(SystemExit, self.conf, ['--foo'])
 
-        self.assertTrue('error' in sys.stderr.getvalue())
-        self.assertTrue('--foo' in sys.stderr.getvalue())
+        self.assertIn('error', sys.stderr.getvalue())
+        self.assertIn('--foo', sys.stderr.getvalue())
 
     def _do_test_bad_cli_value(self, opt_class):
         self.conf.register_cli_opt(opt_class('foo'))
@@ -3450,8 +3450,8 @@ class SadPathTestCase(BaseTestCase):
 
         self.assertRaises(SystemExit, self.conf, ['--foo', 'bar'])
 
-        self.assertTrue('foo' in sys.stderr.getvalue())
-        self.assertTrue('bar' in sys.stderr.getvalue())
+        self.assertIn('foo', sys.stderr.getvalue())
+        self.assertIn('bar', sys.stderr.getvalue())
 
     def test_bad_int_arg(self):
         self._do_test_bad_cli_value(cfg.IntOpt)
@@ -3690,8 +3690,8 @@ class ConfigParserTestCase(BaseTestCase):
         parser = cfg.ConfigParser(paths[0], sections)
         parser.parse()
 
-        self.assertTrue('DEFAULT' in sections)
-        self.assertTrue('BLAA' in sections)
+        self.assertIn('DEFAULT', sections)
+        self.assertIn('BLAA', sections)
         self.assertEqual(sections['DEFAULT']['foo'], ['bar'])
         self.assertEqual(sections['BLAA']['bar'], ['foo'])
 
@@ -3708,10 +3708,10 @@ class ConfigParserTestCase(BaseTestCase):
         parser._add_normalized(normalized)
         parser.parse()
 
-        self.assertTrue('DEFAULT' in sections)
-        self.assertTrue('DEFAULT' in normalized)
-        self.assertTrue('BLAA' in sections)
-        self.assertTrue('blaa' in normalized)
+        self.assertIn('DEFAULT', sections)
+        self.assertIn('DEFAULT', normalized)
+        self.assertIn('BLAA', sections)
+        self.assertIn('blaa', normalized)
         self.assertEqual(sections['DEFAULT']['foo'], ['bar'])
         self.assertEqual(normalized['DEFAULT']['foo'], ['bar'])
         self.assertEqual(sections['BLAA']['bar'], ['foo'])
@@ -3751,7 +3751,7 @@ class MultiConfigParserTestCase(BaseTestCase):
 
         self.assertEqual(read_ok, paths)
 
-        self.assertTrue('DEFAULT' in parser.parsed[0])
+        self.assertIn('DEFAULT', parser.parsed[0])
         self.assertEqual(parser.parsed[0]['DEFAULT']['foo'], ['bar'])
         self.assertEqual(parser.get([('DEFAULT', 'foo')]), ['bar'])
         self.assertEqual(parser.get([('DEFAULT', 'foo')], multi=True),
@@ -3764,7 +3764,7 @@ class MultiConfigParserTestCase(BaseTestCase):
                                      multi=True, normalized=True),
                          ['bar'])
 
-        self.assertTrue('BLAA' in parser.parsed[0])
+        self.assertIn('BLAA', parser.parsed[0])
         self.assertEqual(parser.parsed[0]['BLAA']['bar'], ['foo'])
         self.assertEqual(parser.get([('BLAA', 'bar')]), ['foo'])
         self.assertEqual(parser.get([('BLAA', 'bar')], multi=True),
@@ -3792,19 +3792,19 @@ class MultiConfigParserTestCase(BaseTestCase):
 
         self.assertEqual(read_ok, paths)
 
-        self.assertTrue('DEFAULT' in parser.parsed[0])
+        self.assertIn('DEFAULT', parser.parsed[0])
         self.assertEqual(parser.parsed[0]['DEFAULT']['foo'], ['barbar'])
-        self.assertTrue('DEFAULT' in parser.parsed[1])
+        self.assertIn('DEFAULT', parser.parsed[1])
         self.assertEqual(parser.parsed[1]['DEFAULT']['foo'], ['bar'])
         self.assertEqual(parser.get([('DEFAULT', 'foo')]), ['barbar'])
         self.assertEqual(parser.get([('DEFAULT', 'foo')], multi=True),
                          ['bar', 'barbar'])
 
-        self.assertTrue('BLAA' in parser.parsed[0])
-        self.assertTrue('bLAa' in parser.parsed[0])
+        self.assertIn('BLAA', parser.parsed[0])
+        self.assertIn('bLAa', parser.parsed[0])
         self.assertEqual(parser.parsed[0]['BLAA']['bar'], ['foofoo'])
         self.assertEqual(parser.parsed[0]['bLAa']['bar'], ['foofoofoo'])
-        self.assertTrue('BLAA' in parser.parsed[1])
+        self.assertIn('BLAA', parser.parsed[1])
         self.assertEqual(parser.parsed[1]['BLAA']['bar'], ['foo'])
         self.assertEqual(parser.get([('BLAA', 'bar')]), ['foofoo'])
         self.assertEqual(parser.get([('bLAa', 'bar')]), ['foofoofoo'])
@@ -3909,7 +3909,7 @@ class TildeExpansionTestCase(BaseTestCase):
         try:
             self.conf(['--config-file', os.path.join('~', tmpbase)])
         except cfg.ConfigFilesNotFoundError as cfnfe:
-            self.assertTrue(homedir in str(cfnfe))
+            self.assertIn(homedir, str(cfnfe))
 
         self.useFixture(fixtures.MonkeyPatch(
             'os.path.exists',
@@ -4033,7 +4033,7 @@ class SubCommandTestCase(BaseTestCase):
         self.conf.register_cli_opt(cfg.SubCommandOpt('cmd'))
         self.useFixture(fixtures.MonkeyPatch('sys.stderr', moves.StringIO()))
         self.assertRaises(SystemExit, self.conf, [])
-        self.assertTrue('error' in sys.stderr.getvalue())
+        self.assertIn('error', sys.stderr.getvalue())
 
     def test_sub_command_with_help(self):
         def add_parsers(subparsers):
@@ -4046,9 +4046,9 @@ class SubCommandTestCase(BaseTestCase):
                                                      handler=add_parsers))
         self.useFixture(fixtures.MonkeyPatch('sys.stdout', moves.StringIO()))
         self.assertRaises(SystemExit, self.conf, ['--help'])
-        self.assertTrue('foo foo' in sys.stdout.getvalue())
-        self.assertTrue('bar bar' in sys.stdout.getvalue())
-        self.assertTrue('blaa blaa' in sys.stdout.getvalue())
+        self.assertIn('foo foo', sys.stdout.getvalue())
+        self.assertIn('bar bar', sys.stdout.getvalue())
+        self.assertIn('blaa blaa', sys.stdout.getvalue())
 
     def test_sub_command_errors(self):
         def add_parsers(subparsers):
@@ -4067,7 +4067,7 @@ class SubCommandTestCase(BaseTestCase):
         self.conf.register_cli_opt(cfg.SubCommandOpt('cmd2'))
         self.useFixture(fixtures.MonkeyPatch('sys.stderr', moves.StringIO()))
         self.assertRaises(SystemExit, self.conf, [])
-        self.assertTrue('multiple' in sys.stderr.getvalue())
+        self.assertIn('multiple', sys.stderr.getvalue())
 
 
 class SetDefaultsTestCase(BaseTestCase):
