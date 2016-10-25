@@ -503,6 +503,10 @@ class ListTypeTests(TypeTestHelper, unittest.TestCase):
         self.assertConvertedValue(' foo bar ',
                                   ['foo bar'])
 
+    def test_tuple_of_values(self):
+        self.assertConvertedValue(('foo', 'bar'),
+                                  ['foo', 'bar'])
+
     def test_list_of_values(self):
         self.assertConvertedValue(' foo bar, baz ',
                                   ['foo bar',

@@ -440,23 +440,24 @@ class List(ConfigType):
         self.bounds = bounds
 
     def __call__(self, value):
-        if isinstance(value, list):
-            return value
+        if isinstance(value, (list, tuple)):
+            return list(value)
 
-        result = []
         s = value.strip()
-
         if self.bounds:
             if not s.startswith('['):
                 raise ValueError('Value should start with "["')
             if not s.endswith(']'):
                 raise ValueError('Value should end with "]"')
             s = s[1:-1]
+        if s:
+            values = s.split(',')
+        else:
+            values = []
+        if not values:
+            return []
 
-        if s == '':
-            return result
-
-        values = s.split(',')
+        result = []
         while values:
             value = values.pop(0)
             while True:
