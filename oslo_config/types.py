@@ -506,7 +506,7 @@ class Range(ConfigType):
     :param inclusive: True if the right bound is to be included in the range.
     :param type_name: Type name to be used in the sample config file.
 
-    .. versionadded:: 3.16
+    .. versionadded:: 3.18
     """
 
     def __init__(self, min=None, max=None, inclusive=True,
