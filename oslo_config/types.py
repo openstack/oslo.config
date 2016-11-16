@@ -441,7 +441,7 @@ class List(ConfigType):
 
     def __call__(self, value):
         if isinstance(value, (list, tuple)):
-            return list(value)
+            return list(six.moves.map(self.item_type, value))
 
         s = value.strip()
         if self.bounds:
