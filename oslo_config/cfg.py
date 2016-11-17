@@ -2218,8 +2218,8 @@ class ConfigOpts(collections.Mapping):
         self._cli_opts = collections.deque()
         self._validate_default_values = False
 
-    def _pre_setup(self, project, prog, version, usage, default_config_files,
-                   default_config_dirs):
+    def _pre_setup(self, project, prog, version, usage, description, epilog,
+                   default_config_files, default_config_dirs):
         """Initialize a ConfigCliParser object for option parsing."""
 
         if prog is None:
@@ -2233,7 +2233,8 @@ class ConfigOpts(collections.Mapping):
         if default_config_dirs is None:
             default_config_dirs = find_config_dirs(project, prog)
 
-        self._oparser = _CachedArgumentParser(prog=prog, usage=usage)
+        self._oparser = _CachedArgumentParser(
+            prog=prog, usage=usage, description=description, epilog=epilog)
 
         if version is not None:
             self._oparser.add_parser_argument(self._oparser,
@@ -2300,7 +2301,9 @@ class ConfigOpts(collections.Mapping):
                  usage=None,
                  default_config_files=None,
                  default_config_dirs=None,
-                 validate_default_values=False):
+                 validate_default_values=False,
+                 description=None,
+                 epilog=None):
         """Parse command line arguments and config files.
 
         Calling a ConfigOpts object causes the supplied command line arguments
@@ -2323,6 +2326,8 @@ class ConfigOpts(collections.Mapping):
             basename, without extension .py)
         :param version: the program version (for --version)
         :param usage: a usage string (%prog will be expanded)
+        :param description: A description of what the program does
+        :param epilog: Text following the argument descriptions
         :param default_config_files: config files to use by default
         :param default_config_dirs: config dirs to use by default
         :param validate_default_values: whether to validate the default values
@@ -2335,12 +2340,8 @@ class ConfigOpts(collections.Mapping):
         self._validate_default_values = validate_default_values
 
         prog, default_config_files, default_config_dirs = self._pre_setup(
-            project,
-            prog,
-            version,
-            usage,
-            default_config_files,
-            default_config_dirs)
+            project, prog, version, usage, description, epilog,
+            default_config_files, default_config_dirs)
 
         self._setup(project, prog, version, usage, default_config_files,
                     default_config_dirs)

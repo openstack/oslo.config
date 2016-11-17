@@ -100,6 +100,8 @@ class BaseTestCase(base.BaseTestCase):
                 prog='test',
                 version='1.0',
                 usage='%(prog)s FOO BAR',
+                description='somedesc',
+                epilog='tepilog',
                 default_config_files=default_config_files,
                 default_config_dirs=default_config_dirs,
                 validate_default_values=True)
@@ -140,6 +142,17 @@ class UsageTestCase(BaseTestCase):
         self.conf([])
         self.conf.print_usage(file=f)
         self.assertIn('usage: test FOO BAR', f.getvalue())
+        self.assertNotIn('somedesc', f.getvalue())
+        self.assertNotIn('tepilog', f.getvalue())
+        self.assertNotIn('optional:', f.getvalue())
+
+    def test_print_help(self):
+        f = moves.StringIO()
+        self.conf([])
+        self.conf.print_help(file=f)
+        self.assertIn('usage: test FOO BAR', f.getvalue())
+        self.assertIn('somedesc', f.getvalue())
+        self.assertIn('tepilog', f.getvalue())
         self.assertNotIn('optional:', f.getvalue())
 
 
