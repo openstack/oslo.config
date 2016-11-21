@@ -531,11 +531,6 @@ class ListTypeTests(TypeTestHelper, unittest.TestCase):
         self.assertConvertedValue('1,2,3,5',
                                   [1, 2, 3, 5])
 
-    def test_tuple_of_custom_type(self):
-        self.type_instance = types.List(types.Integer())
-        self.assertConvertedValue(('1', '2', '3', '5'),
-                                  [1, 2, 3, 5])
-
     def test_bounds_parsing(self):
         self.type_instance = types.List(types.Integer(), bounds=True)
         self.assertConvertedValue('[1,2,3]', [1, 2, 3])
