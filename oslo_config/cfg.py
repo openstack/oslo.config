@@ -457,7 +457,6 @@ import sys
 import debtcollector
 from debtcollector import removals
 import six
-from six import moves
 
 from oslo_config._i18n import _LI, _LW
 from oslo_config import iniparser
@@ -625,7 +624,7 @@ def _get_config_dirs(project=None):
         os.path.join('/etc', project) if project else None,
         '/etc'
     ]
-    return list(moves.filter(bool, cfg_dirs))
+    return [x for x in cfg_dirs if x]
 
 
 def _search_dirs(dirs, basename, extension=""):
@@ -643,6 +642,19 @@ def _search_dirs(dirs, basename, extension=""):
         path = os.path.join(d, '%s%s' % (basename, extension))
         if os.path.exists(path):
             return path
+
+
+def _find_config_files(project, prog, extension):
+    if prog is None:
+        prog = os.path.basename(sys.argv[0])
+        if prog.endswith(".py"):
+            prog = prog[:-3]
+
+    cfg_dirs = _get_config_dirs(project)
+    config_files = (_search_dirs(cfg_dirs, p, extension)
+                    for p in [project, prog] if p)
+
+    return [x for x in config_files if x]
 
 
 def find_config_files(project=None, prog=None, extension='.conf'):
@@ -671,19 +683,7 @@ def find_config_files(project=None, prog=None, extension='.conf'):
 
     If no project name is supplied, we only look for ${prog.conf}.
     """
-    if prog is None:
-        prog = os.path.basename(sys.argv[0])
-        if prog.endswith(".py"):
-            prog = prog[:-3]
-
-    cfg_dirs = _get_config_dirs(project)
-
-    config_files = []
-    if project:
-        config_files.append(_search_dirs(cfg_dirs, project, extension))
-    config_files.append(_search_dirs(cfg_dirs, prog, extension))
-
-    return list(moves.filter(bool, config_files))
+    return _find_config_files(project, prog, extension)
 
 
 def find_config_dirs(project=None, prog=None, extension='.conf.d'):
@@ -711,20 +711,7 @@ def find_config_dirs(project=None, prog=None, extension='.conf.d'):
     /etc/bar.conf.d/ and ~/.foo/bar.conf.d/ all exist, then we return
     ['/etc/foo/foo.conf.d/', '~/.foo/bar.conf.d/']
     """
-    if prog is None:
-        prog = os.path.basename(sys.argv[0])
-        if prog.endswith(".py"):
-            prog = prog[:-3]
-
-    # the base config directories
-    cfg_base_dirs = _get_config_dirs(project)
-
-    config_dirs = []
-    if project:
-        config_dirs.append(_search_dirs(cfg_base_dirs, project, extension))
-    config_dirs.append(_search_dirs(cfg_base_dirs, prog, extension))
-
-    return list(moves.filter(bool, config_dirs))
+    return _find_config_files(project, prog, extension)
 
 
 def _is_opt_registered(opts, opt):
