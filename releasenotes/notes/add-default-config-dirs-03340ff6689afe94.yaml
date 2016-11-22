@@ -1,0 +1,38 @@
+---
+features:
+  - |
+    Add default config-dir paths if no --config-dir switches are given on the
+    command line. This is similar to the default config-file handling
+    oslo.config already supports.
+    If no --config-dir switches are given, oslo.config searches now in a couple
+    of directories (depending on the given project name) for config file
+    snippets. Non-existing directories are simply skipped.
+    The directories, if no project name is given, are:
+
+    * ~/${prog}.conf.d/
+    * /etc/${prog}.conf.d/
+
+    Only the first directory is used if that is available.
+    If a project is given, the directories searched is a bit more complicated.
+    2 directories are searched, first search is for the project related dir:
+
+    * ~/.${project}/${project}.conf.d/
+    * ~/${project}.conf.d/
+    * /etc/${project}/${project}.conf.d/
+    * /etc/${project}.conf.d/
+
+    Then for the program name related configs, the following directories are
+    searched:
+
+    * ~/.${project}/${prog}.conf.d/
+    * ~/${prog}.conf.d/
+    * /etc/${project}/${prog}.conf.d/
+    * /etc/${prog}.conf.d/
+
+other:
+  - Adding some default config-dirs makes it possible to use config dir snippets
+    also in wsgi environments (like Apache) where it is not easily possible to
+    pass command line parameters to a wsgi app.
+upgrade:
+  - Similar to 'default_config_files', 'default_config_dirs' is no longer an
+    allowed config key. If that key is used, a ValueError() will be raised.
