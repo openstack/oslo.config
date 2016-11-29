@@ -670,7 +670,7 @@ def find_config_files(project=None, prog=None, extension='.conf'):
     and ~/.foo/bar.conf all exist, then we return ['/etc/foo/foo.conf',
     '~/.foo/bar.conf']
 
-    If no project name is supplied, we only look for ${prog.conf}.
+    If no project name is supplied, we only look for ${prog}.conf.
     """
     if prog is None:
         prog = os.path.basename(sys.argv[0])
