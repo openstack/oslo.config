@@ -92,7 +92,8 @@ class ExceptionsTestCase(base.BaseTestCase):
 class BaseTestCase(base.BaseTestCase):
 
     class TestConfigOpts(cfg.ConfigOpts):
-        def __call__(self, args=None, default_config_files=[]):
+        def __call__(self, args=None, default_config_files=[],
+                     default_config_dirs=[]):
             return cfg.ConfigOpts.__call__(
                 self,
                 args=args,
@@ -100,6 +101,7 @@ class BaseTestCase(base.BaseTestCase):
                 version='1.0',
                 usage='%(prog)s FOO BAR',
                 default_config_files=default_config_files,
+                default_config_dirs=default_config_dirs,
                 validate_default_values=True)
 
     def setUp(self):
@@ -113,10 +115,16 @@ class BaseTestCase(base.BaseTestCase):
         tempfiles = []
         for (basename, contents) in files:
             if not os.path.isabs(basename):
-                (fd, path) = tempfile.mkstemp(prefix=basename, suffix=ext)
+                # create all the tempfiles in a tempdir
+                tmpdir = tempfile.mkdtemp()
+                path = os.path.join(tmpdir, basename + ext)
+                # the path can start with a subdirectory so create
+                # it if it doesn't exist yet
+                if not os.path.exists(os.path.dirname(path)):
+                    os.makedirs(os.path.dirname(path))
             else:
                 path = basename + ext
-                fd = os.open(path, os.O_CREAT | os.O_WRONLY)
+            fd = os.open(path, os.O_CREAT | os.O_WRONLY)
             tempfiles.append(path)
             try:
                 os.write(fd, contents.encode('utf-8'))
@@ -200,6 +208,35 @@ class FindConfigFilesTestCase(BaseTestCase):
                          config_files)
 
 
+class FindConfigDirsTestCase(BaseTestCase):
+
+    def test_find_config_dirs(self):
+        config_dirs = [os.path.expanduser('~/.blaa/blaa.conf.d'),
+                       '/etc/foo.conf.d']
+
+        self.useFixture(fixtures.MonkeyPatch('sys.argv', ['foo']))
+        self.useFixture(fixtures.MonkeyPatch('os.path.exists',
+                                             lambda p: p in config_dirs))
+
+        self.assertEqual(cfg.find_config_dirs(project='blaa'), config_dirs)
+
+    def test_find_config_dirs_non_exists(self):
+        self.useFixture(fixtures.MonkeyPatch('sys.argv', ['foo']))
+        self.assertEqual(cfg.find_config_dirs(project='blaa'), [])
+
+    def test_find_config_dirs_with_extension(self):
+        config_dirs = ['/etc/foo.json.d']
+
+        self.useFixture(fixtures.MonkeyPatch('sys.argv', ['foo']))
+        self.useFixture(fixtures.MonkeyPatch('os.path.exists',
+                                             lambda p: p in config_dirs))
+
+        self.assertEqual(cfg.find_config_dirs(project='blaa'), [])
+        self.assertEqual(cfg.find_config_dirs(project='blaa',
+                                              extension='.json.d'),
+                         config_dirs)
+
+
 class DefaultConfigFilesTestCase(BaseTestCase):
 
     def test_use_default(self):
@@ -272,6 +309,88 @@ class DefaultConfigFilesTestCase(BaseTestCase):
         self.conf(args=['--foo=blaa'], default_config_files=paths)
 
         self.assertEqual(paths, self.conf.config_file)
+        self.assertEqual('blaa', self.conf.foo)
+
+
+class DefaultConfigDirsTestCase(BaseTestCase):
+
+    def test_use_default(self):
+        self.conf.register_opt(cfg.StrOpt('foo'))
+        paths = self.create_tempfiles([('foo.conf.d/foo',
+                                        '[DEFAULT]\n''foo = bar\n')])
+        p = os.path.dirname(paths[0])
+        self.conf.register_cli_opt(cfg.StrOpt('config-dir-foo'))
+        self.conf(args=['--config-dir-foo', 'foo.conf.d'],
+                  default_config_dirs=[p])
+
+        self.assertEqual([p], self.conf.config_dir)
+        self.assertEqual('bar', self.conf.foo)
+
+    def test_do_not_use_default_multi_arg(self):
+        self.conf.register_opt(cfg.StrOpt('foo'))
+        paths = self.create_tempfiles([('foo.conf.d/foo',
+                                        '[DEFAULT]\n''foo = bar\n')])
+        p = os.path.dirname(paths[0])
+        self.conf(args=['--config-dir', p],
+                  default_config_dirs=['bar.conf.d'])
+
+        self.assertEqual([p], self.conf.config_dirs)
+        self.assertEqual('bar', self.conf.foo)
+
+    def test_do_not_use_default_single_arg(self):
+        self.conf.register_opt(cfg.StrOpt('foo'))
+        paths = self.create_tempfiles([('foo.conf.d/foo',
+                                        '[DEFAULT]\n''foo = bar\n')])
+        p = os.path.dirname(paths[0])
+        self.conf(args=['--config-dir=' + p],
+                  default_config_dirs=['bar.conf.d'])
+
+        self.assertEqual([p], self.conf.config_dir)
+        self.assertEqual('bar', self.conf.foo)
+
+    def test_no_default_config_dir(self):
+        self.conf(args=[])
+        self.assertEqual([], self.conf.config_dir)
+
+    def test_find_default_config_dir(self):
+        paths = self.create_tempfiles([('def.conf.d/def',
+                                        '[DEFAULT]')])
+        p = os.path.dirname(paths[0])
+        self.useFixture(fixtures.MonkeyPatch(
+                        'oslo_config.cfg.find_config_dirs',
+                        lambda project, prog: p))
+
+        self.conf(args=[], default_config_dirs=None)
+        self.assertEqual([p], self.conf.config_dir)
+
+    def test_default_config_dir(self):
+        paths = self.create_tempfiles([('def.conf.d/def',
+                                        '[DEFAULT]')])
+        p = os.path.dirname(paths[0])
+        self.conf(args=[], default_config_dirs=[p])
+
+        self.assertEqual([p], self.conf.config_dir)
+
+    def test_default_config_dir_with_value(self):
+        self.conf.register_cli_opt(cfg.StrOpt('foo'))
+
+        paths = self.create_tempfiles([('def.conf.d/def',
+                                        '[DEFAULT]\n''foo = bar\n')])
+        p = os.path.dirname(paths[0])
+        self.conf(args=[], default_config_dirs=[p])
+
+        self.assertEqual([p], self.conf.config_dir)
+        self.assertEqual('bar', self.conf.foo)
+
+    def test_default_config_dir_priority(self):
+        self.conf.register_cli_opt(cfg.StrOpt('foo'))
+
+        paths = self.create_tempfiles([('def.conf.d/def',
+                                        '[DEFAULT]\n''foo = bar\n')])
+        p = os.path.dirname(paths[0])
+        self.conf(args=['--foo=blaa'], default_config_dirs=[p])
+
+        self.assertEqual([p], self.conf.config_dir)
         self.assertEqual('blaa', self.conf.foo)
 
 
@@ -3645,7 +3764,7 @@ class OptDumpingTestCase(BaseTestCase):
                          "'that', '--blaa-key', 'admin', '--passwd', 'hush']",
                          "config files: []",
                          "=" * 80,
-                         "config_dir                     = None",
+                         "config_dir                     = []",
                          "config_file                    = []",
                          "foo                            = this",
                          "passwd                         = ****",

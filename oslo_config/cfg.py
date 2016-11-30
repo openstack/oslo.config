@@ -625,20 +625,19 @@ def _get_config_dirs(project=None):
         os.path.join('/etc', project) if project else None,
         '/etc'
     ]
-
     return list(moves.filter(bool, cfg_dirs))
 
 
 def _search_dirs(dirs, basename, extension=""):
-    """Search a list of directories for a given filename.
+    """Search a list of directories for a given filename or directory name.
 
     Iterator over the supplied directories, returning the first file
     found with the supplied name and extension.
 
     :param dirs: a list of directories
-    :param basename: the filename, for example 'glance-api'
+    :param basename: the filename or directory name, for example 'glance-api'
     :param extension: the file extension, for example '.conf'
-    :returns: the path to a matching file, or None
+    :returns: the path to a matching file or directory, or None
     """
     for d in dirs:
         path = os.path.join(d, '%s%s' % (basename, extension))
@@ -685,6 +684,47 @@ def find_config_files(project=None, prog=None, extension='.conf'):
     config_files.append(_search_dirs(cfg_dirs, prog, extension))
 
     return list(moves.filter(bool, config_files))
+
+
+def find_config_dirs(project=None, prog=None, extension='.conf.d'):
+    """Return a list of default configuration dirs.
+
+    :param project: an optional project name
+    :param prog: the program name, defaulting to the basename of
+        sys.argv[0], without extension .py
+    :param extension: the type of the config directory. Defaults to '.conf.d'
+
+    We default to two config dirs: [${project}.conf.d/, ${prog}.conf.d/].
+    If no project name is supplied, we only look for ${prog.conf.d/}.
+
+    And we look for those config dirs in the following directories::
+
+      ~/.${project}/
+      ~/
+      /etc/${project}/
+      /etc/
+
+    We return an absolute path for each of the two config dirs,
+    in the first place we find it (iff we find it).
+
+    For example, if project=foo, prog=bar and /etc/foo/foo.conf.d/,
+    /etc/bar.conf.d/ and ~/.foo/bar.conf.d/ all exist, then we return
+    ['/etc/foo/foo.conf.d/', '~/.foo/bar.conf.d/']
+    """
+    if prog is None:
+        prog = os.path.basename(sys.argv[0])
+        if prog.endswith(".py"):
+            prog = prog[:-3]
+
+    # the base config directories
+    cfg_base_dirs = _get_config_dirs(project)
+
+    config_dirs = []
+    if project:
+        config_dirs.append(_search_dirs(cfg_base_dirs, project, extension))
+    config_dirs.append(_search_dirs(cfg_base_dirs, prog, extension))
+
+    return list(moves.filter(bool, config_dirs))
 
 
 def _is_opt_registered(opts, opt):
@@ -2158,7 +2198,7 @@ class ConfigOpts(collections.Mapping):
 
     """
     disallow_names = ('project', 'prog', 'version',
-                      'usage', 'default_config_files')
+                      'usage', 'default_config_files', 'default_config_dirs')
 
     def __init__(self):
         """Construct a ConfigOpts object."""
@@ -2176,7 +2216,8 @@ class ConfigOpts(collections.Mapping):
         self._cli_opts = collections.deque()
         self._validate_default_values = False
 
-    def _pre_setup(self, project, prog, version, usage, default_config_files):
+    def _pre_setup(self, project, prog, version, usage, default_config_files,
+                   default_config_dirs):
         """Initialize a ConfigCliParser object for option parsing."""
 
         if prog is None:
@@ -2187,6 +2228,9 @@ class ConfigOpts(collections.Mapping):
         if default_config_files is None:
             default_config_files = find_config_files(project, prog)
 
+        if default_config_dirs is None:
+            default_config_dirs = find_config_dirs(project, prog)
+
         self._oparser = _CachedArgumentParser(prog=prog, usage=usage)
 
         if version is not None:
@@ -2195,10 +2239,10 @@ class ConfigOpts(collections.Mapping):
                                               action='version',
                                               version=version)
 
-        return prog, default_config_files
+        return prog, default_config_files, default_config_dirs
 
     @staticmethod
-    def _make_config_options(default_config_files):
+    def _make_config_options(default_config_files, default_config_dirs):
         return [
             _ConfigFileOpt('config-file',
                            default=default_config_files,
@@ -2209,6 +2253,7 @@ class ConfigOpts(collections.Mapping):
                                  'to %(default)s.')),
             _ConfigDirOpt('config-dir',
                           metavar='DIR',
+                          default=default_config_dirs,
                           help='Path to a config directory to pull *.conf '
                                'files from. This file set is sorted, so as to '
                                'provide a predictable parse order if '
@@ -2219,10 +2264,11 @@ class ConfigOpts(collections.Mapping):
                                'precedence.'),
         ]
 
-    def _setup(self, project, prog, version, usage, default_config_files):
+    def _setup(self, project, prog, version, usage, default_config_files,
+               default_config_dirs):
         """Initialize a ConfigOpts object for option parsing."""
-
-        self._config_opts = self._make_config_options(default_config_files)
+        self._config_opts = self._make_config_options(default_config_files,
+                                                      default_config_dirs)
         self.register_cli_opts(self._config_opts)
 
         self.project = project
@@ -2230,6 +2276,7 @@ class ConfigOpts(collections.Mapping):
         self.version = version
         self.usage = usage
         self.default_config_files = default_config_files
+        self.default_config_dirs = default_config_dirs
 
     def __clear_cache(f):
         @functools.wraps(f)
@@ -2250,6 +2297,7 @@ class ConfigOpts(collections.Mapping):
                  version=None,
                  usage=None,
                  default_config_files=None,
+                 default_config_dirs=None,
                  validate_default_values=False):
         """Parse command line arguments and config files.
 
@@ -2274,6 +2322,7 @@ class ConfigOpts(collections.Mapping):
         :param version: the program version (for --version)
         :param usage: a usage string (%prog will be expanded)
         :param default_config_files: config files to use by default
+        :param default_config_dirs: config dirs to use by default
         :param validate_default_values: whether to validate the default values
         :raises: SystemExit, ConfigFilesNotFoundError, ConfigFileParseError,
                  ConfigFilesPermissionDeniedError,
@@ -2283,13 +2332,16 @@ class ConfigOpts(collections.Mapping):
 
         self._validate_default_values = validate_default_values
 
-        prog, default_config_files = self._pre_setup(project,
-                                                     prog,
-                                                     version,
-                                                     usage,
-                                                     default_config_files)
+        prog, default_config_files, default_config_dirs = self._pre_setup(
+            project,
+            prog,
+            version,
+            usage,
+            default_config_files,
+            default_config_dirs)
 
-        self._setup(project, prog, version, usage, default_config_files)
+        self._setup(project, prog, version, usage, default_config_files,
+                    default_config_dirs)
 
         self._namespace = self._parse_cli_opts(args if args is not None
                                                else sys.argv[1:])
@@ -2383,8 +2435,8 @@ class ConfigOpts(collections.Mapping):
             return group._register_opt(opt, cli)
 
         # NOTE(gcb) We can't use some names which are same with attributes of
-        # Opts in default group. They includes project, prog, version, usage
-        # and default_config_files.
+        # Opts in default group. They includes project, prog, version, usage,
+        # default_config_files and default_config_dirs.
         if group is None:
             if opt.name in self.disallow_names:
                 raise ValueError('Name %s was reserved for oslo.config.'
@@ -2930,12 +2982,31 @@ class ConfigOpts(collections.Mapping):
                  RequiredOptError, DuplicateOptError
         """
         namespace = _Namespace(self)
+
+        # handle --config-file args or the default_config_files
         for arg in self._args:
             if arg == '--config-file' or arg.startswith('--config-file='):
                 break
         else:
             for config_file in self.default_config_files:
                 ConfigParser._parse_file(config_file, namespace)
+
+        # handle --config-dir args or the default_config_dirs
+        for arg in self._args:
+            if arg == '--config-dir' or arg.startswith('--config-dir='):
+                break
+        else:
+            for config_dir in self.default_config_dirs:
+                # for the default config-dir directories we just continue
+                # if the directories do not exist. This is different to the
+                # case where --config-dir is given on the command line.
+                if not os.path.exists(config_dir):
+                    continue
+
+                config_dir_glob = os.path.join(config_dir, '*.conf')
+
+                for config_file in sorted(glob.glob(config_dir_glob)):
+                    ConfigParser._parse_file(config_file, namespace)
 
         self._oparser.parse_args(self._args, namespace)
 

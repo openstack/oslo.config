@@ -20,6 +20,13 @@ def list_opts():
         '/etc/project/project.conf',
         '/etc/project.conf',
     ]
+    default_config_dirs = [
+        '~/.project/project.conf.d/',
+        '~/project.conf.d/',
+        '/etc/project/project.conf.d/',
+        '/etc/project.conf.d/',
+    ]
     return [
-        (None, cfg.ConfigOpts._make_config_options(default_config_files)),
+        (None, cfg.ConfigOpts._make_config_options(default_config_files,
+                                                   default_config_dirs)),
     ]
