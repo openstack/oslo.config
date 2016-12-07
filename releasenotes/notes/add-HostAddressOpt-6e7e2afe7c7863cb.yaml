@@ -1,0 +1,13 @@
+---
+prelude: >
+    Configuration option type of ``HostAddressOpt`` added to accept and
+    validate both IP addresses and hostnames. Please refer to the
+    ``features`` section for more information.
+
+features:
+  - Configuration option type of ``HostAddressOpt`` added to accept both
+    valid IP address (IPv4 and IPv6) values as well as hostnames.
+    The ``HostAddressOpt`` will accept both IPv4 and IPv6 addresses
+    and ensure that strict checks are performed on the IP versions.
+    This option type will also accept and accurately validate hostnames
+    ensuring that no invalid IP passes as a valid hostname.

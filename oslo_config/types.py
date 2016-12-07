@@ -704,7 +704,7 @@ class IPAddress(ConfigType):
 
 
 class Hostname(ConfigType):
-    """Hostname type.
+    """Host domain name type.
 
     A hostname refers to a valid DNS or hostname. It must not be longer than
     253 characters, have a segment greater than 63 characters, nor start or
@@ -724,10 +724,14 @@ class Hostname(ConfigType):
         - Contains at least one character and a maximum of 63 characters
         - Consists only of allowed characters: letters (A-Z and a-z),
           digits (0-9), and hyphen (-)
+        - Ensures that the final segment (representing the top level domain
+          name) contains at least one non-numeric character
         - Does not begin or end with a hyphen
         - maximum total length of 253 characters
 
-        For more details , please see: http://tools.ietf.org/html/rfc1035
+        For more details , please see: http://tools.ietf.org/html/rfc1035,
+        https://www.ietf.org/rfc/rfc1912, and
+        https://tools.ietf.org/html/rfc1123
         """
 
         if len(value) == 0:
@@ -738,12 +742,65 @@ class Hostname(ConfigType):
         if value.endswith("."):
             value = value[:-1]
         allowed = re.compile("(?!-)[A-Z0-9-]{1,63}(?<!-)$", re.IGNORECASE)
+        if not re.search('[a-zA-Z-]', value.split(".")[-1]):
+            raise ValueError('%s contains no non-numeric characters in the '
+                             'top-level domain part of the host name and is '
+                             'invalid' % value)
         if any((not allowed.match(x)) for x in value.split(".")):
             raise ValueError("%s is an invalid hostname" % value)
         return value
 
     def __repr__(self):
         return 'Hostname'
+
+    def __eq__(self, other):
+        return self.__class__ == other.__class__
+
+    def _formatter(self, value):
+        return value
+
+
+class HostAddress(object):
+    """Host Address type.
+
+    Represents both valid IP addresses and valid host domain names
+    including fully qualified domain names.
+    Performs strict checks for both IP addresses and valid hostnames,
+    matching the opt values to the respective types as per RFC1912.
+
+    :param version: defines which version should be explicitly
+    checked (4 or 6) in case of an IP address
+    :param type_name: Type name to be used in the sample config file.
+
+    """
+
+    def __init__(self, version=None, type_name='host address value'):
+        """Check for valid version in case an IP address is provided
+
+        """
+
+        self.ip_address = IPAddress(version, type_name)
+        self.hostname = Hostname('localhost')
+
+    def __call__(self, value):
+        """Checks if is a valid IP/hostname.
+
+        If not a valid IP, makes sure it is not a mistyped IP before
+        performing checks for it as a hostname.
+
+        """
+
+        try:
+            value = self.ip_address(value)
+        except ValueError:
+            try:
+                value = self.hostname(value)
+            except ValueError:
+                raise ValueError("%s is not a valid host address", value)
+        return value
+
+    def __repr__(self):
+        return 'HostAddress'
 
     def __eq__(self, other):
         return self.__class__ == other.__class__

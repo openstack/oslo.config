@@ -59,6 +59,7 @@ Type                                  Option
 :class:`oslo_config.types.Dict`       :class:`oslo_config.cfg.DictOpt`
 :class:`oslo_config.types.IPAddress`  :class:`oslo_config.cfg.IPOpt`
 :class:`oslo_config.types.Hostname`   :class:`oslo_config.cfg.HostnameOpt`
+:class:`oslo_config.types.HostAddress`:class:`oslo_config.cfg.HostAddressOpt`
 :class:`oslo_config.types.URI`        :class:`oslo_config.cfg.URIOpt`
 ====================================  ======
 
@@ -1389,6 +1390,20 @@ class HostnameOpt(Opt):
     def __init__(self, name, **kwargs):
         super(HostnameOpt, self).__init__(name, type=types.Hostname(),
                                           **kwargs)
+
+
+class HostAddressOpt(Opt):
+    """Option for either an IP or a hostname.
+
+       Accepts valid hostnames and valid IP addresses.
+
+       .. versionadded:: 3.22
+    """
+
+    def __init__(self, name, version=None, **kwargs):
+        super(HostAddressOpt, self).__init__(name,
+                                             type=types.HostAddress(version),
+                                             **kwargs)
 
 
 class URIOpt(Opt):

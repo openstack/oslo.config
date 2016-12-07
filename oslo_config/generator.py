@@ -90,7 +90,8 @@ def _format_defaults(opt):
         elif opt.default is None:
             default_str = '<None>'
         elif (isinstance(opt, (cfg.StrOpt, cfg.IPOpt,
-                               cfg.HostnameOpt, cfg.URIOpt))):
+                               cfg.HostnameOpt, cfg.HostAddressOpt,
+                               cfg.URIOpt))):
             default_str = opt.default
         elif isinstance(opt, cfg.BoolOpt):
             default_str = str(opt.default).lower()
