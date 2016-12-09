@@ -16,7 +16,6 @@
 #    under the License.
 
 import fixtures
-import six
 
 from oslo_config import cfg
 
@@ -70,7 +69,7 @@ class Config(fixtures.Fixture):
 
         group = kw.pop('group', None)
         enforce_type = kw.pop('enforce_type', False)
-        for k, v in six.iteritems(kw):
+        for k, v in kw.items():
             self.conf.set_override(k, v, group, enforce_type=enforce_type)
 
     def _unregister_config_opts(self):
@@ -174,7 +173,7 @@ class Config(fixtures.Fixture):
 
         raw_config = dict()
         raw_config[group] = dict()
-        for key, value in six.iteritems(kwargs):
+        for key, value in kwargs.items():
             # Parsed values are an array of raw strings.
             raw_config[group][key] = [str(value)]
 

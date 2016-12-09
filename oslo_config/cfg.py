@@ -2156,7 +2156,7 @@ class _CachedArgumentParser(argparse.ArgumentParser):
         # not touch positional. For the reason optional opts go first in
         # the values we only need to find an index of the first positional
         # option and then sort the values slice.
-        for container, values in six.iteritems(self._args_cache):
+        for container, values in self._args_cache.items():
             index = 0
             has_positional = False
             for index, argument in enumerate(values):
