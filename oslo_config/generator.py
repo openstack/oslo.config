@@ -37,6 +37,7 @@ from oslo_config import cfg
 import stevedore.named  # noqa
 
 LOG = logging.getLogger(__name__)
+UPPER_CASE_GROUP_NAMES = ['DEFAULT']
 
 _generator_opts = [
     cfg.StrOpt(
@@ -347,6 +348,22 @@ def _cleanup_opts(read_opts):
         if namespace not in clean:
             clean[namespace] = collections.OrderedDict()
         for group, opts in listing:
+            # NOTE: Normalize group names to lowe-case except those defined in
+            # UPPER_CASE_GROUP_NAMES
+            if group:
+                group_name = getattr(group, 'name', str(group))
+                if group_name.upper() in UPPER_CASE_GROUP_NAMES:
+                    normalized_gn = group_name.upper()
+                else:
+                    normalized_gn = group_name.lower()
+                if normalized_gn != group_name:
+                    LOG.warning('normalizing group name %r to %r', group_name,
+                                normalized_gn)
+                    if hasattr(group, 'name'):
+                        group.name = normalized_gn
+                    else:
+                        group = normalized_gn
+
             if group not in clean[namespace]:
                 clean[namespace][group] = collections.OrderedDict()
             for opt in opts:
@@ -355,8 +372,8 @@ def _cleanup_opts(read_opts):
     # recreate the list of (namespace, [(group, [opt_1, opt_2])]) tuples
     # from the cleaned structure.
     cleaned_opts = [
-        (namespace, [(group, list(clean[namespace][group].values()))
-                     for group in clean[namespace]])
+        (namespace, [(g, list(clean[namespace][g].values()))
+                     for g in clean[namespace]])
         for namespace in clean
     ]
 
