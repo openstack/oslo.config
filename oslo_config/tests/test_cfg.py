@@ -3635,6 +3635,17 @@ class SadPathTestCase(BaseTestCase):
     def test_conf_file_bad_float(self):
         self._do_test_conf_file_bad_value(cfg.FloatOpt)
 
+    def test_str_sub_none_value(self):
+        self.conf.register_cli_opt(cfg.StrOpt('oo'))
+        self.conf.register_cli_opt(cfg.StrOpt('bar', default='$oo'))
+        self.conf.register_cli_opt(cfg.StrOpt('barbar', default='foo $oo foo'))
+
+        self.conf([])
+
+        self.assertTrue(hasattr(self.conf, 'bar'))
+        self.assertEqual('', self.conf.bar)
+        self.assertEqual("foo  foo", self.conf.barbar)
+
     def test_str_sub_from_group(self):
         self.conf.register_group(cfg.OptGroup('f'))
         self.conf.register_cli_opt(cfg.StrOpt('oo', default='blaa'), group='f')

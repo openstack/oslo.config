@@ -3284,6 +3284,8 @@ class ConfigOpts(collections.Mapping):
             if isinstance(value, self.conf.GroupAttr):
                 raise TemplateSubstitutionError(
                     'substituting group %s not supported' % key)
+            if value is None:
+                return ''
             return value
 
 
