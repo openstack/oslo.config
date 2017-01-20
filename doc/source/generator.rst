@@ -106,7 +106,7 @@ The hooks are registered in a separate entry point namespace
    In this case, the name of the entry point for the default override
    function *must* match the name of one of the entry points defining
    options for the application in order to be detected and
-   used. Applications that have multple list_opts functions should use
+   used. Applications that have multiple list_opts functions should use
    one that is present in the inputs for the config generator where
    the changed defaults need to appear. For example, if an application
    defines ``foo.api`` to list the API-related options, and needs to
