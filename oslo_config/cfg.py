@@ -888,13 +888,20 @@ class Opt(object):
         self.deprecated_reason = deprecated_reason
         self.deprecated_since = deprecated_since
         self._logged_deprecation = False
-        if deprecated_name is not None:
-            deprecated_name = deprecated_name.replace('-', '_')
 
         self.deprecated_opts = copy.deepcopy(deprecated_opts) or []
+        for o in self.deprecated_opts:
+            if '-' in o.name:
+                self.deprecated_opts.append(DeprecatedOpt(
+                    o.name.replace('-', '_'),
+                    group=o.group))
         if deprecated_name is not None or deprecated_group is not None:
             self.deprecated_opts.append(DeprecatedOpt(deprecated_name,
                                                       group=deprecated_group))
+            if deprecated_name and '-' in deprecated_name:
+                self.deprecated_opts.append(DeprecatedOpt(
+                    deprecated_name.replace('-', '_'),
+                    group=deprecated_group))
         self._check_default()
 
         self.mutable = mutable

@@ -270,8 +270,12 @@ class _OptFormatter(object):
                               (opt.dest, err))
 
         for d in opt.deprecated_opts:
-            lines.append('# Deprecated group/name - [%s]/%s\n' %
-                         (d.group or group_name, d.name or opt.dest))
+            # NOTE(bnemec): opt names with a - are not valid in a config file,
+            # but it is possible to add a DeprecatedOpt with a - name.  We
+            # want to ignore those as they won't work anyway.
+            if d.name and '-' not in d.name:
+                lines.append('# Deprecated group/name - [%s]/%s\n' %
+                             (d.group or group_name, d.name or opt.dest))
 
         if opt.deprecated_for_removal:
             if opt.deprecated_since:
