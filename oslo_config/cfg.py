@@ -1278,10 +1278,10 @@ class FloatOpt(Opt):
     """Option with Float type
 
     Option with ``type`` :class:`oslo_config.types.Float`
-    :param min: minimum value the float can take
-    :param max: maximum value the float can take
 
     :param name: the option's name
+    :param min: minimum value the float can take
+    :param max: maximum value the float can take
     :param \*\*kwargs: arbitrary keyword arguments passed to :class:`Opt`
 
     .. versionchanged:: 3.14
@@ -1358,10 +1358,10 @@ class PortOpt(Opt):
     Option with ``type`` :class:`oslo_config.types.Integer`
 
     :param name: the option's name
-    :param choices: Optional sequence of valid values.
-    :param \*\*kwargs: arbitrary keyword arguments passed to :class:`Opt`
     :param min: minimum value the port can take
     :param max: maximum value the port can take
+    :param choices: Optional sequence of valid values.
+    :param \*\*kwargs: arbitrary keyword arguments passed to :class:`Opt`
 
     .. versionadded:: 2.6
     .. versionchanged:: 3.2
@@ -1384,6 +1384,9 @@ class HostnameOpt(Opt):
 
     Option with ``type`` :class:`oslo_config.types.Hostname`
 
+    :param name: the option's name
+    :param \*\*kwargs: arbitrary keyword arguments passed to :class:`Opt`
+
     .. versionadded:: 3.8
     """
 
@@ -1393,11 +1396,19 @@ class HostnameOpt(Opt):
 
 
 class HostAddressOpt(Opt):
+
     """Option for either an IP or a hostname.
 
-       Accepts valid hostnames and valid IP addresses.
+    Accepts valid hostnames and valid IP addresses.
 
-       .. versionadded:: 3.22
+    Option with ``type`` :class:`oslo_config.types.HostAddress`
+
+    :param name: the option's name
+    :param version: one of either ``4``, ``6``, or ``None`` to specify
+       either version.
+    :param \*\*kwargs: arbitrary keyword arguments passed to :class:`Opt`
+
+    .. versionadded:: 3.22
     """
 
     def __init__(self, name, version=None, **kwargs):
@@ -1412,9 +1423,11 @@ class URIOpt(Opt):
 
     Option with ``type`` :class:`oslo_config.types.URI`
 
+    :param name: the option's name
     :param max_length: If positive integer, the value must be less than or
                        equal to this parameter.
     :param schemes: list of valid URI schemes, e.g. 'https', 'ftp', 'git'
+    :param \*\*kwargs: arbitrary keyword arguments passed to :class:`Opt`
 
     .. versionadded:: 3.12
 

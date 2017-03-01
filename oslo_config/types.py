@@ -248,11 +248,11 @@ class Number(ConfigType):
 
     """Number class, base for Integer and Float.
 
+    :param num_type: the type of number used for casting (i.e int, float)
+    :param type_name: Type name to be used in the sample config file.
     :param min: Optional check that value is greater than or equal to min.
     :param max: Optional check that value is less than or equal to max.
-    :param type_name: Type name to be used in the sample config file.
     :param choices: Optional sequence of valid values.
-    :param num_type: the type of number used for casting (i.e int, float)
 
     .. versionadded:: 3.14
     """
@@ -358,9 +358,9 @@ class Float(Number):
 
     """Float type.
 
-    :param type_name: Type name to be used in the sample config file.
     :param min: Optional check that value is greater than or equal to min.
     :param max: Optional check that value is less than or equal to max.
+    :param type_name: Type name to be used in the sample config file.
 
     .. versionchanged:: 2.7
 
@@ -382,10 +382,10 @@ class Port(Integer):
 
     Represents a L4 Port.
 
-    :param type_name: Type name to be used in the sample config file.
-    :param choices: Optional sequence of valid values.
     :param min: Optional check that value is greater than or equal to min.
     :param max: Optional check that value is less than or equal to max.
+    :param type_name: Type name to be used in the sample config file.
+    :param choices: Optional sequence of valid values.
 
     .. versionadded:: 3.16
     """
