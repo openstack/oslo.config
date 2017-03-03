@@ -2206,6 +2206,7 @@ class ConfigOpts(collections.Mapping):
         """Construct a ConfigOpts object."""
         self._opts = {}  # dict of dicts of (opt:, override:, default:)
         self._groups = {}
+        self._deprecated_opts = {}
 
         self._args = None
 
@@ -2417,6 +2418,26 @@ class ConfigOpts(collections.Mapping):
         else:
             self._cli_opts.appendleft({'opt': opt, 'group': group})
 
+    def _track_deprecated_opts(self, opt, group=None):
+        if hasattr(opt, 'deprecated_opts'):
+            for dep_opt in opt.deprecated_opts:
+                dep_group = dep_opt.group or 'DEFAULT'
+                dep_dest = dep_opt.name
+                if dep_dest:
+                    dep_dest = dep_dest.replace('-', '_')
+                if dep_group not in self._deprecated_opts:
+                    self._deprecated_opts[dep_group] = {
+                        dep_dest: {
+                            'opt': opt,
+                            'group': group
+                        }
+                    }
+                else:
+                    self._deprecated_opts[dep_group][dep_dest] = {
+                        'opt': opt,
+                        'group': group
+                    }
+
     @__clear_cache
     def register_opt(self, opt, group=None, cli=False):
         """Register an option schema.
@@ -2435,6 +2456,7 @@ class ConfigOpts(collections.Mapping):
             group = self._get_group(group, autocreate=True)
             if cli:
                 self._add_cli_opt(opt, group)
+            self._track_deprecated_opts(opt, group=group)
             return group._register_opt(opt, cli)
 
         # NOTE(gcb) We can't use some names which are same with attributes of
@@ -2452,7 +2474,7 @@ class ConfigOpts(collections.Mapping):
             return False
 
         self._opts[opt.dest] = {'opt': opt, 'cli': cli}
-
+        self._track_deprecated_opts(opt)
         return True
 
     @__clear_cache
@@ -2925,6 +2947,19 @@ class ConfigOpts(collections.Mapping):
 
         return self._groups[group_name]
 
+    def _find_deprecated_opts(self, opt_name, group=None):
+        real_opt_name = None
+        real_group_name = None
+        group_name = group or 'DEFAULT'
+        dep_group = self._deprecated_opts.get(group_name)
+        if dep_group:
+            real_opt_dict = dep_group.get(opt_name)
+            if real_opt_dict:
+                real_opt_name = real_opt_dict['opt'].name
+                if real_opt_dict['group']:
+                    real_group_name = real_opt_dict['group'].name
+        return real_opt_name, real_group_name
+
     def _get_opt_info(self, opt_name, group=None):
         """Return the (opt, override, default) dict for an opt.
 
@@ -2939,7 +2974,22 @@ class ConfigOpts(collections.Mapping):
             opts = group._opts
 
         if opt_name not in opts:
-            raise NoSuchOptError(opt_name, group)
+            real_opt_name, real_group_name = self._find_deprecated_opts(
+                opt_name, group=group)
+            if not real_opt_name:
+                raise NoSuchOptError(opt_name, group)
+            log_real_group_name = real_group_name or 'DEFAULT'
+            dep_message = _LW('Config option %(dep_group)s.%(dep_option)s '
+                              ' is deprecated. Use option %(group)s.'
+                              '%(option)s instead.')
+            LOG.warning(dep_message, {'dep_option': opt_name,
+                                      'dep_group': group,
+                                      'option': real_opt_name,
+                                      'group': log_real_group_name})
+            opt_name = real_opt_name
+            if real_group_name:
+                group = self._get_group(real_group_name)
+                opts = group._opts
 
         return opts[opt_name]
 
