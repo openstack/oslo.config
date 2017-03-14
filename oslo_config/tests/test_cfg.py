@@ -195,6 +195,20 @@ class HelpTestCase(BaseTestCase):
         list = [abc, ghi, zba]
         self.assertEqual(sorted(list), list)
 
+    def test_print_help_with_deprecated(self):
+        f = moves.StringIO()
+        abc = cfg.StrOpt('a-bc',
+                         deprecated_opts=[cfg.DeprecatedOpt('d-ef')])
+        uvw = cfg.StrOpt('u-vw',
+                         deprecated_name='x-yz')
+
+        self.conf.register_cli_opt(abc)
+        self.conf.register_cli_opt(uvw)
+        self.conf([])
+        self.conf.print_help(file=f)
+        self.assertIn('--a-bc A_BC, --d-ef A_BC, --d_ef A_BC', f.getvalue())
+        self.assertIn('--u-vw U_VW, --x-yz U_VW, --x_yz U_VW', f.getvalue())
+
 
 class FindConfigFilesTestCase(BaseTestCase):
 
@@ -2381,8 +2395,12 @@ class MappingInterfaceTestCase(BaseTestCase):
         self.assertEqual(self.conf['blaa'], self.conf.blaa)
 
 
-class OptNameSeparatorTestCast(BaseTestCase):
+class OptNameSeparatorTestCase(BaseTestCase):
 
+    # NOTE(bnemec): The broken* values in these scenarios are opt dests or
+    # config file names that are not actually valid, but can be added via a
+    # DeprecatedOpt.  The tests only verify that those values do not end up
+    # in the final config object.
     scenarios = [
         ('hyphen',
          dict(opt_name='foo-bar',
@@ -2391,8 +2409,7 @@ class OptNameSeparatorTestCast(BaseTestCase):
               cf_name='foo_bar',
               broken_cf_name='foo-bar',
               cli_name='foo-bar',
-              broken_cli_name='foo_bar',
-              broken=True)),  # FIXME(markmc): see #1279973
+              hyphen=True)),
         ('underscore',
          dict(opt_name='foo_bar',
               opt_dest='foo_bar',
@@ -2400,8 +2417,7 @@ class OptNameSeparatorTestCast(BaseTestCase):
               cf_name='foo_bar',
               broken_cf_name='foo-bar',
               cli_name='foo_bar',
-              broken_cli_name='foo_bar',
-              broken=False)),
+              hyphen=False)),
     ]
 
     def test_attribute_and_key_name(self):
@@ -2447,11 +2463,7 @@ class OptNameSeparatorTestCast(BaseTestCase):
         self.conf.register_cli_opt(cfg.BoolOpt('foobar',
                                                deprecated_name=self.opt_name))
 
-        # FIXME(markmc): this should be self.cli_name, see #1279973
-        if self.broken:
-            self.conf(['--' + self.broken_cli_name])
-        else:
-            self.conf(['--' + self.cli_name])
+        self.conf(['--' + self.cli_name])
 
         self.assertTrue(self.conf.foobar)
 
@@ -2494,16 +2506,9 @@ class OptNameSeparatorTestCast(BaseTestCase):
         self.conf.register_opt(cfg.BoolOpt('foobar',
                                            deprecated_opts=oldopts))
 
-        # FIXME(markmc): this should be self.cf_name, see #1279973
-        if self.broken:
-            paths = self.create_tempfiles([('test',
-                                            '[DEFAULT]\n' +
-                                            self.broken_cf_name +
-                                            ' = True\n')])
-        else:
-            paths = self.create_tempfiles([('test',
-                                            '[DEFAULT]\n' +
-                                            self.cf_name + ' = True\n')])
+        paths = self.create_tempfiles([('test',
+                                        '[DEFAULT]\n' +
+                                        self.cf_name + ' = True\n')])
 
         self.conf(['--config-file', paths[0]])
 

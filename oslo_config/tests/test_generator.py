@@ -103,6 +103,11 @@ class GeneratorTestCase(base.BaseTestCase):
         'deprecated_opt_with_deprecated_group': cfg.StrOpt(
             'bar', deprecated_name='foobar', deprecated_group='group1',
             help='deprecated'),
+        'opt_with_DeprecatedOpt': cfg.BoolOpt(
+            'foo-bar',
+            help='Opt with DeprecatedOpt',
+            deprecated_opts = [cfg.DeprecatedOpt('foo-bar',
+                                                 group='deprecated')]),
         # Unknown Opt default must be a string
         'unknown_type': cfg.Opt('unknown_opt',
                                 default='123',
@@ -838,6 +843,18 @@ class GeneratorTestCase(base.BaseTestCase):
 
 # a string (string value)
 #str_opt = foo bar
+''')),
+         ('opt_with_DeprecatedOpt',
+         dict(opts=[('test', [(None, [opts['opt_with_DeprecatedOpt']])])],
+              expected='''[DEFAULT]
+
+#
+# From test
+#
+
+# Opt with DeprecatedOpt (boolean value)
+# Deprecated group/name - [deprecated]/foo_bar
+#foo_bar = <None>
 ''')),
     ]
 
