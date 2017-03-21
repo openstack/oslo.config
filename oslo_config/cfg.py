@@ -459,7 +459,7 @@ import debtcollector
 from debtcollector import removals
 import six
 
-from oslo_config._i18n import _LI, _LW
+
 from oslo_config import iniparser
 from oslo_config import types
 
@@ -956,9 +956,9 @@ class Opt(object):
         if self.deprecated_for_removal and not self._logged_deprecation:
             self._logged_deprecation = True
             pretty_group = group_name or 'DEFAULT'
-            LOG.warning(_LW('Option "%(option)s" from group "%(group)s" is '
-                            'deprecated for removal.  Its value may be '
-                            'silently ignored in the future.'),
+            LOG.warning('Option "%(option)s" from group "%(group)s" is '
+                        'deprecated for removal.  Its value may be '
+                        'silently ignored in the future.',
                         {'option': self.dest, 'group': pretty_group})
         return value
 
@@ -1843,9 +1843,9 @@ class MultiConfigParser(object):
     _Namespace.
     """
 
-    _deprecated_opt_message = _LW('Option "%(dep_option)s" from group '
-                                  '"%(dep_group)s" is deprecated. Use option '
-                                  '"%(option)s" from group "%(group)s".')
+    _deprecated_opt_message = ('Option "%(dep_option)s" from group '
+                               '"%(dep_group)s" is deprecated. Use option '
+                               '"%(option)s" from group "%(group)s".')
 
     def __init__(self):
         self.parsed = []
@@ -1954,9 +1954,9 @@ class _Namespace(argparse.Namespace):
     or convert a config file value at this point.
     """
 
-    _deprecated_opt_message = _LW('Option "%(dep_option)s" from group '
-                                  '"%(dep_group)s" is deprecated. Use option '
-                                  '"%(option)s" from group "%(group)s".')
+    _deprecated_opt_message = ('Option "%(dep_option)s" from group '
+                               '"%(dep_group)s" is deprecated. Use option '
+                               '"%(option)s" from group "%(group)s".')
 
     def __init__(self, conf):
         self._conf = conf
@@ -2999,9 +2999,9 @@ class ConfigOpts(collections.Mapping):
             if not real_opt_name:
                 raise NoSuchOptError(opt_name, group)
             log_real_group_name = real_group_name or 'DEFAULT'
-            dep_message = _LW('Config option %(dep_group)s.%(dep_option)s '
-                              ' is deprecated. Use option %(group)s.'
-                              '%(option)s instead.')
+            dep_message = ('Config option %(dep_group)s.%(dep_option)s '
+                           ' is deprecated. Use option %(group)s.'
+                           '%(option)s instead.')
             LOG.warning(dep_message, {'dep_option': opt_name,
                                       'dep_group': group,
                                       'option': real_opt_name,
@@ -3125,12 +3125,12 @@ class ConfigOpts(collections.Mapping):
         try:
             namespace = self._reload_config_files()
         except SystemExit as exc:
-            LOG.warning(_LW("Caught SystemExit while reloading configure "
-                            "files with exit code: %d"), exc.code)
+            LOG.warning("Caught SystemExit while reloading configure "
+                        "files with exit code: %d", exc.code)
             return False
         except Error as err:
-            LOG.warning(_LW("Caught Error while reloading configure files: "
-                            " %s"), err)
+            LOG.warning("Caught Error while reloading configure files: "
+                        "%s", err)
             return False
         else:
             self._namespace = namespace
@@ -3171,8 +3171,8 @@ class ConfigOpts(collections.Mapping):
         sorted_fresh = sorted(fresh.items(), key=key_fn)
         for (groupname, optname), (old, new) in sorted_fresh:
             groupname = groupname if groupname else 'DEFAULT'
-            LOG.info(_LI("Option %(group)s.%(option)s changed from "
-                         "[%(old_val)s] to [%(new_val)s]"),
+            LOG.info("Option %(group)s.%(option)s changed from "
+                     "[%(old_val)s] to [%(new_val)s]",
                      {'group': groupname,
                       'option': optname,
                       'old_val': old,
@@ -3201,8 +3201,8 @@ class ConfigOpts(collections.Mapping):
             except KeyError:
                 new = None
             if old != new:
-                LOG.warning(_LW("Ignoring change to immutable option "
-                                "%(group)s.%(option)s"),
+                LOG.warning("Ignoring change to immutable option "
+                            "%(group)s.%(option)s",
                             {"group": groupname, "option": opt.name})
 
     def _diff_ns(self, old_ns, new_ns):

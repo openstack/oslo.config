@@ -32,7 +32,7 @@ import textwrap
 import pkg_resources
 import six
 
-from oslo_config._i18n import _LW
+
 from oslo_config import cfg
 import stevedore.named  # noqa
 
@@ -107,7 +107,7 @@ def _format_defaults(opt):
                                   key=operator.itemgetter(0))
             default_str = ','.join(['%s:%s' % i for i in sorted_items])
         else:
-            LOG.warning(_LW('Unknown option type: %s'), repr(opt))
+            LOG.warning('Unknown option type: %s', repr(opt))
             default_str = str(opt.default)
         defaults = [default_str]
 
@@ -207,7 +207,7 @@ class _OptFormatter(object):
         :returns: a formatted opt description string
         """
         if not opt.help:
-            LOG.warning(_LW('"%s" is missing a help string'), opt.dest)
+            LOG.warning('"%s" is missing a help string', opt.dest)
 
         opt_type = _format_type_name(opt.type)
         opt_prefix = ''
