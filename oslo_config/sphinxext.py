@@ -156,9 +156,10 @@ def _format_group(app, namespace, group_name, group_obj, opt_list):
 
         try:
             help_text = opt.help % {'default': 'the value above'}
-        except (TypeError, KeyError):
+        except (TypeError, KeyError, ValueError):
             # There is no mention of the default in the help string,
-            # or the string had some unknown key
+            # the string had some unknown key, or the string contained
+            # invalid formatting characters
             help_text = opt.help
         if help_text:
             yield _indent(help_text)
