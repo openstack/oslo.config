@@ -1,0 +1,7 @@
+---
+features:
+  - |
+    The sample config generator can now generate machine-readable formats of
+    the sample config data.  This can be consumed by deployment tools to
+    automatically generate configuration files that contain all of the
+    information in the traditional sample configs.

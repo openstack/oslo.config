@@ -24,13 +24,16 @@ Tool for generating a sample configuration file. See
 """
 
 import collections
+import copy
 import logging
 import operator
 import sys
 import textwrap
 
+import json
 import pkg_resources
 import six
+import yaml
 
 
 from oslo_config import cfg
@@ -61,6 +64,15 @@ _generator_opts = [
         default=False,
         help='Only output summaries of help text to config files. Retain '
         'longer help text for Sphinx documents.'),
+    cfg.StrOpt(
+        'format',
+        help='Desired format for the output. "ini" is the only one which can '
+             'be used directly with oslo.config. "json" and "yaml" are '
+             'intended for third-party tools that want to write config files '
+             'based on the sample config data.',
+        default='ini',
+        choices=['ini', 'json', 'yaml'],
+        dest='format_'),
 ]
 
 
@@ -491,6 +503,108 @@ def _get_groups(conf_ns):
     return groups
 
 
+def _build_entry(opt, group, namespace, conf):
+    """Return a dict representing the passed in opt
+
+    The dict will contain all public attributes of opt, as well as additional
+    entries for namespace, choices, min, and max.  Any DeprecatedOpts
+    contained in the deprecated_opts member will be converted to a dict with
+    the format: {'group': <deprecated group>, 'name': <deprecated name>}
+
+    :param opt: The Opt object to represent as a dict.
+    :param group: The name of the group containing opt.
+    :param namespace: The name of the namespace containing opt.
+    :param conf: The ConfigOpts object containing the options for the
+                 generator tool
+    """
+    entry = {key: value for key, value in opt.__dict__.items()
+             if not key.startswith('_')}
+    entry['namespace'] = namespace
+    # In some types, choices is explicitly set to None.  Force it to [] so it
+    # is always an iterable type.
+    entry['choices'] = getattr(entry['type'], 'choices', []) or []
+    entry['min'] = getattr(entry['type'], 'min', None)
+    entry['max'] = getattr(entry['type'], 'max', None)
+    entry['type'] = _format_type_name(entry['type'])
+    deprecated_opts = []
+    for deprecated_opt in entry['deprecated_opts']:
+        # NOTE(bnemec): opt names with a - are not valid in a config file,
+        # but it is possible to add a DeprecatedOpt with a - name.  We
+        # want to ignore those as they won't work anyway.
+        if not deprecated_opt.name or '-' not in deprecated_opt.name:
+            deprecated_opts.append(
+                {'group': deprecated_opt.group or group,
+                 'name': deprecated_opt.name or entry['name'],
+                 })
+    entry['deprecated_opts'] = deprecated_opts
+    return entry
+
+
+def _generate_machine_readable_data(groups, conf):
+    """Create data structure for machine readable sample config
+
+    Returns a dictionary with the top-level keys 'options',
+    'deprecated_options', and 'generator_options'.
+
+    'options' contains a dict mapping group names to a list of options in
+    that group.  Each option is represented by the result of a call to
+    _build_entry.  Only non-deprecated options are included in this list.
+
+    'deprecated_options' contains a dict mapping groups names to a list of
+    opts from that group which were deprecated.
+
+    'generator_options' is a dict mapping the options for the sample config
+    generator itself to their values.
+
+    :param groups: A dict of groups as returned by _get_groups.
+    :param conf: The ConfigOpts object containing the options for the
+                 generator tool
+    """
+    output_data = {'options': {},
+                   'deprecated_options': {},
+                   'generator_options': {}}
+    # See _get_groups for details on the structure of group_data
+    for group_name, group_data in groups.items():
+        output_data['options'][group_name] = {'opts': [], 'help': ''}
+        for namespace in group_data['namespaces']:
+            for opt in namespace[1]:
+                if group_data['object']:
+                    output_group = output_data['options'][group_name]
+                    output_group['help'] = group_data['object'].help
+                entry = _build_entry(opt, group_name, namespace[0], conf)
+                output_data['options'][group_name]['opts'].append(entry)
+                # Need copies of the opts because we modify them
+                for deprecated_opt in copy.deepcopy(entry['deprecated_opts']):
+                    group = deprecated_opt.pop('group')
+                    deprecated_options = output_data['deprecated_options']
+                    deprecated_options.setdefault(group, [])
+                    deprecated_opt['replacement_name'] = entry['name']
+                    deprecated_opt['replacement_group'] = group_name
+                    deprecated_options[group].append(deprecated_opt)
+    output_data['generator_options'] = conf
+    return output_data
+
+
+def _output_machine_readable(groups, output_file, conf):
+    """Write a machine readable sample config file
+
+    Take the data returned by _generate_machine_readable_data and write it in
+    the format specified by the format_ attribute of conf.
+
+    :param groups: A dict of groups as returned by _get_groups.
+    :param output_file: A file-like object to which the data should be written.
+    :param conf: The ConfigOpts object containing the options for the
+                 generator tool
+    """
+    output_data = _generate_machine_readable_data(groups, conf)
+    if conf.format_ == 'yaml':
+        output_file.write(yaml.safe_dump(output_data,
+                                         default_flow_style=False))
+    else:
+        output_file.write(json.dumps(output_data, sort_keys=True))
+    output_file.write('\n')
+
+
 def generate(conf):
     """Generate a sample config file.
 
@@ -504,20 +618,25 @@ def generate(conf):
     output_file = (open(conf.output_file, 'w')
                    if conf.output_file else sys.stdout)
 
-    formatter = _OptFormatter(output_file=output_file,
-                              wrap_width=conf.wrap_width)
-
     groups = _get_groups(_list_opts(conf.namespace))
 
-    # Output the "DEFAULT" section as the very first section
-    _output_opts(formatter, 'DEFAULT', groups.pop('DEFAULT'), conf.minimal,
-                 conf.summarize)
+    if conf.format_ == 'ini':
+        formatter = _OptFormatter(output_file=output_file,
+                                  wrap_width=conf.wrap_width)
 
-    # output all other config sections with groups in alphabetical order
-    for group, group_data in sorted(groups.items()):
-        formatter.write('\n\n')
-        _output_opts(formatter, group, group_data, conf.minimal,
+        # Output the "DEFAULT" section as the very first section
+        _output_opts(formatter, 'DEFAULT', groups.pop('DEFAULT'), conf.minimal,
                      conf.summarize)
+
+        # output all other config sections with groups in alphabetical order
+        for group, group_data in sorted(groups.items()):
+            formatter.write('\n\n')
+            _output_opts(formatter, group, group_data, conf.minimal,
+                         conf.summarize)
+    else:
+        _output_machine_readable(groups,
+                                 output_file=output_file,
+                                 conf=conf)
 
 
 def main(args=None):
