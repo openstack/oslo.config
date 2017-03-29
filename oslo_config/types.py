@@ -769,9 +769,8 @@ class HostAddress(object):
     matching the opt values to the respective types as per RFC1912.
 
     :param version: defines which version should be explicitly
-    checked (4 or 6) in case of an IP address
+                    checked (4 or 6) in case of an IP address
     :param type_name: Type name to be used in the sample config file.
-
     """
 
     def __init__(self, version=None, type_name='host address value'):

@@ -46,22 +46,22 @@ the value can not be converted.
 For convenience, there are predefined option subclasses in
 :mod:`oslo_config.cfg` that set the option `type` as in the following table:
 
-====================================  ======
-Type                                  Option
-====================================  ======
-:class:`oslo_config.types.String`     - :class:`oslo_config.cfg.StrOpt`
-                                      - :class:`oslo_config.cfg.SubCommandOpt`
-:class:`oslo_config.types.Boolean`    :class:`oslo_config.cfg.BoolOpt`
-:class:`oslo_config.types.Integer`    :class:`oslo_config.cfg.IntOpt`
-:class:`oslo_config.types.Float`      :class:`oslo_config.cfg.FloatOpt`
-:class:`oslo_config.types.Port`       :class:`oslo_config.cfg.PortOpt`
-:class:`oslo_config.types.List`       :class:`oslo_config.cfg.ListOpt`
-:class:`oslo_config.types.Dict`       :class:`oslo_config.cfg.DictOpt`
-:class:`oslo_config.types.IPAddress`  :class:`oslo_config.cfg.IPOpt`
-:class:`oslo_config.types.Hostname`   :class:`oslo_config.cfg.HostnameOpt`
-:class:`oslo_config.types.HostAddress`:class:`oslo_config.cfg.HostAddressOpt`
-:class:`oslo_config.types.URI`        :class:`oslo_config.cfg.URIOpt`
-====================================  ======
+======================================  ======
+Type                                    Option
+======================================  ======
+:class:`oslo_config.types.String`       :class:`oslo_config.cfg.StrOpt`
+:class:`oslo_config.types.String`       :class:`oslo_config.cfg.SubCommandOpt`
+:class:`oslo_config.types.Boolean`      :class:`oslo_config.cfg.BoolOpt`
+:class:`oslo_config.types.Integer`      :class:`oslo_config.cfg.IntOpt`
+:class:`oslo_config.types.Float`        :class:`oslo_config.cfg.FloatOpt`
+:class:`oslo_config.types.Port`         :class:`oslo_config.cfg.PortOpt`
+:class:`oslo_config.types.List`         :class:`oslo_config.cfg.ListOpt`
+:class:`oslo_config.types.Dict`         :class:`oslo_config.cfg.DictOpt`
+:class:`oslo_config.types.IPAddress`    :class:`oslo_config.cfg.IPOpt`
+:class:`oslo_config.types.Hostname`     :class:`oslo_config.cfg.HostnameOpt`
+:class:`oslo_config.types.HostAddress`  :class:`oslo_config.cfg.HostAddressOpt`
+:class:`oslo_config.types.URI`          :class:`oslo_config.cfg.URIOpt`
+======================================  ======
 
 For :class:`oslo_config.cfg.MultiOpt` the `item_type` parameter defines
 the type of the values. For convenience, :class:`oslo_config.cfg.MultiStrOpt`
@@ -2278,7 +2278,7 @@ class ConfigOpts(collections.Mapping):
             _ConfigDirOpt('config-dir',
                           metavar='DIR',
                           default=default_config_dirs,
-                          help='Path to a config directory to pull *.conf '
+                          help='Path to a config directory to pull `*.conf` '
                                'files from. This file set is sorted, so as to '
                                'provide a predictable parse order if '
                                'individual options are over-ridden. The set '
@@ -3119,7 +3119,7 @@ class ConfigOpts(collections.Mapping):
     def reload_config_files(self):
         """Reload configure files and parse all options
 
-        :return False if reload configure files failed or else return True
+        :return: False if reload configure files failed or else return True
         """
 
         try:
@@ -3141,7 +3141,7 @@ class ConfigOpts(collections.Mapping):
 
         :param hook: a function accepting this ConfigOpts object and a dict of
                      config mutations, as returned by mutate_config_files.
-        :return None
+        :return: None
         """
         self._mutate_hooks.add(hook)
 
@@ -3153,8 +3153,8 @@ class ConfigOpts(collections.Mapping):
         Hooks are called in a NON-DETERMINISTIC ORDER. Do not expect hooks to
         be called in the same order as they were added.
 
-        :return {(None or 'group', 'optname'): (old_value, new_value), ... }
-        :raises Error if reloading fails
+        :return: {(None or 'group', 'optname'): (old_value, new_value), ... }
+        :raises: Error if reloading fails
         """
         self.__cache.clear()
 
