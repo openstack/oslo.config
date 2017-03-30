@@ -1,0 +1,12 @@
+---
+upgrade:
+  - |
+    Positional options are now required by default, to match argparse's default
+    behavior. To revert this behavior (and maintain optional positional
+    arguments), you need to explicitly specify ``positional=True,
+    required=False`` as part of the options definition.
+fixes:
+  - |
+    On the command line, oslo.config now returns command usage information from
+    argparse (instead of dumping a backtrace) when required arguments are
+    missing.
