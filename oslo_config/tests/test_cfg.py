@@ -976,15 +976,11 @@ class PositionalTestCase(BaseTestCase):
 
         self.useFixture(fixtures.MonkeyPatch('sys.stdout', moves.StringIO()))
         self.assertRaises(SystemExit, self.conf, ['--help'])
-        self.assertIn(' [foo-bar]\n', sys.stdout.getvalue())
+        self.assertIn(' [foo_bar]\n', sys.stdout.getvalue())
 
         self.conf(['baz'])
         self.assertTrue(hasattr(self.conf, 'foo_bar'))
-        # FIXME(dolphm): Due to bug 1676989, this argument cannot be retrieved
-        # by oslo_config.cfg. Instead, the following commented-out code should
-        # work:
-        # self.assertEqual('baz', self.conf.foo_bar)
-        self.assertIsNone(self.conf.foo_bar)
+        self.assertEqual('baz', self.conf.foo_bar)
 
     def test_optional_positional_hyphenated_opt_undefined(self):
         self.conf.register_cli_opt(
@@ -992,7 +988,7 @@ class PositionalTestCase(BaseTestCase):
 
         self.useFixture(fixtures.MonkeyPatch('sys.stdout', moves.StringIO()))
         self.assertRaises(SystemExit, self.conf, ['--help'])
-        self.assertIn(' [foo-bar]\n', sys.stdout.getvalue())
+        self.assertIn(' [foo_bar]\n', sys.stdout.getvalue())
 
         self.conf([])
         self.assertTrue(hasattr(self.conf, 'foo_bar'))
@@ -1004,15 +1000,11 @@ class PositionalTestCase(BaseTestCase):
 
         self.useFixture(fixtures.MonkeyPatch('sys.stdout', moves.StringIO()))
         self.assertRaises(SystemExit, self.conf, ['--help'])
-        self.assertIn(' foo-bar\n', sys.stdout.getvalue())
+        self.assertIn(' foo_bar\n', sys.stdout.getvalue())
 
-        # FIXME(dolphm): Due to bug 1676989, this mistakenly raises an
-        # exception, even though the option is clearly defined. Instead, the
-        # following commented out lines should work:
-        # self.conf(['baz'])
-        # self.assertTrue(hasattr(self.conf, 'foo_bar'))
-        # self.assertEqual('baz', self.conf.foo_bar)
-        self.assertRaises(cfg.RequiredOptError, self.conf, ['baz'])
+        self.conf(['baz'])
+        self.assertTrue(hasattr(self.conf, 'foo_bar'))
+        self.assertEqual('baz', self.conf.foo_bar)
 
     def test_required_positional_hyphenated_opt_undefined(self):
         self.conf.register_cli_opt(
@@ -1020,7 +1012,7 @@ class PositionalTestCase(BaseTestCase):
 
         self.useFixture(fixtures.MonkeyPatch('sys.stdout', moves.StringIO()))
         self.assertRaises(SystemExit, self.conf, ['--help'])
-        self.assertIn(' foo-bar\n', sys.stdout.getvalue())
+        self.assertIn(' foo_bar\n', sys.stdout.getvalue())
 
         self.assertRaises(SystemExit, self.conf, [])
 

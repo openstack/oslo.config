@@ -721,6 +721,13 @@ class Opt(object):
         def hyphen(arg):
             return arg if not positional else ''
 
+        # Because we must omit the dest parameter when using a positional
+        # argument, the name supplied for the positional argument must not
+        # include hyphens.
+        if positional:
+            prefix = prefix.replace('-', '_')
+            name = name.replace('-', '_')
+
         args = [hyphen('--') + prefix + name]
         if short:
             args.append(hyphen('-') + short)
