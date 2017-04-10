@@ -3134,20 +3134,12 @@ class OverridesTestCase(BaseTestCase):
         self.conf.clear_default('foo')
         self.assertEqual('foo', self.conf.foo)
 
-    @mock.patch('debtcollector.deprecate')
-    def test_deprecation_wrong_type_default(self, deprecate):
+    def test_enforce_type_wrong_type_default(self):
         self.conf.register_opt(cfg.IntOpt('foo', default=1))
         self.conf([])
         self.assertEqual(1, self.conf.foo)
-        self.conf.set_default('foo', "not_really_a_int")
-        self.assertEqual('not_really_a_int', self.conf.foo)
-        self.conf.clear_default('foo')
-        self.assertEqual(1, self.conf.foo)
-        deprecate.assert_called_once_with(
-            "The argument enforce_type is changing its default value to True "
-            "and then will be removed completely, please fix the invalid "
-            "Integer value 'not_really_a_int' for option 'foo'.",
-            version=4.0)
+        self.assertRaises(ValueError, self.conf.set_default,
+                          'foo', 'not_really_a_int')
 
     def test_override(self):
         self.conf.register_opt(cfg.StrOpt('foo'))
@@ -3235,19 +3227,10 @@ class OverridesTestCase(BaseTestCase):
         self.conf.clear_override('foo')
         self.assertIsNone(self.conf.foo)
 
-    @mock.patch('debtcollector.deprecate')
-    def test_deprecation_wrong_type_override(self, deprecate):
+    def test_enforce_type_wrong_type_override(self):
         self.conf.register_opt(cfg.IntOpt('foo'))
-        self.conf.set_override('foo', "not_really_a_int")
-        self.conf([])
-        self.assertEqual('not_really_a_int', self.conf.foo)
-        self.conf.clear_override('foo')
-        self.assertIsNone(self.conf.foo)
-        deprecate.assert_called_once_with(
-            "The argument enforce_type is changing its default value to True "
-            "and then will be removed completely, please fix the invalid "
-            "Integer value 'not_really_a_int' for option 'foo'.",
-            version=4.0)
+        self.assertRaises(ValueError, self.conf.set_override,
+                          'foo', "not_really_a_int")
 
     def test_set_override_in_choices(self):
         self.conf.register_group(cfg.OptGroup('f'))
