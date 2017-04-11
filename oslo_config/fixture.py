@@ -68,7 +68,7 @@ class Config(fixtures.Fixture):
         """
 
         group = kw.pop('group', None)
-        enforce_type = kw.pop('enforce_type', False)
+        enforce_type = kw.pop('enforce_type', True)
         for k, v in kw.items():
             self.conf.set_override(k, v, group, enforce_type=enforce_type)
 
