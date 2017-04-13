@@ -2611,7 +2611,7 @@ class ConfigOpts(collections.Mapping):
     @removals.removed_kwarg('enforce_type', "The argument enforce_type has "
                             "changed its default value to True and then will"
                             " be removed completely.",
-                            version='3.24', removal_version='4.0')
+                            version='4.0', removal_version='5.0')
     @__clear_cache
     def set_override(self, name, override, group=None, enforce_type=True):
         """Override an opt value.
@@ -2634,7 +2634,7 @@ class ConfigOpts(collections.Mapping):
     @removals.removed_kwarg('enforce_type', "The argument enforce_type has "
                             "changed its default value to True and then will"
                             " be removed completely.",
-                            version='3.24', removal_version='4.0')
+                            version='4.0', removal_version='5.0')
     @__clear_cache
     def set_default(self, name, default, group=None, enforce_type=True):
         """Override an opt's default value.
