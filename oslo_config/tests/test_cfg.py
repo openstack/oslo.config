@@ -3122,14 +3122,13 @@ class OverridesTestCase(BaseTestCase):
         self.conf.register_cli_opt(cfg.StrOpt('oo', choices=('a', 'b')),
                                    group='f')
         self.assertRaises(ValueError,
-                          self.conf.set_default, 'oo', 'c', 'f',
-                          enforce_type=True)
+                          self.conf.set_default, 'oo', 'c', 'f')
 
     def test_enforce_type_default_override(self):
         self.conf.register_opt(cfg.StrOpt('foo', default='foo'))
         self.conf([])
         self.assertEqual('foo', self.conf.foo)
-        self.conf.set_default('foo', 'bar', enforce_type=True)
+        self.conf.set_default('foo', 'bar')
         self.assertEqual('bar', self.conf.foo)
         self.conf.clear_default('foo')
         self.assertEqual('foo', self.conf.foo)
@@ -3212,7 +3211,7 @@ class OverridesTestCase(BaseTestCase):
 
     def test_enforce_type_str_override(self):
         self.conf.register_opt(cfg.StrOpt('foo'))
-        self.conf.set_override('foo', True, enforce_type=True)
+        self.conf.set_override('foo', True)
         self.conf([])
         self.assertEqual('True', self.conf.foo)
         self.conf.clear_override('foo')
@@ -3236,7 +3235,7 @@ class OverridesTestCase(BaseTestCase):
         self.conf.register_group(cfg.OptGroup('f'))
         self.conf.register_cli_opt(cfg.StrOpt('oo', choices=('a', 'b')),
                                    group='f')
-        self.conf.set_override('oo', 'b', 'f', enforce_type=True)
+        self.conf.set_override('oo', 'b', 'f')
         self.assertEqual('b', self.conf.f.oo)
 
     def test_set_override_not_in_choices(self):
@@ -3244,12 +3243,11 @@ class OverridesTestCase(BaseTestCase):
         self.conf.register_cli_opt(cfg.StrOpt('oo', choices=('a', 'b')),
                                    group='f')
         self.assertRaises(ValueError,
-                          self.conf.set_override, 'oo', 'c', 'f',
-                          enforce_type=True)
+                          self.conf.set_override, 'oo', 'c', 'f')
 
     def test_enforce_type_bool_override(self):
         self.conf.register_opt(cfg.BoolOpt('foo'))
-        self.conf.set_override('foo', 'True', enforce_type=True)
+        self.conf.set_override('foo', 'True')
         self.conf([])
         self.assertTrue(self.conf.foo)
         self.conf.clear_override('foo')
@@ -3257,7 +3255,7 @@ class OverridesTestCase(BaseTestCase):
 
     def test_enforce_type_int_override_with_None(self):
         self.conf.register_opt(cfg.IntOpt('foo'))
-        self.conf.set_override('foo', None, enforce_type=True)
+        self.conf.set_override('foo', None)
         self.conf([])
         self.assertIsNone(self.conf.foo)
         self.conf.clear_override('foo')
@@ -3265,7 +3263,7 @@ class OverridesTestCase(BaseTestCase):
 
     def test_enforce_type_str_override_with_None(self):
         self.conf.register_opt(cfg.StrOpt('foo'))
-        self.conf.set_override('foo', None, enforce_type=True)
+        self.conf.set_override('foo', None)
         self.conf([])
         self.assertIsNone(self.conf.foo)
         self.conf.clear_override('foo')
@@ -3273,7 +3271,7 @@ class OverridesTestCase(BaseTestCase):
 
     def test_enforce_type_List_override(self):
         self.conf.register_opt(cfg.ListOpt('foo'))
-        self.conf.set_override('foo', ['aa', 'bb'], enforce_type=True)
+        self.conf.set_override('foo', ['aa', 'bb'])
         self.conf([])
         self.assertEqual(['aa', 'bb'], self.conf.foo)
         self.conf.clear_override('foo')
