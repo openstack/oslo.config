@@ -397,10 +397,10 @@ class Port(Integer):
         min = self.PORT_MIN if min is None else min
         max = self.PORT_MAX if max is None else max
         if min < self.PORT_MIN:
-            raise ValueError('Min value cannot be less than %(min)d',
+            raise ValueError('Min value cannot be less than %(min)d' %
                              {'min': self.PORT_MIN})
         if max > self.PORT_MAX:
-            raise ValueError('Max value cannot be more than %(max)d',
+            raise ValueError('Max value cannot be more than %(max)d' %
                              {'max': self.PORT_MAX})
 
         super(Port, self).__init__(min=min, max=max, type_name=type_name,
@@ -796,7 +796,7 @@ class HostAddress(object):
             try:
                 value = self.hostname(value)
             except ValueError:
-                raise ValueError("%s is not a valid host address", value)
+                raise ValueError("%s is not a valid host address" % (value,))
         return value
 
     def __repr__(self):
