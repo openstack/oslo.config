@@ -15,6 +15,7 @@
 import argparse
 import errno
 import functools
+import logging
 import os
 import shutil
 import sys
@@ -913,6 +914,16 @@ class PositionalTestCase(BaseTestCase):
 
 class ConfigFileOptsTestCase(BaseTestCase):
 
+    def setUp(self):
+        super(ConfigFileOptsTestCase, self).setUp()
+        self.logger = self.useFixture(
+            fixtures.FakeLogger(
+                format='%(message)s',
+                level=logging.WARNING,
+                nuke_handlers=True,
+            )
+        )
+
     def _do_deprecated_test(self, opt_class, value, result, key,
                             section='DEFAULT',
                             dname=None, dgroup=None):
@@ -1010,9 +1021,42 @@ class ConfigFileOptsTestCase(BaseTestCase):
                    '--config-file', paths[1]])
 
         self.assertTrue(hasattr(self.conf, 'newfoo'))
-        # TODO(mtreinish): Add a check for the log message
         self.assertTrue(hasattr(self.conf, 'oldfoo'))
         self.assertEqual('last', self.conf.newfoo)
+        log_out = self.logger.output
+        self.assertIn('is deprecated', log_out)
+        self.assertIn('Use option "newfoo"', log_out)
+
+    def test_use_deprecated_for_removal_without_reason(self):
+        self.conf.register_cli_opt(
+            cfg.StrOpt('oldfoo',
+                       deprecated_for_removal=True))
+
+        paths = self.create_tempfiles([('0',
+                                        '[DEFAULT]\n'
+                                        'oldfoo = middle\n')])
+
+        self.conf(['--oldfoo', 'first',
+                   '--config-file', paths[0]])
+
+        log_out = self.logger.output
+        self.assertIn('deprecated for removal.', log_out)
+
+    def test_use_deprecated_for_removal_with_reason(self):
+        self.conf.register_cli_opt(
+            cfg.StrOpt('oldfoo',
+                       deprecated_for_removal=True,
+                       deprecated_reason='a very good reason'))
+
+        paths = self.create_tempfiles([('0',
+                                        '[DEFAULT]\n'
+                                        'oldfoo = middle\n')])
+
+        self.conf(['--oldfoo', 'first',
+                   '--config-file', paths[0]])
+
+        log_out = self.logger.output
+        self.assertIn('deprecated for removal (a very good reason).', log_out)
 
     def test_conf_file_str_use_dname(self):
         self._do_dname_test_use(cfg.StrOpt, 'value1', 'value1')

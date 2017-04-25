@@ -1,0 +1,5 @@
+---
+features:
+  - |
+    When a deprecated option is used, the message warning that the option is
+    deprecated now includes the reason for the deprecation, if there is one given.

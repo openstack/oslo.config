@@ -955,10 +955,16 @@ class Opt(object):
         if self.deprecated_for_removal and not self._logged_deprecation:
             self._logged_deprecation = True
             pretty_group = group_name or 'DEFAULT'
+            if self.deprecated_reason:
+                pretty_reason = ' ({})'.format(self.deprecated_reason)
+            else:
+                pretty_reason = ''
             LOG.warning('Option "%(option)s" from group "%(group)s" is '
-                        'deprecated for removal.  Its value may be '
+                        'deprecated for removal%(reason)s.  Its value may be '
                         'silently ignored in the future.',
-                        {'option': self.dest, 'group': pretty_group})
+                        {'option': self.dest,
+                         'group': pretty_group,
+                         'reason': pretty_reason})
         return value
 
     def _add_to_cli(self, parser, group=None):
