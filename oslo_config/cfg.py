@@ -2420,7 +2420,10 @@ class ConfigOpts(collections.Mapping):
 
     @__clear_cache
     def clear(self):
-        """Clear the state of the object to before it was called.
+        """Reset the state of the object to before options were registered.
+
+        This method removes all registered options and discards the data
+        from the command line and configuration files.
 
         Any subparsers added using the add_cli_subparsers() will also be
         removed as a side-effect of this method.
