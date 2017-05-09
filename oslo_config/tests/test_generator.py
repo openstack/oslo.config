@@ -122,6 +122,9 @@ class GeneratorTestCase(base.BaseTestCase):
         'str_opt_with_space': cfg.StrOpt('str_opt',
                                          default='  foo bar  ',
                                          help='a string with spaces'),
+        'str_opt_multiline': cfg.StrOpt('str_opt',
+                                        default='foo\nbar\nbaz',
+                                        help='a string with newlines'),
         'bool_opt': cfg.BoolOpt('bool_opt',
                                 default=False,
                                 help='a boolean'),
@@ -528,6 +531,19 @@ class GeneratorTestCase(base.BaseTestCase):
 
 # a string with spaces (string value)
 #str_opt = "  foo bar  "
+''')),
+        ('str_opt_multiline',
+         dict(opts=[('test', [(None, [opts['str_opt_multiline']])])],
+              expected='''[DEFAULT]
+
+#
+# From test
+#
+
+# a string with newlines (string value)
+#str_opt = foo
+#    bar
+#    baz
 ''')),
         ('bool_opt',
          dict(opts=[('test', [(None, [opts['bool_opt']])])],

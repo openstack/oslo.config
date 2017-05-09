@@ -311,7 +311,7 @@ class _OptFormatter(object):
             defaults = _format_defaults(opt)
         for default_str in defaults:
             if default_str:
-                default_str = ' ' + default_str
+                default_str = ' ' + default_str.replace('\n', '\n#    ')
             if minimal:
                 lines.append('%s =%s\n' % (opt.dest, default_str))
             else:
