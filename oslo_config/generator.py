@@ -581,7 +581,7 @@ def _generate_machine_readable_data(groups, conf):
                     deprecated_opt['replacement_name'] = entry['name']
                     deprecated_opt['replacement_group'] = group_name
                     deprecated_options[group].append(deprecated_opt)
-    output_data['generator_options'] = conf
+    output_data['generator_options'] = dict(conf)
     return output_data
 
 
