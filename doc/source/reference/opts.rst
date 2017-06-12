@@ -1,3 +1,5 @@
+.. _option-definitions:
+
 ------------------
 Option Definitions
 ------------------
