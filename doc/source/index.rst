@@ -13,6 +13,7 @@ Contents
 
    reference/index
    cli/index
+   configuration/index
    contributor/index
 
 Indices and tables
