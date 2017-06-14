@@ -208,6 +208,18 @@ class FindConfigFilesTestCase(BaseTestCase):
 
         self.assertEqual(cfg.find_config_files(project='blaa'), config_files)
 
+    def test_find_config_files_snap(self):
+        config_files = ['/snap/nova/current/etc/blaa/blaa.conf']
+        fake_env = {'SNAP': '/snap/nova/current/',
+                    'SNAP_COMMON': '/var/snap/nova/common/'}
+
+        self.useFixture(fixtures.MonkeyPatch('sys.argv', ['foo']))
+        self.useFixture(fixtures.MonkeyPatch('os.path.exists',
+                        lambda p: p in config_files))
+        self.useFixture(fixtures.MonkeyPatch('os.environ', fake_env))
+
+        self.assertEqual(cfg.find_config_files(project='blaa'), config_files)
+
     def test_find_config_files_with_extension(self):
         config_files = ['/etc/foo.json']
 
@@ -230,6 +242,18 @@ class FindConfigDirsTestCase(BaseTestCase):
         self.useFixture(fixtures.MonkeyPatch('sys.argv', ['foo']))
         self.useFixture(fixtures.MonkeyPatch('os.path.exists',
                                              lambda p: p in config_dirs))
+
+        self.assertEqual(cfg.find_config_dirs(project='blaa'), config_dirs)
+
+    def test_find_config_dirs_snap(self):
+        config_dirs = ['/var/snap/nova/common/etc/blaa/blaa.conf.d']
+        fake_env = {'SNAP': '/snap/nova/current/',
+                    'SNAP_COMMON': '/var/snap/nova/common/'}
+
+        self.useFixture(fixtures.MonkeyPatch('sys.argv', ['foo']))
+        self.useFixture(fixtures.MonkeyPatch('os.path.exists',
+                                             lambda p: p in config_dirs))
+        self.useFixture(fixtures.MonkeyPatch('os.environ', fake_env))
 
         self.assertEqual(cfg.find_config_dirs(project='blaa'), config_dirs)
 
