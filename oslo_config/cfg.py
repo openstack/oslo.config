@@ -231,6 +231,46 @@ group name::
 
     --rabbit-host localhost --rabbit-port 9999
 
+Dynamic Groups
+--------------
+
+Groups can be registered dynamically by application code. This
+introduces a challenge for the sample generator, discovery mechanisms,
+and validation tools, since they do not know in advance the names of
+all of the groups. The ``dynamic_group_owner`` parameter to the
+constructor specifies the full name of an option registered in another
+group that controls repeated instances of a dynamic group. This option
+is usually a MultiStrOpt.
+
+For example, Cinder supports multiple storage backend devices and
+services. To configure Cinder to communicate with multiple backends,
+the ``enabled_backends`` option is set to the list of names of
+backends. Each backend group includes the options for communicating
+with that device or service.
+
+Driver Groups
+-------------
+
+Groups can have dynamic sets of options, usually based on a driver
+that has unique requirements. This works at runtime because the code
+registers options before it uses them, but it introduces a challenge
+for the sample generator, discovery mechanisms, and validation tools
+because they do not know in advance the correct options for a group.
+
+To address this issue, the driver option for a group can be named
+using the ``driver_option`` parameter.  Each driver option should
+define its own discovery entry point namespace to return the set of
+options for that driver, named using the prefix
+``"oslo.config.opts."`` followed by the driver option name.
+
+In the Cinder case described above, a ``volume_backend_name`` option
+is part of the static definition of the group, so ``driver_option``
+should be set to ``"volume_backend_name"``. And plugins should be
+registered under ``"oslo.config.opts.volume_backend_name"`` using the
+same names as the main plugin registered with
+``"oslo.config.opts"``. The drivers residing within the Cinder code
+base have an entry point named ``"cinder"`` registered.
+
 Accessing Option Values In Your Code
 ------------------------------------
 
@@ -1694,18 +1734,51 @@ class OptGroup(object):
         the group description as displayed in --help
 
     :param name: the group name
+    :type name: str
     :param title: the group title for --help
+    :type title: str
     :param help: the group description for --help
+    :type help: str
+    :param dynamic_group_owner: The name of the option that controls
+                                repeated instances of this group.
+    :type dynamic_group_owner: str
+    :param driver_option: The name of the option within the group that
+                          controls which driver will register options.
+    :type driver_option: str
+
     """
 
-    def __init__(self, name, title=None, help=None):
+    def __init__(self, name, title=None, help=None,
+                 dynamic_group_owner='',
+                 driver_option=''):
         """Constructs an OptGroup object."""
         self.name = name
         self.title = "%s options" % name if title is None else title
         self.help = help
+        self.dynamic_group_owner = dynamic_group_owner
+        self.driver_option = driver_option
 
         self._opts = {}  # dict of dicts of (opt:, override:, default:)
         self._argparse_group = None
+        self._driver_opts = {}  # populated by the config generator
+
+    def _save_driver_opts(self, opts):
+        """Save known driver opts.
+
+        :param opts: mapping between driver name and list of opts
+        :type opts: dict
+
+        """
+        self._driver_opts.update(opts)
+
+    def _get_generator_data(self):
+        "Return a dict with data for the sample generator."
+        return {
+            'help': self.help or '',
+            'dynamic_group_owner': self.dynamic_group_owner,
+            'driver_option': self.driver_option,
+            'driver_opts': self._driver_opts,
+        }
 
     def _register_opt(self, opt, cli=False):
         """Add an opt to this group.
