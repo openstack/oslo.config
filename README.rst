@@ -23,6 +23,6 @@ The Oslo configuration API supports parsing command line arguments and
 .ini style configuration files.
 
 * License: Apache License, Version 2.0
-* Documentation: https://docs.openstack.org/developer/oslo.config
+* Documentation: https://docs.openstack.org/oslo.config
 * Source: https://git.openstack.org/cgit/openstack/oslo.config
 * Bugs: https://bugs.launchpad.net/oslo.config
