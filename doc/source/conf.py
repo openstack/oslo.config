@@ -10,9 +10,18 @@ sys.path.insert(0, os.path.abspath('../..'))
 
 # Add any Sphinx extension module names here, as strings. They can be
 # extensions coming with Sphinx (named 'sphinx.ext.*') or your custom ones.
-extensions = ['sphinx.ext.autodoc', 'oslosphinx',
-              'oslo_config.sphinxconfiggen',
-              'oslo_config.sphinxext']
+extensions = [
+    'sphinx.ext.autodoc',
+    'openstackdocstheme',
+    'oslo_config.sphinxconfiggen',
+    'oslo_config.sphinxext',
+]
+
+# openstackdocstheme options
+repository_name = 'openstack/oslo.config'
+bug_project = 'oslo.config'
+bug_tag = ''
+html_last_updated_fmt = '%Y-%m-%d %H:%M'
 
 config_generator_config_file = 'config-generator.conf'
 
@@ -58,14 +67,6 @@ modindex_common_prefix = ['oslo_config.']
 
 # Output file base name for HTML help builder.
 htmlhelp_basename = '%sdoc' % project
-
-git_cmd = ["git", "log", "--pretty=format:'%ad, commit %h'", "--date=local",
-           "-n1"]
-try:
-    html_last_updated_fmt = subprocess.check_output(git_cmd).decode('utf-8')
-except Exception:
-    warnings.warn('Cannot get last updated time from git repository. '
-                  'Not setting "html_last_updated_fmt".')
 
 # Grouping the document tree into LaTeX files. List of tuples
 # (source start file, target name, title, author, documentclass
