@@ -26,6 +26,9 @@ from oslo_config import fixture as config_fixture
 from oslo_config import generator
 from oslo_config import types
 
+import yaml
+
+
 load_tests = testscenarios.load_tests_apply_scenarios
 
 
@@ -954,6 +957,80 @@ class GeneratorTestCase(base.BaseTestCase):
             self.assertFalse(mock_log.warning.called)
 
 
+class DriverOptionTestCase(base.BaseTestCase):
+
+    def setUp(self):
+        super(DriverOptionTestCase, self).setUp()
+
+        self.conf = cfg.ConfigOpts()
+        self.config_fixture = config_fixture.Config(self.conf)
+        self.config = self.config_fixture.config
+        self.useFixture(self.config_fixture)
+
+    @mock.patch.object(generator, '_get_driver_opts_loaders')
+    @mock.patch.object(generator, '_get_raw_opts_loaders')
+    @mock.patch.object(generator, 'LOG')
+    def test_driver_option(self, mock_log, raw_opts_loader,
+                           driver_opts_loader):
+        group = cfg.OptGroup(
+            name='test_group',
+            title='Test Group',
+            driver_option='foo',
+        )
+        regular_opts = [
+            cfg.MultiStrOpt('foo', help='foo option'),
+            cfg.StrOpt('bar', help='bar option'),
+        ]
+        driver_opts = {
+            'd1': [
+                cfg.StrOpt('d1-foo', help='foo option'),
+            ],
+            'd2': [
+                cfg.StrOpt('d2-foo', help='foo option'),
+            ],
+        }
+
+        # We have a static data structure matching what should be
+        # returned by _list_opts() but we're mocking out a lower level
+        # function that needs to return a namespace and a callable to
+        # return options from that namespace. We have to pass opts to
+        # the lambda to cache a reference to the name because the list
+        # comprehension changes the thing pointed to by the name each
+        # time through the loop.
+        raw_opts_loader.return_value = [
+            ('testing', lambda: [(group, regular_opts)]),
+        ]
+        driver_opts_loader.return_value = [
+            ('testing', lambda: driver_opts),
+        ]
+
+        # Initialize the generator to produce YAML output to a buffer.
+        generator.register_cli_opts(self.conf)
+        self.config(namespace=['test_generator'], format_='yaml')
+        stdout = moves.StringIO()
+
+        # Generate the output and parse it back to a data structure.
+        generator.generate(self.conf, output_file=stdout)
+        body = stdout.getvalue()
+        actual = yaml.safe_load(body)
+
+        test_section = actual['options']['test_group']
+
+        self.assertEqual('foo', test_section['driver_option'])
+        found_option_names = [
+            o['name']
+            for o in test_section['opts']
+        ]
+        self.assertEqual(
+            ['foo', 'bar', 'd1-foo', 'd2-foo'],
+            found_option_names
+        )
+        self.assertEqual(
+            {'d1': ['d1-foo'], 'd2': ['d2-foo']},
+            test_section['driver_opts'],
+        )
+
+
 GENERATOR_OPTS = {'format_': 'yaml',
                   'minimal': False,
                   'namespace': ['test'],
@@ -972,7 +1049,11 @@ class MachineReadableGeneratorTestCase(base.BaseTestCase):
                         'generator_options': GENERATOR_OPTS,
                         'options': {
                             'DEFAULT': {
+                                'driver_option': '',
+                                'driver_opts': {},
+                                'dynamic_group_owner': '',
                                 'help': '',
+                                'standard_opts': ['foo'],
                                 'opts': [{'advanced': False,
                                           'choices': [],
                                           'default': None,
@@ -1000,7 +1081,11 @@ class MachineReadableGeneratorTestCase(base.BaseTestCase):
                         'generator_options': GENERATOR_OPTS,
                         'options': {
                             'DEFAULT': {
+                                'driver_option': '',
+                                'driver_opts': {},
+                                'dynamic_group_owner': '',
                                 'help': '',
+                                'standard_opts': ['long_help'],
                                 'opts': [{'advanced': False,
                                           'choices': [],
                                           'default': None,
@@ -1028,7 +1113,11 @@ class MachineReadableGeneratorTestCase(base.BaseTestCase):
                         'generator_options': GENERATOR_OPTS,
                         'options': {
                             'DEFAULT': {
+                                'driver_option': '',
+                                'driver_opts': {},
+                                'dynamic_group_owner': '',
                                 'help': '',
+                                'standard_opts': ['long_help_pre'],
                                 'opts': [{'advanced': False,
                                           'choices': [],
                                           'default': None,
@@ -1061,7 +1150,11 @@ class MachineReadableGeneratorTestCase(base.BaseTestCase):
                   'generator_options': GENERATOR_OPTS,
                   'options': {
                       'DEFAULT': {
+                          'driver_option': '',
+                          'driver_opts': {},
+                          'dynamic_group_owner': '',
                           'help': '',
+                          'standard_opts': ['foo-bar'],
                           'opts': [{
                               'advanced': False,
                               'choices': [],
@@ -1092,7 +1185,11 @@ class MachineReadableGeneratorTestCase(base.BaseTestCase):
                         'generator_options': GENERATOR_OPTS,
                         'options': {
                             'DEFAULT': {
+                                'driver_option': '',
+                                'driver_opts': {},
+                                'dynamic_group_owner': '',
                                 'help': '',
+                                'standard_opts': ['choices_opt'],
                                 'opts': [{'advanced': False,
                                           'choices': (None, '', 'a', 'b', 'c'),
                                           'default': 'a',
@@ -1120,7 +1217,11 @@ class MachineReadableGeneratorTestCase(base.BaseTestCase):
                         'generator_options': GENERATOR_OPTS,
                         'options': {
                             'DEFAULT': {
+                                'driver_option': '',
+                                'driver_opts': {},
+                                'dynamic_group_owner': '',
                                 'help': '',
+                                'standard_opts': ['int_opt'],
                                 'opts': [{'advanced': False,
                                           'choices': [],
                                           'default': 10,
@@ -1148,11 +1249,19 @@ class MachineReadableGeneratorTestCase(base.BaseTestCase):
                         'generator_options': GENERATOR_OPTS,
                         'options': {
                             'DEFAULT': {
+                                # 'driver_option': '',
+                                # 'driver_opts': [],
+                                # 'dynamic_group_owner': '',
                                 'help': '',
+                                'standard_opts': [],
                                 'opts': []
                             },
                             'group1': {
+                                'driver_option': '',
+                                'driver_opts': {},
+                                'dynamic_group_owner': '',
                                 'help': all_groups['group1'].help,
+                                'standard_opts': ['foo'],
                                 'opts': [{'advanced': False,
                                           'choices': [],
                                           'default': None,

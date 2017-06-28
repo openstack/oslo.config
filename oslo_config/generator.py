@@ -410,6 +410,33 @@ def _get_raw_opts_loaders(namespaces):
     return [(e.name, e.plugin) for e in mgr]
 
 
+def _get_driver_opts_loaders(namespaces, driver_option_name):
+    mgr = stevedore.named.NamedExtensionManager(
+        namespace='oslo.config.opts.' + driver_option_name,
+        names=namespaces,
+        on_load_failure_callback=on_load_failure_callback,
+        invoke_on_load=False)
+    return [(e.name, e.plugin) for e in mgr]
+
+
+def _get_driver_opts(driver_option_name, namespaces):
+    """List the options available from plugins for drivers based on the option.
+
+    :param driver_option_name: The name of the option controlling the
+                               driver options.
+    :param namespaces: a list of namespaces registered under
+                       'oslo.config.opts.' + driver_option_name
+    :returns: a dict mapping driver name to option list
+
+    """
+    all_opts = {}
+    loaders = _get_driver_opts_loaders(namespaces, driver_option_name)
+    for plugin_name, loader in loaders:
+        for driver_name, option_list in loader().items():
+            all_opts.setdefault(driver_name, []).extend(option_list)
+    return all_opts
+
+
 def _get_opt_default_updaters(namespaces):
     mgr = stevedore.named.NamedExtensionManager(
         'oslo.config.opts.defaults',
@@ -441,11 +468,41 @@ def _list_opts(namespaces):
     _update_defaults(namespaces)
     # Ask for the option definitions. At this point any global default
     # changes made by the updaters should be in effect.
-    opts = [
-        (namespace, loader())
-        for namespace, loader in loaders
-    ]
-    return _cleanup_opts(opts)
+    response = []
+    for namespace, loader in loaders:
+        # The loaders return iterables for the group opts, and we need
+        # to extend them, so build a list.
+        namespace_values = []
+        # Look through the groups and find any that need drivers so we
+        # can load those extra options.
+        for group, group_opts in loader():
+            # group_opts is an iterable but we are going to extend it
+            # so convert it to a list.
+            group_opts = list(group_opts)
+            if isinstance(group, cfg.OptGroup):
+                if group.driver_option:
+                    # Load the options for all of the known drivers.
+                    driver_opts = _get_driver_opts(
+                        group.driver_option,
+                        namespaces,
+                    )
+                    # Save the list of names of options for each
+                    # driver in the group for use later. Add the
+                    # options to the group_opts list so they are
+                    # processed along with the static options in that
+                    # group.
+                    driver_opt_names = {}
+                    for driver_name, opts in sorted(driver_opts.items()):
+                        # Multiple plugins may add values to the same
+                        # driver name, so combine the lists we do
+                        # find.
+                        driver_opt_names.setdefault(driver_name, []).extend(
+                            o.name for o in opts)
+                        group_opts.extend(opts)
+                    group._save_driver_opts(driver_opt_names)
+            namespace_values.append((group, group_opts))
+        response.append((namespace, namespace_values))
+    return _cleanup_opts(response)
 
 
 def on_load_failure_callback(*args, **kwargs):
@@ -565,14 +622,22 @@ def _generate_machine_readable_data(groups, conf):
                    'generator_options': {}}
     # See _get_groups for details on the structure of group_data
     for group_name, group_data in groups.items():
-        output_data['options'][group_name] = {'opts': [], 'help': ''}
+        output_group = {'opts': [], 'help': ''}
+        output_data['options'][group_name] = output_group
         for namespace in group_data['namespaces']:
             for opt in namespace[1]:
                 if group_data['object']:
-                    output_group = output_data['options'][group_name]
-                    output_group['help'] = group_data['object'].help
+                    output_group.update(
+                        group_data['object']._get_generator_data()
+                    )
+                else:
+                    output_group.update({
+                        'dynamic_group_owner': '',
+                        'driver_option': '',
+                        'driver_opts': {},
+                    })
                 entry = _build_entry(opt, group_name, namespace[0], conf)
-                output_data['options'][group_name]['opts'].append(entry)
+                output_group['opts'].append(entry)
                 # Need copies of the opts because we modify them
                 for deprecated_opt in copy.deepcopy(entry['deprecated_opts']):
                     group = deprecated_opt.pop('group')
@@ -581,6 +646,16 @@ def _generate_machine_readable_data(groups, conf):
                     deprecated_opt['replacement_name'] = entry['name']
                     deprecated_opt['replacement_group'] = group_name
                     deprecated_options[group].append(deprecated_opt)
+        # Build the list of options in the group that are not tied to
+        # a driver.
+        non_driver_opt_names = [
+            o['name']
+            for o in output_group['opts']
+            if not any(o['name'] in output_group['driver_opts'][d]
+                       for d in output_group['driver_opts'])
+        ]
+        output_group['standard_opts'] = non_driver_opt_names
+
     output_data['generator_options'] = dict(conf)
     return output_data
 
@@ -605,7 +680,7 @@ def _output_machine_readable(groups, output_file, conf):
     output_file.write('\n')
 
 
-def generate(conf):
+def generate(conf, output_file=None):
     """Generate a sample config file.
 
     List all of the options available via the namespaces specified in the given
@@ -615,8 +690,9 @@ def generate(conf):
     """
     conf.register_opts(_generator_opts)
 
-    output_file = (open(conf.output_file, 'w')
-                   if conf.output_file else sys.stdout)
+    if output_file is None:
+        output_file = (open(conf.output_file, 'w')
+                       if conf.output_file else sys.stdout)
 
     groups = _get_groups(_list_opts(conf.namespace))
 
