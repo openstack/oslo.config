@@ -289,7 +289,7 @@ where the top-level keys are:
   the ``OptGroup`` they are assigned to which defaults to ``DEFAULT`` if unset.
 
   For information on the various attributes of each option, refer to
-  :doc:`opts`.
+  :ref:`option-definitions`.
 
 ``deprecated_options``
 
