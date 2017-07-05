@@ -321,8 +321,9 @@ class ConfigOptXRefRole(XRefRole):
 
 class ConfigGroup(rst.Directive):
 
+    required_arguments = 1
+    optional_arguments = 0
     has_content = True
-
     option_spec = {
         'namespace': directives.unchanged,
     }
@@ -331,7 +332,7 @@ class ConfigGroup(rst.Directive):
         env = self.state.document.settings.env
         app = env.app
 
-        group_name = ' '.join(self.content)
+        group_name = self.arguments[0]
         namespace = self.options.get('namespace')
 
         cached_groups = env.domaindata['oslo.config']['groups']
@@ -359,6 +360,9 @@ class ConfigGroup(rst.Directive):
 
         _add(title)
         _add('-' * len(title))
+        _add('')
+        for line in self.content:
+            _add(line)
         node = nodes.section()
         node.document = self.state.document
         nested_parse_with_titles(self.state, result, node)
