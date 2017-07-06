@@ -93,7 +93,7 @@ def _get_choice_text(choice):
 
 def _format_group(app, namespace, group_name, group_obj, opt_list):
     group_name = group_name or 'DEFAULT'
-    app.info('[oslo.config] %s %s' % (namespace, group_name))
+    app.debug('[oslo.config] %s %s' % (namespace, group_name))
 
     yield '.. oslo.config:group:: %s' % group_name
     if namespace:
@@ -339,7 +339,7 @@ class ConfigGroup(rst.Directive):
 
         # Store the current group for use later in option directives
         env.temp_data['oslo.config:group'] = group_name
-        app.info('oslo.config group %s' % group_name)
+        app.debug('oslo.config group %s' % group_name)
 
         # Store the location where this group is being defined
         # for use when resolving cross-references later.
@@ -384,7 +384,7 @@ class ConfigOption(ObjectDescription):
     def handle_signature(self, sig, signode):
         """Transform an option description into RST nodes."""
         optname = sig
-        self.env.app.info('oslo.config option %s' % optname)
+        self.env.app.debug('oslo.config option %s' % optname)
         # Insert a node into the output showing the option name
         signode += addnodes.desc_name(optname, optname)
         signode['allnames'] = [optname]
