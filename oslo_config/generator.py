@@ -721,7 +721,13 @@ def main(args=None):
     logging.basicConfig(level=logging.WARN)
     conf = cfg.ConfigOpts()
     register_cli_opts(conf)
-    conf(args, version=version)
+    try:
+        conf(args, version=version)
+    except cfg.RequiredOptError:
+        conf.print_help()
+        if not sys.argv[1:]:
+            raise SystemExit
+        raise
     generate(conf)
 
 
