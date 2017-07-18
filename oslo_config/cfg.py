@@ -964,7 +964,7 @@ class Opt(object):
     def _default_is_ref(self):
         """Check if default is a reference to another var."""
         if isinstance(self.default, six.string_types):
-            tmpl = self.default.replace('\$', '').replace('$$', '')
+            tmpl = self.default.replace(r'\$', '').replace('$$', '')
             return '$' in tmpl
         return False
 
@@ -1081,7 +1081,7 @@ class Opt(object):
             return parser
 
     def _get_argparse_kwargs(self, group, **kwargs):
-        """Build a dict of keyword arguments for argparse's add_argument().
+        r"""Build a dict of keyword arguments for argparse's add_argument().
 
         Most opt types extend this method to customize the behaviour of the
         options added to argparse.
@@ -1220,7 +1220,7 @@ class DeprecatedOpt(object):
 
 
 class StrOpt(Opt):
-    """Option with String type
+    r"""Option with String type
 
     Option with ``type`` :class:`oslo_config.types.String`
 
@@ -1264,7 +1264,7 @@ class StrOpt(Opt):
 
 class BoolOpt(Opt):
 
-    """Boolean options.
+    r"""Boolean options.
 
     Bool opts are set to True or False on the command line using --optname or
     --nooptname respectively.
@@ -1321,7 +1321,7 @@ class BoolOpt(Opt):
 
 class IntOpt(Opt):
 
-    """Option with Integer type
+    r"""Option with Integer type
 
     Option with ``type`` :class:`oslo_config.types.Integer`
 
@@ -1342,7 +1342,7 @@ class IntOpt(Opt):
 
 class FloatOpt(Opt):
 
-    """Option with Float type
+    r"""Option with Float type
 
     Option with ``type`` :class:`oslo_config.types.Float`
 
@@ -1363,7 +1363,7 @@ class FloatOpt(Opt):
 
 class ListOpt(Opt):
 
-    """Option with List(String) type
+    r"""Option with List(String) type
 
     Option with ``type`` :class:`oslo_config.types.List`
 
@@ -1385,7 +1385,7 @@ class ListOpt(Opt):
 
 class DictOpt(Opt):
 
-    """Option with Dict(String) type
+    r"""Option with Dict(String) type
 
     Option with ``type`` :class:`oslo_config.types.Dict`
 
@@ -1401,7 +1401,7 @@ class DictOpt(Opt):
 
 class IPOpt(Opt):
 
-    """Opt with IPAddress type
+    r"""Opt with IPAddress type
 
     Option with ``type`` :class:`oslo_config.types.IPAddress`
 
@@ -1420,7 +1420,7 @@ class IPOpt(Opt):
 
 class PortOpt(Opt):
 
-    """Option for a TCP/IP port number.  Ports can range from 0 to 65535.
+    r"""Option for a TCP/IP port number.  Ports can range from 0 to 65535.
 
     Option with ``type`` :class:`oslo_config.types.Integer`
 
@@ -1447,7 +1447,7 @@ class PortOpt(Opt):
 
 class HostnameOpt(Opt):
 
-    """Option for a hostname.  Only accepts valid hostnames.
+    r"""Option for a hostname.  Only accepts valid hostnames.
 
     Option with ``type`` :class:`oslo_config.types.Hostname`
 
@@ -1464,7 +1464,7 @@ class HostnameOpt(Opt):
 
 class HostAddressOpt(Opt):
 
-    """Option for either an IP or a hostname.
+    r"""Option for either an IP or a hostname.
 
     Accepts valid hostnames and valid IP addresses.
 
@@ -1486,7 +1486,7 @@ class HostAddressOpt(Opt):
 
 class URIOpt(Opt):
 
-    """Opt with URI type
+    r"""Opt with URI type
 
     Option with ``type`` :class:`oslo_config.types.URI`
 
@@ -1511,7 +1511,7 @@ class URIOpt(Opt):
 
 class MultiOpt(Opt):
 
-    """Multi-value option.
+    r"""Multi-value option.
 
     Multi opt values are typed opts which may be specified multiple times.
     The opt value is a list containing all the values specified.
@@ -1549,7 +1549,7 @@ class MultiOpt(Opt):
 
 class MultiStrOpt(MultiOpt):
 
-    """MultiOpt with a MultiString ``item_type``.
+    r"""MultiOpt with a MultiString ``item_type``.
 
     MultiOpt with a default :class:`oslo_config.types.MultiString` item
     type.
@@ -3003,8 +3003,8 @@ class ConfigOpts(collections.Mapping):
             # Treat a backslash followed by the dollar sign "\$"
             # the same as the string template escape "$$" as it is
             # a bit more natural for users
-            if '\$' in value:
-                value = value.replace('\$', '$$')
+            if r'\$' in value:
+                value = value.replace(r'\$', '$$')
             tmpl = self.Template(value)
             ret = tmpl.safe_substitute(
                 self.StrSubWrapper(self, group=group, namespace=namespace))
