@@ -489,6 +489,11 @@ class List(ConfigType):
     def _formatter(self, value):
         if isinstance(value, six.string_types):
             return value
+        if isinstance(value, list):
+            value = [
+                six.text_type(v)
+                for v in value
+            ]
         return ','.join(value)
 
 

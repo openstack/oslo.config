@@ -113,7 +113,7 @@ def _format_defaults(opt):
             default_str = str(opt.default)
         elif isinstance(opt, (cfg.ListOpt, cfg._ConfigFileOpt,
                               cfg._ConfigDirOpt)):
-            default_str = ','.join(opt.default)
+            default_str = ','.join(six.text_type(d) for d in opt.default)
         elif isinstance(opt, cfg.DictOpt):
             sorted_items = sorted(opt.default.items(),
                                   key=operator.itemgetter(0))
@@ -125,7 +125,9 @@ def _format_defaults(opt):
 
     results = []
     for default_str in defaults:
-        if default_str.strip() != default_str:
+        if not isinstance(default_str, six.text_type):
+            default_str = six.text_type(default_str)
+        elif default_str.strip() != default_str:
             default_str = '"%s"' % default_str
         results.append(default_str)
     return results

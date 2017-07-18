@@ -151,6 +151,12 @@ class GeneratorTestCase(base.BaseTestCase):
         'list_opt': cfg.ListOpt('list_opt',
                                 default=['1', '2', '3'],
                                 help='a list'),
+        'list_opt_single': cfg.ListOpt('list_opt_single',
+                                       default='1',
+                                       help='a list'),
+        'list_int_opt': cfg.ListOpt('list_int_opt',
+                                    default=[1, 2, 3],
+                                    help='a list'),
         'dict_opt': cfg.DictOpt('dict_opt',
                                 default={'1': 'yes', '2': 'no'},
                                 help='a dict'),
@@ -619,6 +625,28 @@ class GeneratorTestCase(base.BaseTestCase):
 
 # a list (list value)
 #list_opt = 1,2,3
+''')),
+        ('list_opt_single',
+         dict(opts=[('test', [(None, [opts['list_opt_single']])])],
+              expected='''[DEFAULT]
+
+#
+# From test
+#
+
+# a list (list value)
+#list_opt_single = 1
+''')),
+        ('list_int_opt',
+         dict(opts=[('test', [(None, [opts['list_int_opt']])])],
+              expected='''[DEFAULT]
+
+#
+# From test
+#
+
+# a list (list value)
+#list_int_opt = 1,2,3
 ''')),
         ('dict_opt',
          dict(opts=[('test', [(None, [opts['dict_opt']])])],
