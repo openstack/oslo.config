@@ -3068,6 +3068,8 @@ class ConfigOpts(collections.Mapping):
         real_opt_name = None
         real_group_name = None
         group_name = group or 'DEFAULT'
+        if hasattr(group_name, 'name'):
+            group_name = group_name.name
         dep_group = self._deprecated_opts.get(group_name)
         if dep_group:
             real_opt_dict = dep_group.get(opt_name)
