@@ -2527,6 +2527,22 @@ class OptNameSeparatorTestCase(BaseTestCase):
         self.assertNotIn(self.opt_dest, self.conf)
         self.assertNotIn(self.broken_opt_dest, self.conf)
 
+    def test_deprecated_name_alternate_group(self):
+        self.conf.register_opt(
+            cfg.StrOpt('foobar',
+                       deprecated_name=self.opt_name,
+                       deprecated_group='testing'),
+            group=cfg.OptGroup('testing'),
+        )
+
+        self.assertTrue(hasattr(self.conf.testing, 'foobar'))
+        # TODO(mtreinish): Add a check on the log message
+        self.assertTrue(hasattr(self.conf.testing, self.opt_dest))
+        self.assertFalse(hasattr(self.conf.testing, self.broken_opt_dest))
+        self.assertIn('foobar', self.conf.testing)
+        self.assertNotIn(self.opt_dest, self.conf.testing)
+        self.assertNotIn(self.broken_opt_dest, self.conf.testing)
+
     def test_deprecated_name_cli(self):
         self.conf.register_cli_opt(cfg.BoolOpt('foobar',
                                                deprecated_name=self.opt_name))
