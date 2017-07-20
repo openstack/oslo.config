@@ -127,7 +127,7 @@ def _format_defaults(opt):
     for default_str in defaults:
         if not isinstance(default_str, six.text_type):
             default_str = six.text_type(default_str)
-        elif default_str.strip() != default_str:
+        if default_str.strip() != default_str:
             default_str = '"%s"' % default_str
         results.append(default_str)
     return results
