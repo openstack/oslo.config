@@ -69,9 +69,11 @@ _generator_opts = [
         help='Desired format for the output. "ini" is the only one which can '
              'be used directly with oslo.config. "json" and "yaml" are '
              'intended for third-party tools that want to write config files '
-             'based on the sample config data.',
+             'based on the sample config data. "rst" can be used to dump '
+             'the text given to sphinx when building documentation using '
+             'the sphinx extension, for debugging.',
         default='ini',
-        choices=['ini', 'json', 'yaml'],
+        choices=['ini', 'json', 'yaml', 'rst'],
         dest='format_'),
 ]
 
@@ -682,6 +684,24 @@ def _output_machine_readable(groups, output_file, conf):
     output_file.write('\n')
 
 
+def _output_human_readable(namespaces, output_file):
+    """Write an RST formated version of the docs for the options.
+
+    :param groups: A list of the namespaces to use for discovery.
+    :param output_file: A file-like object to which the data should be written.
+    """
+    try:
+        from oslo_config import sphinxext
+    except ImportError:
+        raise RuntimeError(
+            'Could not import sphinxext. '
+            'Please install Sphinx and try again.',
+        )
+    output_data = list(sphinxext._format_option_help(
+        LOG, namespaces, False))
+    output_file.write('\n'.join(output_data))
+
+
 def generate(conf, output_file=None):
     """Generate a sample config file.
 
@@ -711,6 +731,11 @@ def generate(conf, output_file=None):
             formatter.write('\n\n')
             _output_opts(formatter, group, group_data, conf.minimal,
                          conf.summarize)
+    elif conf.format_ == 'rst':
+        _output_human_readable(
+            conf.namespace,
+            output_file=output_file,
+        )
     else:
         _output_machine_readable(groups,
                                  output_file=output_file,
