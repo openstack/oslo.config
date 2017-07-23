@@ -18,7 +18,7 @@
 """Sample configuration generator
 
 Tool for generating a sample configuration file. See
-../doc/source/generator.rst for details.
+../doc/source/cli/generator.rst for details.
 
 .. versionadded:: 1.4
 """
