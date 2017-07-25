@@ -403,14 +403,14 @@ class FormatOptionHelpTest(base.BaseTestCase):
         _format_group.assert_any_call(
             app=None,
             namespace='namespace1',
-            group_name=None,
+            group_name='DEFAULT',
             group_obj=None,
             opt_list=['opt1'],
         )
         _format_group.assert_any_call(
             app=None,
             namespace='namespace2',
-            group_name=None,
+            group_name='DEFAULT',
             group_obj=None,
             opt_list=['opt2'],
         )
@@ -429,7 +429,7 @@ class FormatOptionHelpTest(base.BaseTestCase):
         _format_group.assert_called_once_with(
             app=None,
             namespace=None,
-            group_name=None,
+            group_name='DEFAULT',
             group_obj=None,
             opt_list=['opt1', 'opt2'],
         )
