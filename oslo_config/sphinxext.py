@@ -206,6 +206,8 @@ def _format_option_help(app, namespaces, split_namespaces):
                 else:
                     group_name = group
                     group = None
+                if group_name is None:
+                    group_name = 'DEFAULT'
                 lines = _format_group(
                     app=app,
                     namespace=namespace,
@@ -228,6 +230,8 @@ def _format_option_help(app, namespaces, split_namespaces):
                 else:
                     group_name = group
                     group = None
+                if group_name is None:
+                    group_name = 'DEFAULT'
                 group_objs.setdefault(group_name, group)
                 by_section.setdefault(group_name, []).extend(group_opts)
         for group_name, group_opts in sorted(by_section.items()):
