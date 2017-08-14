@@ -614,27 +614,16 @@ def _get_config_dirs(project=None):
       /etc/${project}/
       /etc/
 
-    If a project is specified and installed from a snap package, following
-    directories are also returned:
-
-      ${SNAP}/etc/${project}
-      ${SNAP_COMMON}/etc/${project}
-
-    Otherwise, if project is not specified, these directories are returned:
+    Otherwise, these directories::
 
       ~/
       /etc/
     """
-    snap = os.environ.get('SNAP')
-    snap_c = os.environ.get('SNAP_COMMON')
-
     cfg_dirs = [
         _fixpath(os.path.join('~', '.' + project)) if project else None,
         _fixpath('~'),
         os.path.join('/etc', project) if project else None,
-        '/etc',
-        os.path.join(snap, "etc", project) if snap and project else None,
-        os.path.join(snap_c, "etc", project) if snap_c and project else None,
+        '/etc'
     ]
     return [x for x in cfg_dirs if x]
 
@@ -685,8 +674,6 @@ def find_config_files(project=None, prog=None, extension='.conf'):
       ~/
       /etc/${project}/
       /etc/
-      ${SNAP}/etc/${project}
-      ${SNAP_COMMON}/etc/${project}
 
     We return an absolute path for (at most) one of each the default config
     files, for the topmost directory it exists in.
@@ -717,8 +704,6 @@ def find_config_dirs(project=None, prog=None, extension='.conf.d'):
       ~/
       /etc/${project}/
       /etc/
-      ${SNAP}/etc/${project}
-      ${SNAP_COMMON}/etc/${project}
 
     We return an absolute path for each of the two config dirs,
     in the first place we find it (iff we find it).
