@@ -311,7 +311,7 @@ register multiple entry points:
       nova.api = nova.config:list_api_opts
       nova.compute = nova.config:list_compute_opts
 
-and generate a config file specific to each program::
+and generate a config file specific to each program:
 
 .. code-block:: shell
 
