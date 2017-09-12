@@ -2705,12 +2705,8 @@ class ConfigOpts(collections.Mapping):
         __import__(module_str)
         self._get_group(group)
 
-    @removals.removed_kwarg('enforce_type', "The argument enforce_type has "
-                            "changed its default value to True and then will"
-                            " be removed completely.",
-                            version='4.0', removal_version='5.0')
     @__clear_cache
-    def set_override(self, name, override, group=None, enforce_type=True):
+    def set_override(self, name, override, group=None):
         """Override an opt value.
 
         Override the command line, config file and default values of a
@@ -2719,21 +2715,15 @@ class ConfigOpts(collections.Mapping):
         :param name: the name/dest of the opt
         :param override: the override value
         :param group: an option OptGroup object or group name
-        :param enforce_type: a boolean whether to convert the override
-         value to the option's type, None is *not* converted even
-         if enforce_type is True.
+
         :raises: NoSuchOptError, NoSuchGroupError
         """
         opt_info = self._get_opt_info(name, group)
         opt_info['override'] = self._get_enforced_type_value(
-            opt_info['opt'], override, enforce_type)
+            opt_info['opt'], override)
 
-    @removals.removed_kwarg('enforce_type', "The argument enforce_type has "
-                            "changed its default value to True and then will"
-                            " be removed completely.",
-                            version='4.0', removal_version='5.0')
     @__clear_cache
-    def set_default(self, name, default, group=None, enforce_type=True):
+    def set_default(self, name, default, group=None):
         """Override an opt's default value.
 
         Override the default value of given option. A command line or
@@ -2742,27 +2732,18 @@ class ConfigOpts(collections.Mapping):
         :param name: the name/dest of the opt
         :param default: the default value
         :param group: an option OptGroup object or group name
-        :param enforce_type: a boolean whether to convert the default
-         value to the option's type, None is *not* converted even
-         if enforce_type is True.
+
         :raises: NoSuchOptError, NoSuchGroupError
         """
         opt_info = self._get_opt_info(name, group)
         opt_info['default'] = self._get_enforced_type_value(
-            opt_info['opt'], default, enforce_type)
+            opt_info['opt'], default)
 
-    def _get_enforced_type_value(self, opt, value, enforce_type):
+    def _get_enforced_type_value(self, opt, value):
         if value is None:
             return None
-        try:
-            converted = self._convert_value(value, opt)
-        except (ValueError, TypeError):
-            if enforce_type:
-                raise
-        if enforce_type:
-            return converted
-        else:
-            return value
+
+        return self._convert_value(value, opt)
 
     @__clear_cache
     def clear_override(self, name, group=None):

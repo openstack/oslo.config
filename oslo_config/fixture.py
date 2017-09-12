@@ -63,19 +63,11 @@ class Config(fixtures.Fixture):
         the specified configuration option group, otherwise the overrides
         are applied to the ``default`` group.
 
-        If a `enforce_type` is supplied, will convert the override
-        value to the option's type before overriding.
         """
 
         group = kw.pop('group', None)
-        enforce_type = kw.pop('enforce_type', True)
         for k, v in kw.items():
-            if enforce_type is False:
-                self.conf.set_override(k, v, group, enforce_type=False)
-            else:
-                # this removes the deprecation warning if you are just
-                # using defaults
-                self.conf.set_override(k, v, group)
+            self.conf.set_override(k, v, group)
 
     def _unregister_config_opts(self):
         for group in self._registered_config_opts:
