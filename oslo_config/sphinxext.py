@@ -125,7 +125,7 @@ def _format_group(app, namespace, group_name, group_obj, opt_list):
         try:
             if opt.mutable:
                 yield _indent(
-                    ':Mutable: This option can be changed without restarting.',
+                    ':Mutable: This option can be changed without restarting.'
                 )
         except AttributeError as err:
             # NOTE(dhellmann): keystoneauth defines its own Opt class,
@@ -147,11 +147,11 @@ def _format_group(app, namespace, group_name, group_obj, opt_list):
                               (opt.dest, err))
         if opt.advanced:
             yield _indent(
-                ':Advanced Option: intended for advanced users and not used',)
+                ':Advanced Option: Intended for advanced users and not used')
             yield _indent(
-                ':by the majority of users, and might have a significant',)
+                'by the majority of users, and might have a significant', 6)
             yield _indent(
-                ':effect on stability and/or performance.',)
+                'effect on stability and/or performance.', 6)
         yield ''
 
         try:
