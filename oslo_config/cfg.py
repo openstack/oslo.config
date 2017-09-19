@@ -1251,7 +1251,7 @@ class StrOpt(Opt):
     """
 
     def __init__(self, name, choices=None, quotes=None,
-                 regex=None, ignore_case=None, max_length=None, **kwargs):
+                 regex=None, ignore_case=False, max_length=None, **kwargs):
         super(StrOpt, self).__init__(name,
                                      type=types.String(
                                          choices=choices,
