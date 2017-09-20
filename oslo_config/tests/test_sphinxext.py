@@ -359,9 +359,9 @@ class FormatGroupTest(base.BaseTestCase):
 
           :Type: string
           :Default: ``<None>``
-          :Advanced Option: intended for advanced users and not used
-          :by the majority of users, and might have a significant
-          :effect on stability and/or performance.
+          :Advanced Option: Intended for advanced users and not used
+              by the majority of users, and might have a significant
+              effect on stability and/or performance.
 
         ''').lstrip(), results)
 
