@@ -1829,6 +1829,9 @@ class OptGroup(object):
         """Clear this group's option parsing state."""
         self._argparse_group = None
 
+    def __str__(self):
+        return self.name
+
 
 class ParseError(iniparser.ParseError):
     def __init__(self, msg, lineno, line, filename):
