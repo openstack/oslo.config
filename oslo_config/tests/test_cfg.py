@@ -224,7 +224,8 @@ class FindConfigFilesTestCase(BaseTestCase):
         self.assertEqual(cfg.find_config_files(project='blaa'), config_files)
 
     def test_find_config_files_snap(self):
-        config_files = ['/snap/nova/current/etc/blaa/blaa.conf']
+        config_files = ['/snap/nova/current/etc/blaa/blaa.conf',
+                        '/var/snap/nova/common/etc/blaa/blaa.conf']
         fake_env = {'SNAP': '/snap/nova/current/',
                     'SNAP_COMMON': '/var/snap/nova/common/'}
 
@@ -233,7 +234,8 @@ class FindConfigFilesTestCase(BaseTestCase):
                         lambda p: p in config_files))
         self.useFixture(fixtures.MonkeyPatch('os.environ', fake_env))
 
-        self.assertEqual(cfg.find_config_files(project='blaa'), config_files)
+        self.assertEqual(cfg.find_config_files(project='blaa'),
+                         ['/var/snap/nova/common/etc/blaa/blaa.conf'])
 
     def test_find_config_files_with_extension(self):
         config_files = ['/etc/foo.json']
