@@ -1194,7 +1194,7 @@ class DeprecatedOpt(object):
         [group2]
         opt2=val21,val22
 
-    Then the value of "[group1]/opt1" will be ['val11', 'val12', 'val21',
+    Then the value of "[group1]/opt1" will be ['val10', 'val11', 'val21',
     'val22'].
 
     .. versionadded:: 1.2
