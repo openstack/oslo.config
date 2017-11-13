@@ -167,6 +167,32 @@ class HelpTestCase(BaseTestCase):
         self.assertIn('optional', f.getvalue())
         self.assertIn('-h, --help', f.getvalue())
 
+    def test_print_strOpt_with_choices_help(self):
+        f = moves.StringIO()
+        cli_opts = [
+            cfg.StrOpt('aa', short='a', default='xx',
+                       choices=['xx', 'yy', 'zz'],
+                       help='StrOpt with choices.'),
+            cfg.StrOpt('bb', short='b', default='yy',
+                       choices=[None, 'yy', 'zz'],
+                       help='StrOpt with choices.'),
+            cfg.StrOpt('cc', short='c', default='zz',
+                       choices=['', 'yy', 'zz'],
+                       help='StrOpt with choices.'),
+        ]
+        self.conf.register_cli_opts(cli_opts)
+        self.conf([])
+        self.conf.print_help(file=f)
+        self.assertIn('usage: test FOO BAR', f.getvalue())
+        self.assertIn('optional', f.getvalue())
+        self.assertIn('-h, --help', f.getvalue())
+        self.assertIn('StrOpt with choices. Allowed values: xx, yy, zz',
+                      f.getvalue())
+        self.assertIn('StrOpt with choices. Allowed values: <None>, yy, zz',
+                      f.getvalue())
+        self.assertIn("StrOpt with choices. Allowed values: '', yy, zz",
+                      f.getvalue())
+
     def test_print_sorted_help(self):
         f = moves.StringIO()
         self.conf.register_cli_opt(cfg.StrOpt('abc'))

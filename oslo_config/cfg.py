@@ -1261,6 +1261,27 @@ class StrOpt(Opt):
                                          max_length=max_length),
                                      **kwargs)
 
+    def _get_choice_text(self, choice):
+        if choice is None:
+            return '<None>'
+        elif choice == '':
+            return "''"
+        return six.text_type(choice)
+
+    def _get_argparse_kwargs(self, group, **kwargs):
+        """Extends the base argparse keyword dict for the config dir option."""
+        kwargs = super(StrOpt, self)._get_argparse_kwargs(group)
+
+        if getattr(self.type, 'choices', None):
+            choices_text = ', '.join([self._get_choice_text(choice)
+                                      for choice in self.type.choices])
+            if kwargs['help'] is not None:
+                kwargs['help'] += (' Allowed values: %s\n' % choices_text)
+            else:
+                kwargs['help'] = (' Allowed values: %s\n' % choices_text)
+
+        return kwargs
+
 
 class BoolOpt(Opt):
 
