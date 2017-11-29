@@ -3237,16 +3237,7 @@ class OverridesTestCase(BaseTestCase):
         self.assertRaises(ValueError,
                           self.conf.set_default, 'oo', 'c', 'f')
 
-    def test_enforce_type_default_override(self):
-        self.conf.register_opt(cfg.StrOpt('foo', default='foo'))
-        self.conf([])
-        self.assertEqual('foo', self.conf.foo)
-        self.conf.set_default('foo', 'bar')
-        self.assertEqual('bar', self.conf.foo)
-        self.conf.clear_default('foo')
-        self.assertEqual('foo', self.conf.foo)
-
-    def test_enforce_type_wrong_type_default(self):
+    def test_wrong_type_default_override(self):
         self.conf.register_opt(cfg.IntOpt('foo', default=1))
         self.conf([])
         self.assertEqual(1, self.conf.foo)
@@ -3322,7 +3313,7 @@ class OverridesTestCase(BaseTestCase):
         self.conf.clear_override('foo')
         self.assertIsNone(self.conf.foo)
 
-    def test_enforce_type_str_override(self):
+    def test__str_override(self):
         self.conf.register_opt(cfg.StrOpt('foo'))
         self.conf.set_override('foo', True)
         self.conf([])
@@ -3330,7 +3321,7 @@ class OverridesTestCase(BaseTestCase):
         self.conf.clear_override('foo')
         self.assertIsNone(self.conf.foo)
 
-    def test_enforce_type_wrong_type_override(self):
+    def test__wrong_type_override(self):
         self.conf.register_opt(cfg.IntOpt('foo'))
         self.assertRaises(ValueError, self.conf.set_override,
                           'foo', "not_really_a_int")
@@ -3349,7 +3340,7 @@ class OverridesTestCase(BaseTestCase):
         self.assertRaises(ValueError,
                           self.conf.set_override, 'oo', 'c', 'f')
 
-    def test_enforce_type_bool_override(self):
+    def test_bool_override(self):
         self.conf.register_opt(cfg.BoolOpt('foo'))
         self.conf.set_override('foo', 'True')
         self.conf([])
@@ -3357,7 +3348,7 @@ class OverridesTestCase(BaseTestCase):
         self.conf.clear_override('foo')
         self.assertIsNone(self.conf.foo)
 
-    def test_enforce_type_int_override_with_None(self):
+    def test_int_override_with_None(self):
         self.conf.register_opt(cfg.IntOpt('foo'))
         self.conf.set_override('foo', None)
         self.conf([])
@@ -3365,7 +3356,7 @@ class OverridesTestCase(BaseTestCase):
         self.conf.clear_override('foo')
         self.assertIsNone(self.conf.foo)
 
-    def test_enforce_type_str_override_with_None(self):
+    def test_str_override_with_None(self):
         self.conf.register_opt(cfg.StrOpt('foo'))
         self.conf.set_override('foo', None)
         self.conf([])
@@ -3373,7 +3364,7 @@ class OverridesTestCase(BaseTestCase):
         self.conf.clear_override('foo')
         self.assertIsNone(self.conf.foo)
 
-    def test_enforce_type_List_override(self):
+    def test_List_override(self):
         self.conf.register_opt(cfg.ListOpt('foo'))
         self.conf.set_override('foo', ['aa', 'bb'])
         self.conf([])

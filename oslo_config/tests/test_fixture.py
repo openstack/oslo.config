@@ -42,7 +42,7 @@ class ConfigTestCase(base.BaseTestCase):
         self.assertEqual('changed_value',
                          f.conf.get('testing_option'))
 
-    def test_overridden_value_with_enforce_type(self):
+    def test_overridden_value_with_wrong_type(self):
         f = self._make_fixture()
         self.assertEqual(5, f.conf.get('test2'))
         self.assertEqual('a', f.conf.get('test3'))
