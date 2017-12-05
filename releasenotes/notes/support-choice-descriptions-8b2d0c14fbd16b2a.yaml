@@ -1,0 +1,14 @@
+---
+features:
+  - |
+    String, Number, Integer, Float and Port now support value-description
+    tuples in the interable provided for the *choice* parameter. Support for
+    value-only definitions is retained.
+  - |
+    StringOpt and PortOpt now support a value-description tuples in the
+    iterable provided for the *choice* parameter. Support for value-only
+    definitions is retained.
+  - |
+    *oslo-config-generator* and the Sphinx extension will now output
+    descriptions for option choices where provided. This will impact tooling
+    that relies on the *yaml* and *json* output of the former.

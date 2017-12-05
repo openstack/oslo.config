@@ -66,14 +66,18 @@ _generator_opts = [
         'longer help text for Sphinx documents.'),
     cfg.StrOpt(
         'format',
-        help='Desired format for the output. "ini" is the only one which can '
-             'be used directly with oslo.config. "json" and "yaml" are '
-             'intended for third-party tools that want to write config files '
-             'based on the sample config data. "rst" can be used to dump '
-             'the text given to sphinx when building documentation using '
-             'the sphinx extension, for debugging.',
+        help='Desired format for the output.',
         default='ini',
-        choices=['ini', 'json', 'yaml', 'rst'],
+        choices=[
+            ('ini', 'The only format that can be used directly with '
+             'oslo.config.'),
+            ('json', 'Intended for third-party tools that want to write '
+             'config files based on the sample config data.'),
+            ('yaml', 'Same as json'),
+            ('rst', 'Can be used to dump the text given to Sphinx when '
+             'building documentation using the Sphinx extension. '
+             'Useful for debugging,')
+        ],
         dest='format_'),
 ]
 
@@ -257,9 +261,12 @@ class _OptFormatter(object):
             lines.append('# Maximum value: %d\n' % opt.type.max)
 
         if getattr(opt.type, 'choices', None):
-            choices_text = ', '.join([self._get_choice_text(choice)
-                                      for choice in opt.type.choices])
-            lines.append('# Allowed values: %s\n' % choices_text)
+            lines.append('# Possible values:\n')
+            for choice in opt.type.choices:
+                help_text = '%s - %s' % (
+                    self._get_choice_text(choice),
+                    opt.type.choices[choice] or '<No description provided>')
+                lines.extend(self._format_help(help_text))
 
         try:
             if opt.mutable:
@@ -581,9 +588,14 @@ def _build_entry(opt, group, namespace, conf):
     entry = {key: value for key, value in opt.__dict__.items()
              if not key.startswith('_')}
     entry['namespace'] = namespace
-    # In some types, choices is explicitly set to None.  Force it to [] so it
-    # is always an iterable type.
-    entry['choices'] = getattr(entry['type'], 'choices', []) or []
+    # Where present, we store choices as an OrderedDict. The default repr for
+    # this is not very machine readable, thus, it is switched to a list of
+    # tuples here. In addition, in some types, choices is explicitly set to
+    # None. Force these cases to [] so it is always an iterable type.
+    if getattr(entry['type'], 'choices', None):
+        entry['choices'] = list(entry['type'].choices.items())
+    else:
+        entry['choices'] = []
     entry['min'] = getattr(entry['type'], 'min', None)
     entry['max'] = getattr(entry['type'], 'max', None)
     entry['type'] = _format_type_name(entry['type'])

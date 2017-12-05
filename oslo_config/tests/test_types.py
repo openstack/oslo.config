@@ -67,6 +67,11 @@ class StringTypeTests(TypeTestHelper, unittest.TestCase):
         self.type_instance = types.String(choices=('foo', 'bar'))
         self.assertConvertedValue('foo', 'foo')
 
+    def test_listed_value_dict(self):
+        self.type_instance = types.String(choices=[
+            ('foo', 'ab'), ('bar', 'xy')])
+        self.assertConvertedValue('foo', 'foo')
+
     def test_unlisted_value(self):
         self.type_instance = types.String(choices=['foo', 'bar'])
         self.assertInvalid('baz')
@@ -98,7 +103,11 @@ class StringTypeTests(TypeTestHelper, unittest.TestCase):
 
     def test_repr_with_choices_tuple(self):
         t = types.String(choices=('foo', 'bar'))
-        self.assertEqual('String(choices=(\'foo\', \'bar\'))', repr(t))
+        self.assertEqual('String(choices=[\'foo\', \'bar\'])', repr(t))
+
+    def test_repr_with_choices_dict(self):
+        t = types.String(choices=[('foo', 'ab'), ('bar', 'xy')])
+        self.assertEqual('String(choices=[\'foo\', \'bar\'])', repr(t))
 
     def test_equal(self):
         self.assertTrue(types.String() == types.String())
@@ -108,9 +117,8 @@ class StringTypeTests(TypeTestHelper, unittest.TestCase):
         t2 = types.String(choices=['foo', 'bar'])
         t3 = types.String(choices=('foo', 'bar'))
         t4 = types.String(choices=['bar', 'foo'])
-        self.assertTrue(t1 == t2)
-        self.assertTrue(t1 == t3)
-        self.assertTrue(t1 == t4)
+        t5 = types.String(choices=[('foo', 'ab'), ('bar', 'xy')])
+        self.assertTrue(t1 == t2 == t3 == t4 == t5)
 
     def test_not_equal_with_different_choices(self):
         t1 = types.String(choices=['foo', 'bar'])
@@ -282,7 +290,11 @@ class IntegerTypeTests(TypeTestHelper, unittest.TestCase):
 
     def test_repr_with_choices_tuple(self):
         t = types.Integer(choices=(80, 457))
-        self.assertEqual('Integer(choices=(80, 457))', repr(t))
+        self.assertEqual('Integer(choices=[80, 457])', repr(t))
+
+    def test_repr_with_choices_dict(self):
+        t = types.Integer(choices=[(80, 'ab'), (457, 'xy')])
+        self.assertEqual('Integer(choices=[80, 457])', repr(t))
 
     def test_equal(self):
         self.assertTrue(types.Integer() == types.Integer())
@@ -302,8 +314,8 @@ class IntegerTypeTests(TypeTestHelper, unittest.TestCase):
         t1 = types.Integer(choices=[80, 457])
         t2 = types.Integer(choices=[457, 80])
         t3 = types.Integer(choices=(457, 80))
-        self.assertTrue(t1 == t2)
-        self.assertTrue(t1 == t3)
+        t4 = types.Integer(choices=[(80, 'ab'), (457, 'xy')])
+        self.assertTrue(t1 == t2 == t3 == t4)
 
     def test_not_equal(self):
         self.assertFalse(types.Integer(min=123) == types.Integer(min=456))
@@ -369,21 +381,24 @@ class IntegerTypeTests(TypeTestHelper, unittest.TestCase):
         self.assertRaises(ValueError, t, 201)
         self.assertRaises(ValueError, t, -457)
 
-    def test_with_choices_list(self):
-        t = types.Integer(choices=[80, 457])
+    def _test_with_choices(self, t):
         self.assertRaises(ValueError, t, 1)
         self.assertRaises(ValueError, t, 200)
         self.assertRaises(ValueError, t, -457)
         t(80)
         t(457)
 
+    def test_with_choices_list(self):
+        t = types.Integer(choices=[80, 457])
+        self._test_with_choices(t)
+
     def test_with_choices_tuple(self):
         t = types.Integer(choices=(80, 457))
-        self.assertRaises(ValueError, t, 1)
-        self.assertRaises(ValueError, t, 200)
-        self.assertRaises(ValueError, t, -457)
-        t(80)
-        t(457)
+        self._test_with_choices(t)
+
+    def test_with_choices_dict(self):
+        t = types.Integer(choices=[(80, 'ab'), (457, 'xy')])
+        self._test_with_choices(t)
 
 
 class FloatTypeTests(TypeTestHelper, unittest.TestCase):
@@ -865,16 +880,29 @@ class PortTypeTests(TypeTestHelper, unittest.TestCase):
 
     def test_repr_with_choices_tuple(self):
         t = types.Port(choices=(80, 457))
-        self.assertEqual('Port(choices=(80, 457))', repr(t))
+        self.assertEqual('Port(choices=[80, 457])', repr(t))
 
-    def test_choices(self):
-        t = types.Port(choices=[80, 457])
+    def _test_with_choices(self, t):
         self.assertRaises(ValueError, t, 1)
         self.assertRaises(ValueError, t, 200)
+        self.assertRaises(ValueError, t, -457)
         t(80)
         t(457)
 
+    def test_with_choices_list(self):
+        t = types.Port(choices=[80, 457])
+        self._test_with_choices(t)
+
+    def test_with_choices_tuple(self):
+        t = types.Port(choices=(80, 457))
+        self._test_with_choices(t)
+
+    def test_with_choices_dict(self):
+        t = types.Port(choices=[(80, 'ab'), (457, 'xy')])
+        self._test_with_choices(t)
+
     def test_invalid_choices(self):
+        """Check for choices that are specifically invalid for ports."""
         self.assertRaises(ValueError, types.Port, choices=[-1, 457])
         self.assertRaises(ValueError, types.Port, choices=[1, 2, 3, 65536])
 
@@ -896,8 +924,8 @@ class PortTypeTests(TypeTestHelper, unittest.TestCase):
         t1 = types.Port(choices=[80, 457])
         t2 = types.Port(choices=[457, 80])
         t3 = types.Port(choices=(457, 80))
-        self.assertTrue(t1 == t2)
-        self.assertTrue(t1 == t3)
+        t4 = types.Port(choices=[(457, 'ab'), (80, 'xy')])
+        self.assertTrue(t1 == t2 == t3 == t4)
 
     def test_not_equal(self):
         self.assertFalse(types.Port(min=123) == types.Port(min=456))
@@ -973,19 +1001,3 @@ class PortTypeTests(TypeTestHelper, unittest.TestCase):
         t = types.Port(max=0)
         self.assertRaises(ValueError, t, 1)
         t(0)
-
-    def test_with_choices_list(self):
-        t = types.Port(choices=[80, 457])
-        self.assertRaises(ValueError, t, 1)
-        self.assertRaises(ValueError, t, 200)
-        self.assertRaises(ValueError, t, -457)
-        t(80)
-        t(457)
-
-    def test_with_choices_tuple(self):
-        t = types.Port(choices=(80, 457))
-        self.assertRaises(ValueError, t, 1)
-        self.assertRaises(ValueError, t, 200)
-        self.assertRaises(ValueError, t, -457)
-        t(80)
-        t(457)

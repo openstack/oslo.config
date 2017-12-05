@@ -1225,7 +1225,8 @@ class StrOpt(Opt):
     Option with ``type`` :class:`oslo_config.types.String`
 
     :param name: the option's name
-    :param choices: Optional sequence of valid values.
+    :param choices: Optional sequence of either valid values or tuples of valid
+        values with descriptions.
     :param quotes: If True and string is enclosed with single or double
                    quotes, will strip those quotes.
     :param regex: Optional regular expression (string or compiled
@@ -1248,6 +1249,10 @@ class StrOpt(Opt):
 
     .. versionchanged:: 2.7
        Added *max_length* parameter
+
+    .. versionchanged:: 5.2
+       The *choices* parameter will now accept a sequence of tuples, where each
+       tuple is of form (*choice*, *description*)
     """
 
     def __init__(self, name, choices=None, quotes=None,
@@ -1275,10 +1280,11 @@ class StrOpt(Opt):
         if getattr(self.type, 'choices', None):
             choices_text = ', '.join([self._get_choice_text(choice)
                                       for choice in self.type.choices])
-            if kwargs['help'] is not None:
-                kwargs['help'] += (' Allowed values: %s\n' % choices_text)
-            else:
-                kwargs['help'] = (' Allowed values: %s\n' % choices_text)
+            if kwargs['help'] is None:
+                kwargs['help'] = ''
+
+            kwargs['help'].rstrip('\n')
+            kwargs['help'] += '\n Allowed values: %s\n' % choices_text
 
         return kwargs
 
@@ -1448,7 +1454,8 @@ class PortOpt(Opt):
     :param name: the option's name
     :param min: minimum value the port can take
     :param max: maximum value the port can take
-    :param choices: Optional sequence of valid values.
+    :param choices: Optional sequence of either valid values or tuples of valid
+        values with descriptions.
     :param \*\*kwargs: arbitrary keyword arguments passed to :class:`Opt`
 
     .. versionadded:: 2.6
@@ -1458,6 +1465,9 @@ class PortOpt(Opt):
        Allow port number with 0.
     .. versionchanged:: 3.16
        Added *min* and *max* parameters.
+    .. versionchanged:: 5.2
+       The *choices* parameter will now accept a sequence of tuples, where each
+       tuple is of form (*choice*, *description*)
     """
 
     def __init__(self, name, min=None, max=None, choices=None, **kwargs):
