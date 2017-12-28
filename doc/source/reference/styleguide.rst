@@ -9,7 +9,7 @@ The help strings are parsed from the code to appear in sample
 configuration files, such as ``etc/cinder/cinder.conf`` in the
 cinder repository. They are also displayed in the `OpenStack
 Configuration Reference
-<http://docs.openstack.org/draft/config-reference/index.html>`_.
+<https://docs.openstack.org/oslo.config/latest/reference/index.html>`_.
 
 Examples::
 
@@ -29,7 +29,7 @@ Style Guide
 
 2. Only use single spaces, no double spaces.
 
-3. Properly capitalize words. If in doubt check the `OpenStack Glossary <http://docs.openstack.org/user-guide/common/glossary.html>`_.
+3. Properly capitalize words. If in doubt check the `OpenStack Glossary <https://docs.openstack.org/oslo.config/latest/reference/styleguide.html#style-guide>`_.
 
 4. End each segment with a period and write complete sentences if
    possible. Examples::
