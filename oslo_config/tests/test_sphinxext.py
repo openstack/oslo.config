@@ -42,7 +42,6 @@ class FormatGroupTest(base.BaseTestCase):
           :Default: ``<None>``
 
           this appears in the default group
-
         ''').lstrip(), results)
 
     def test_with_default_value(self):
@@ -66,7 +65,6 @@ class FormatGroupTest(base.BaseTestCase):
           :Default: ``this is the default``
 
           this appears in the default group
-
         ''').lstrip(), results)
 
     def test_with_min(self):
@@ -88,7 +86,6 @@ class FormatGroupTest(base.BaseTestCase):
           :Type: integer
           :Default: ``<None>``
           :Minimum Value: 1
-
         ''').lstrip(), results)
 
     def test_with_min_0(self):
@@ -110,7 +107,6 @@ class FormatGroupTest(base.BaseTestCase):
           :Type: integer
           :Default: ``<None>``
           :Minimum Value: 0
-
         ''').lstrip(), results)
 
     def test_with_max(self):
@@ -132,7 +128,6 @@ class FormatGroupTest(base.BaseTestCase):
           :Type: integer
           :Default: ``<None>``
           :Maximum Value: 1
-
         ''').lstrip(), results)
 
     def test_with_max_0(self):
@@ -154,7 +149,6 @@ class FormatGroupTest(base.BaseTestCase):
           :Type: integer
           :Default: ``<None>``
           :Maximum Value: 0
-
         ''').lstrip(), results)
 
     def test_with_choices(self):
@@ -176,7 +170,6 @@ class FormatGroupTest(base.BaseTestCase):
           :Type: string
           :Default: ``<None>``
           :Valid Values: a, b, c, <None>, ''
-
         ''').lstrip(), results)
 
     def test_with_choices_with_descriptions(self):
@@ -221,7 +214,6 @@ class FormatGroupTest(base.BaseTestCase):
 
           ''
             <No description provided>
-
         ''').lstrip(), results)
 
     def test_group_obj_without_help(self):
@@ -240,7 +232,6 @@ class FormatGroupTest(base.BaseTestCase):
 
           :Type: string
           :Default: ``<None>``
-
         ''').lstrip(), results)
 
     def test_group_obj_with_help(self):
@@ -261,7 +252,6 @@ class FormatGroupTest(base.BaseTestCase):
 
           :Type: string
           :Default: ``<None>``
-
         ''').lstrip(), results)
 
     def test_deprecated_opts_without_deprecated_group(self):
@@ -291,7 +281,6 @@ class FormatGroupTest(base.BaseTestCase):
                * Name
              - * DEFAULT
                * deprecated_name
-
         ''').lstrip(), results)
 
     def test_deprecated_opts_with_deprecated_group(self):
@@ -322,7 +311,6 @@ class FormatGroupTest(base.BaseTestCase):
                * Name
              - * deprecated_group
                * deprecated_name
-
         ''').lstrip(), results)
 
     def test_deprecated_for_removal(self):
@@ -362,7 +350,6 @@ class FormatGroupTest(base.BaseTestCase):
           :Type: integer
           :Default: ``<None>``
           :Mutable: This option can be changed without restarting.
-
         ''').lstrip(), results)
 
     def test_not_mutable(self):
@@ -383,7 +370,6 @@ class FormatGroupTest(base.BaseTestCase):
 
           :Type: integer
           :Default: ``<None>``
-
         ''').lstrip(), results)
 
     def test_advanced(self):
@@ -407,7 +393,6 @@ class FormatGroupTest(base.BaseTestCase):
           :Advanced Option: Intended for advanced users and not used
               by the majority of users, and might have a significant
               effect on stability and/or performance.
-
         ''').lstrip(), results)
 
     def test_not_advanced(self):
@@ -428,7 +413,6 @@ class FormatGroupTest(base.BaseTestCase):
 
           :Type: string
           :Default: ``<None>``
-
         ''').lstrip(), results)
 
 
