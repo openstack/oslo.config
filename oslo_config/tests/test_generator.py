@@ -431,7 +431,12 @@ class GeneratorTestCase(base.BaseTestCase):
 #
 
 # a string with choices (string value)
-# Allowed values: <None>, '', a, b, c
+# Possible values:
+# <None> - <No description provided>
+# '' - <No description provided>
+# a - <No description provided>
+# b - <No description provided>
+# c - <No description provided>
 #choices_opt = a
 ''')),
         ('deprecated opt without deprecated group',
@@ -1219,7 +1224,13 @@ class MachineReadableGeneratorTestCase(base.BaseTestCase):
                                 'help': '',
                                 'standard_opts': ['choices_opt'],
                                 'opts': [{'advanced': False,
-                                          'choices': (None, '', 'a', 'b', 'c'),
+                                          'choices': [
+                                              (None, None),
+                                              ('', None),
+                                              ('a', None),
+                                              ('b', None),
+                                              ('c', None)
+                                          ],
                                           'default': 'a',
                                           'deprecated_for_removal': False,
                                           'deprecated_opts': [],

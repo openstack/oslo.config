@@ -165,6 +165,18 @@ def _format_group(app, namespace, group_name, group_obj, opt_list):
             yield _indent(help_text)
             yield ''
 
+        # We don't bother outputting this if not using new-style choices with
+        # inline descriptions
+        if getattr(opt.type, 'choices', None) and not all(
+                x is None for x in opt.type.choices.values()):
+            yield _indent('.. rubric:: Possible values')
+            yield ''
+            for choice in opt.type.choices:
+                yield _indent(_get_choice_text(choice))
+                yield _indent(_indent(
+                    opt.type.choices[choice] or '<No description provided>'))
+                yield ''
+
         if opt.deprecated_opts:
             for line in _list_table(
                     ['Group', 'Name'],

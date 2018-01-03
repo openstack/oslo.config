@@ -179,6 +179,51 @@ class FormatGroupTest(base.BaseTestCase):
 
         ''').lstrip(), results)
 
+    def test_with_choices_with_descriptions(self):
+        results = '\n'.join(list(sphinxext._format_group(
+            app=mock.Mock(),
+            namespace=None,
+            group_name=None,
+            group_obj=None,
+            opt_list=[
+                cfg.StrOpt(
+                    'opt_name',
+                    choices=[
+                        ('a', 'a is the best'),
+                        ('b', 'Actually, may-b I am better'),
+                        ('c', 'c, I am clearly the greatest'),
+                        (None, 'I am having none of this'),
+                        ('', '')]),
+            ],
+        )))
+        self.assertEqual(textwrap.dedent('''
+        .. oslo.config:group:: DEFAULT
+
+        .. oslo.config:option:: opt_name
+
+          :Type: string
+          :Default: ``<None>``
+          :Valid Values: a, b, c, <None>, ''
+
+          .. rubric:: Possible values
+
+          a
+            a is the best
+
+          b
+            Actually, may-b I am better
+
+          c
+            c, I am clearly the greatest
+
+          <None>
+            I am having none of this
+
+          ''
+            <No description provided>
+
+        ''').lstrip(), results)
+
     def test_group_obj_without_help(self):
         # option with None group placed in DEFAULT
         results = '\n'.join(list(sphinxext._format_group(

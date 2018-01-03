@@ -19,6 +19,7 @@ Use these classes as values for the `type` argument to
 
 .. versionadded:: 1.3
 """
+import collections
 import operator
 import re
 import warnings
@@ -68,8 +69,8 @@ class String(ConfigType):
 
     String values do not get transformed and are returned as str objects.
 
-    :param choices: Optional sequence of valid values. Mutually
-                    exclusive with 'regex'.
+    :param choices: Optional sequence of either valid values or tuples of valid
+        values with descriptions. Mutually exclusive with 'regex'.
     :param quotes: If True and string is enclosed with single or double
                    quotes, will strip those quotes. Will signal error if
                    string have quote at the beginning and no quote at
@@ -96,6 +97,10 @@ class String(ConfigType):
     .. versionchanged:: 2.7
        Added *max_length* parameter.
        Added *type_name* parameter.
+
+    .. versionchanged:: 5.2
+       The *choices* parameter will now accept a sequence of tuples, where each
+       tuple is of form (*choice*, *description*)
     """
 
     def __init__(self, choices=None, quotes=False, regex=None,
@@ -109,10 +114,17 @@ class String(ConfigType):
         self.quotes = quotes
         self.max_length = max_length or 0
 
-        self.choices = choices
+        if choices is not None:
+            if not all(isinstance(choice, tuple) for choice in choices):
+                choices = [(choice, None) for choice in choices]
+
+            self.choices = collections.OrderedDict(choices)
+        else:
+            self.choices = None
+
         self.lower_case_choices = None
         if self.choices is not None and self.ignore_case:
-            self.lower_case_choices = [c.lower() for c in choices]
+            self.lower_case_choices = [c.lower() for c in self.choices]
 
         self.regex = regex
         if self.regex is not None:
@@ -146,7 +158,7 @@ class String(ConfigType):
         # Check for case insensitive
         processed_value, choices = ((value.lower(), self.lower_case_choices)
                                     if self.ignore_case else
-                                    (value, self.choices))
+                                    (value, self.choices.keys()))
         if processed_value in choices:
             return value
 
@@ -158,7 +170,7 @@ class String(ConfigType):
     def __repr__(self):
         details = []
         if self.choices is not None:
-            details.append("choices={!r}".format(self.choices))
+            details.append("choices={!r}".format(list(self.choices.keys())))
         if self.regex:
             details.append("regex=%r" % self.regex.pattern)
         if details:
@@ -168,11 +180,12 @@ class String(ConfigType):
     def __eq__(self, other):
         return (
             (self.__class__ == other.__class__) and
-            (set(self.choices) == set(other.choices) if
-             self.choices and other.choices else
-             self.choices == other.choices) and
             (self.quotes == other.quotes) and
-            (self.regex == other.regex)
+            (self.regex == other.regex) and
+            (set([x for x in self.choices or []]) ==
+                set([x for x in other.choices or []]) if
+             self.choices and other.choices else
+             self.choices == other.choices)
         )
 
     def _formatter(self, value):
@@ -252,9 +265,14 @@ class Number(ConfigType):
     :param type_name: Type name to be used in the sample config file.
     :param min: Optional check that value is greater than or equal to min.
     :param max: Optional check that value is less than or equal to max.
-    :param choices: Optional sequence of valid values.
+    :param choices: Optional sequence of either valid values or tuples of valid
+        values with descriptions.
 
     .. versionadded:: 3.14
+
+    .. versionchanged:: 5.2
+       The *choices* parameter will now accept a sequence of tuples, where each
+       tuple is of form (*choice*, *description*)
     """
 
     def __init__(self, num_type, type_name,
@@ -263,15 +281,24 @@ class Number(ConfigType):
 
         if min is not None and max is not None and max < min:
             raise ValueError('Max value is less than min value')
-        invalid_choices = [c for c in choices or []
+
+        if choices is not None:
+            if not all(isinstance(choice, tuple) for choice in choices):
+                choices = [(choice, None) for choice in choices]
+
+            self.choices = collections.OrderedDict(choices)
+        else:
+            self.choices = None
+
+        invalid_choices = [c for c in self.choices or []
                            if (min is not None and min > c)
                            or (max is not None and max < c)]
         if invalid_choices:
             raise ValueError("Choices %s are out of bounds [%s..%s]"
                              % (invalid_choices, min, max))
+
         self.min = min
         self.max = max
-        self.choices = choices
         self.num_type = num_type
 
     def __call__(self, value):
@@ -297,7 +324,7 @@ class Number(ConfigType):
     def __repr__(self):
         props = []
         if self.choices is not None:
-            props.append("choices={!r}".format(self.choices))
+            props.append("choices={!r}".format(list(self.choices.keys())))
         else:
             if self.min is not None:
                 props.append('min=%g' % self.min)
@@ -313,7 +340,8 @@ class Number(ConfigType):
             (self.__class__ == other.__class__) and
             (self.min == other.min) and
             (self.max == other.max) and
-            (set(self.choices) == set(other.choices) if
+            (set([x for x in self.choices or []]) ==
+                set([x for x in other.choices or []]) if
              self.choices and other.choices else
              self.choices == other.choices)
         )
@@ -332,7 +360,8 @@ class Integer(Number):
     :param min: Optional check that value is greater than or equal to min.
     :param max: Optional check that value is less than or equal to max.
     :param type_name: Type name to be used in the sample config file.
-    :param choices: Optional sequence of valid values.
+    :param choices: Optional sequence of either valid values or tuples of valid
+        values with descriptions.
 
     .. versionchanged:: 2.4
        The class now honors zero for *min* and *max* parameters.
@@ -346,6 +375,10 @@ class Integer(Number):
     .. versionchanged:: 3.16
        *choices* is no longer mutually exclusive with *min*/*max*. If those are
        supplied, all choices are verified to be within the range.
+
+    .. versionchanged:: 5.2
+       The *choices* parameter will now accept a sequence of tuples, where each
+       tuple is of form (*choice*, *description*)
     """
 
     def __init__(self, min=None, max=None, type_name='integer value',
@@ -385,9 +418,14 @@ class Port(Integer):
     :param min: Optional check that value is greater than or equal to min.
     :param max: Optional check that value is less than or equal to max.
     :param type_name: Type name to be used in the sample config file.
-    :param choices: Optional sequence of valid values.
+    :param choices: Optional sequence of either valid values or tuples of valid
+        values with descriptions.
 
     .. versionadded:: 3.16
+
+    .. versionchanged:: 5.2
+       The *choices* parameter will now accept a sequence of tuples, where each
+       tuple is of form (*choice*, *description*)
     """
 
     PORT_MIN = 0
