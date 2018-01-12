@@ -35,6 +35,7 @@ pip-log.txt
 
 # Unit test / coverage reports
 cover/
+.mypy_cache/
 .coverage*
 !.coveragerc
 .tox
