@@ -75,6 +75,15 @@ class GetLocationTestCase(base.BaseTestCase):
             loc.location,
         )
 
+    def test_set_defaults_func(self):
+        cfg.set_defaults([self.normal_opt], normal_opt=self.id())
+        self.conf([])
+        loc = self.conf.get_location('normal_opt')
+        self.assertEqual(
+            cfg.Locations.set_default,
+            loc.location,
+        )
+
     def test_set_override(self):
         self.conf.set_override('normal_opt', self.id())
         self.conf([])
