@@ -496,6 +496,7 @@ import string
 import sys
 
 from debtcollector import removals
+import enum
 import six
 
 
@@ -503,6 +504,20 @@ from oslo_config import iniparser
 from oslo_config import types
 
 LOG = logging.getLogger(__name__)
+
+
+class Locations(enum.Enum):
+    opt_default = (1, False)
+    set_default = (2, False)
+    set_override = (3, False)
+    user = (4, True)
+
+    def __init__(self, num, is_user_controlled):
+        self.num = num
+        self.is_user_controlled = is_user_controlled
+
+
+LocationInfo = collections.namedtuple('LocationInfo', ['location', 'detail'])
 
 
 class Error(Exception):
@@ -2937,7 +2952,7 @@ class ConfigOpts(collections.Mapping):
                 return self.__cache[key]
             except KeyError:  # nosec: Valid control flow instruction
                 pass
-        value = self._do_get(name, group, namespace)
+        value, loc = self._do_get(name, group, namespace)
         self.__cache[key] = value
         return value
 
@@ -2947,21 +2962,23 @@ class ConfigOpts(collections.Mapping):
         :param name: the opt name (or 'dest', more precisely)
         :param group: an OptGroup
         :param namespace: the namespace object to get the option value from
-        :returns: the option value, or a GroupAttr object
+        :returns: 2-tuple of the option value or a GroupAttr object
+                  and LocationInfo or None
         :raises: NoSuchOptError, NoSuchGroupError, ConfigFileValueError,
                  TemplateSubstitutionError
         """
         if group is None and name in self._groups:
-            return self.GroupAttr(self, self._get_group(name))
+            return (self.GroupAttr(self, self._get_group(name)), None)
 
         info = self._get_opt_info(name, group)
         opt = info['opt']
 
         if isinstance(opt, SubCommandOpt):
-            return self.SubCommandAttr(self, group, opt.dest)
+            return (self.SubCommandAttr(self, group, opt.dest), None)
 
         if 'override' in info:
-            return self._substitute(info['override'])
+            return (self._substitute(info['override']),
+                    LocationInfo(Locations.set_override, ''))
 
         def convert(value):
             return self._convert_value(
@@ -2974,7 +2991,10 @@ class ConfigOpts(collections.Mapping):
         if namespace is not None:
             group_name = group.name if group else None
             try:
-                return convert(opt._get_from_namespace(namespace, group_name))
+                return (
+                    convert(opt._get_from_namespace(namespace, group_name)),
+                    LocationInfo(Locations.user, ''),
+                )
             except KeyError:  # nosec: Valid control flow instruction
                 pass
             except ValueError as ve:
@@ -2983,7 +3003,8 @@ class ConfigOpts(collections.Mapping):
                     % (opt.name, str(ve)))
 
         if 'default' in info:
-            return self._substitute(info['default'])
+            return (self._substitute(info['default']),
+                    LocationInfo(Locations.set_default, ''))
 
         if self._validate_default_values:
             if opt.default is not None:
@@ -2995,9 +3016,10 @@ class ConfigOpts(collections.Mapping):
                         % (opt.name, str(e)))
 
         if opt.default is not None:
-            return convert(opt.default)
+            return (convert(opt.default),
+                    LocationInfo(Locations.opt_default, ''))
 
-        return None
+        return (None, None)
 
     def _substitute(self, value, group=None, namespace=None):
         """Perform string template substitution.
@@ -3356,6 +3378,21 @@ class ConfigOpts(collections.Mapping):
         if self._namespace:
             s |= set(self._namespace._sections())
         return sorted(s)
+
+    def get_location(self, name, group=None):
+        """Return the location where the option is being set.
+
+        :param name: The name of the option.
+        :type name: str
+        :param group: The name of the group of the option. Defaults to
+                      ``'DEFAULT'``.
+        :type group: str
+        :return: LocationInfo
+
+        .. versionadded:: 5.3.0
+        """
+        value, loc = self._do_get(name, group, None)
+        return loc
 
     class GroupAttr(collections.Mapping):
 
