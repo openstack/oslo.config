@@ -174,7 +174,8 @@ class Config(fixtures.Fixture):
             # Parsed values are an array of raw strings.
             raw_config[group][key] = [str(value)]
 
-        self.conf._namespace._add_parsed_config_file(raw_config, raw_config)
+        self.conf._namespace._add_parsed_config_file(
+            '<memory>', raw_config, raw_config)
 
     def set_config_files(self, config_files):
         """Specify a list of config files to read.

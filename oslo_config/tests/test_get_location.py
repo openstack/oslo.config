@@ -10,6 +10,10 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+import io
+import tempfile
+import textwrap
+
 from oslotest import base
 
 from oslo_config import cfg
@@ -35,6 +39,7 @@ class LocationTestCase(base.BaseTestCase):
 
     def test_user_controlled(self):
         self.assertTrue(cfg.Locations.user.is_user_controlled)
+        self.assertTrue(cfg.Locations.command_line.is_user_controlled)
 
     def test_not_user_controlled(self):
         self.assertFalse(cfg.Locations.opt_default.is_user_controlled)
@@ -96,3 +101,65 @@ class GetLocationTestCase(base.BaseTestCase):
             loc.location,
         )
         self.assertIn('test_get_location.py', loc.detail)
+
+    def test_user_cli(self):
+        filename = self._write_opt_to_tmp_file(
+            'DEFAULT', 'unknown_opt', self.id())
+        self.conf(['--config-file', filename,
+                   '--cli_opt', 'blah'])
+        loc = self.conf.get_location('cli_opt')
+        self.assertEqual(
+            cfg.Locations.command_line,
+            loc.location,
+        )
+
+    def test_default_cli(self):
+        filename = self._write_opt_to_tmp_file(
+            'DEFAULT', 'unknown_opt', self.id())
+        self.conf(['--config-file', filename])
+        loc = self.conf.get_location('cli_opt')
+        self.assertEqual(
+            cfg.Locations.opt_default,
+            loc.location,
+        )
+
+    def _write_opt_to_tmp_file(self, group, option, value):
+        filename = tempfile.mktemp()
+        with io.open(filename, 'w', encoding='utf-8') as f:
+            f.write(textwrap.dedent(u'''
+            [{group}]
+            {option} = {value}
+            ''').format(
+                group=group,
+                option=option,
+                value=value,
+            ))
+        return filename
+
+    def test_user_cli_opt_in_file(self):
+        filename = self._write_opt_to_tmp_file(
+            'DEFAULT', 'cli_opt', self.id())
+        self.conf(['--config-file', filename])
+        loc = self.conf.get_location('cli_opt')
+        self.assertEqual(
+            cfg.Locations.user,
+            loc.location,
+        )
+        self.assertEqual(
+            filename,
+            loc.detail,
+        )
+
+    def test_user_file(self):
+        filename = self._write_opt_to_tmp_file(
+            'DEFAULT', 'normal_opt', self.id())
+        self.conf(['--config-file', filename])
+        loc = self.conf.get_location('normal_opt')
+        self.assertEqual(
+            cfg.Locations.user,
+            loc.location,
+        )
+        self.assertEqual(
+            filename,
+            loc.detail,
+        )
