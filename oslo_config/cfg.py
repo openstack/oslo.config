@@ -808,6 +808,7 @@ def set_defaults(opts, **kwargs):
     for opt in opts:
         if opt.dest in kwargs:
             opt.default = kwargs[opt.dest]
+            opt._set_location = LocationInfo(Locations.set_default, '')
 
 
 def _normalize_group_name(group_name):
@@ -957,6 +958,7 @@ class Opt(object):
         self.deprecated_reason = deprecated_reason
         self.deprecated_since = deprecated_since
         self._logged_deprecation = False
+        self._set_location = LocationInfo(Locations.opt_default, '')
 
         self.deprecated_opts = copy.deepcopy(deprecated_opts) or []
         for o in self.deprecated_opts:
@@ -2972,6 +2974,7 @@ class ConfigOpts(collections.Mapping):
 
         info = self._get_opt_info(name, group)
         opt = info['opt']
+        loc = opt._set_location
 
         if isinstance(opt, SubCommandOpt):
             return (self.SubCommandAttr(self, group, opt.dest), None)
@@ -3016,8 +3019,7 @@ class ConfigOpts(collections.Mapping):
                         % (opt.name, str(e)))
 
         if opt.default is not None:
-            return (convert(opt.default),
-                    LocationInfo(Locations.opt_default, ''))
+            return (convert(opt.default), loc)
 
         return (None, None)
 
