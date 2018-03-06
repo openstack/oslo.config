@@ -489,6 +489,7 @@ import copy
 import errno
 import functools
 import glob
+import inspect
 import itertools
 import logging
 import os
@@ -804,11 +805,35 @@ def _is_opt_registered(opts, opt):
         return False
 
 
+def _get_caller_detail(n=2):
+    """Return a string describing where this is being called from.
+
+    :param n: Number of steps up the stack to look. Defaults to ``2``.
+    :type n: int
+    :returns: str
+    """
+    s = inspect.stack()[:n + 1]
+    try:
+        frame = s[n]
+        try:
+            return frame[1]
+            # WARNING(dhellmann): Using frame.lineno to include the
+            # line number in the return value causes some sort of
+            # memory or stack corruption that manifests in values not
+            # being cleaned up in the cfgfilter tests.
+            # return '%s:%s' % (frame[1], frame[2])
+        finally:
+            del frame
+    finally:
+        del s
+
+
 def set_defaults(opts, **kwargs):
     for opt in opts:
         if opt.dest in kwargs:
             opt.default = kwargs[opt.dest]
-            opt._set_location = LocationInfo(Locations.set_default, '')
+            opt._set_location = LocationInfo(Locations.set_default,
+                                             _get_caller_detail())
 
 
 def _normalize_group_name(group_name):
@@ -958,7 +983,15 @@ class Opt(object):
         self.deprecated_reason = deprecated_reason
         self.deprecated_since = deprecated_since
         self._logged_deprecation = False
-        self._set_location = LocationInfo(Locations.opt_default, '')
+
+        if self.__class__ is Opt:
+            stack_depth = 2  # someone instantiated Opt directly
+        else:
+            stack_depth = 3  # skip the call to the child class constructor
+        self._set_location = LocationInfo(
+            Locations.opt_default,
+            _get_caller_detail(stack_depth),
+        )
 
         self.deprecated_opts = copy.deepcopy(deprecated_opts) or []
         for o in self.deprecated_opts:
@@ -2772,6 +2805,10 @@ class ConfigOpts(collections.Mapping):
         opt_info = self._get_opt_info(name, group)
         opt_info['override'] = self._get_enforced_type_value(
             opt_info['opt'], override)
+        opt_info['location'] = LocationInfo(
+            Locations.set_override,
+            _get_caller_detail(3),  # this function has a decorator to skip
+        )
 
     @__clear_cache
     def set_default(self, name, default, group=None):
@@ -2789,6 +2826,10 @@ class ConfigOpts(collections.Mapping):
         opt_info = self._get_opt_info(name, group)
         opt_info['default'] = self._get_enforced_type_value(
             opt_info['opt'], default)
+        opt_info['location'] = LocationInfo(
+            Locations.set_default,
+            _get_caller_detail(3),  # this function has a decorator to skip
+        )
 
     def _get_enforced_type_value(self, opt, value):
         if value is None:
@@ -2974,14 +3015,16 @@ class ConfigOpts(collections.Mapping):
 
         info = self._get_opt_info(name, group)
         opt = info['opt']
-        loc = opt._set_location
+        if 'location' in info:
+            loc = info['location']
+        else:
+            loc = opt._set_location
 
         if isinstance(opt, SubCommandOpt):
             return (self.SubCommandAttr(self, group, opt.dest), None)
 
         if 'override' in info:
-            return (self._substitute(info['override']),
-                    LocationInfo(Locations.set_override, ''))
+            return (self._substitute(info['override']), loc)
 
         def convert(value):
             return self._convert_value(
@@ -2996,7 +3039,7 @@ class ConfigOpts(collections.Mapping):
             try:
                 return (
                     convert(opt._get_from_namespace(namespace, group_name)),
-                    LocationInfo(Locations.user, ''),
+                    loc,
                 )
             except KeyError:  # nosec: Valid control flow instruction
                 pass
@@ -3006,8 +3049,7 @@ class ConfigOpts(collections.Mapping):
                     % (opt.name, str(ve)))
 
         if 'default' in info:
-            return (self._substitute(info['default']),
-                    LocationInfo(Locations.set_default, ''))
+            return (self._substitute(info['default']), loc)
 
         if self._validate_default_values:
             if opt.default is not None:
