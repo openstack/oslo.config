@@ -90,10 +90,106 @@ def _get_choice_text(choice):
     return six.text_type(choice)
 
 
-def _format_group(app, namespace, group_name, group_obj, opt_list):
-    group_name = group_name or 'DEFAULT'
-    app.debug('[oslo.config] %s %s' % (namespace, group_name))
+def _format_opt(opt, group_name):
+    opt_type = _TYPE_DESCRIPTIONS.get(type(opt),
+                                      'unknown type')
+    yield '.. oslo.config:option:: %s' % opt.dest
+    yield ''
+    yield _indent(':Type: %s' % opt_type)
+    for default in generator._format_defaults(opt):
+        if default:
+            default = '``' + default + '``'
+        yield _indent(':Default: %s' % default)
+    if getattr(opt.type, 'min', None) is not None:
+        yield _indent(':Minimum Value: %s' % opt.type.min)
+    if getattr(opt.type, 'max', None) is not None:
+        yield _indent(':Maximum Value: %s' % opt.type.max)
+    if getattr(opt.type, 'choices', None):
+        choices_text = ', '.join([_get_choice_text(choice)
+                                  for choice in opt.type.choices])
+        yield _indent(':Valid Values: %s' % choices_text)
+    try:
+        if opt.mutable:
+            yield _indent(
+                ':Mutable: This option can be changed without restarting.'
+            )
+    except AttributeError as err:
+        # NOTE(dhellmann): keystoneauth defines its own Opt class,
+        # and neutron (at least) returns instances of those
+        # classes instead of oslo_config Opt instances. The new
+        # mutable attribute is the first property where the API
+        # isn't supported in the external class, so we can use
+        # this failure to emit a warning. See
+        # https://bugs.launchpad.net/keystoneauth/+bug/1548433 for
+        # more details.
+        import warnings
+        if not isinstance(cfg.Opt, opt):
+            warnings.warn(
+                'Incompatible option class for %s (%r): %s' %
+                (opt.dest, opt.__class__, err),
+            )
+        else:
+            warnings.warn('Failed to fully format sample for %s: %s' %
+                          (opt.dest, err))
+    if opt.advanced:
+        yield _indent(
+            ':Advanced Option: Intended for advanced users and not used')
+        yield _indent(
+            'by the majority of users, and might have a significant', 6)
+        yield _indent(
+            'effect on stability and/or performance.', 6)
 
+    try:
+        help_text = opt.help % {'default': 'the value above'}
+    except (TypeError, KeyError, ValueError):
+        # There is no mention of the default in the help string,
+        # the string had some unknown key, or the string contained
+        # invalid formatting characters
+        help_text = opt.help
+    if help_text:
+        yield ''
+        yield _indent(help_text.strip())
+
+    # We don't bother outputting this if not using new-style choices with
+    # inline descriptions
+    if getattr(opt.type, 'choices', None) and not all(
+            x is None for x in opt.type.choices.values()):
+        yield ''
+        yield _indent('.. rubric:: Possible values')
+        for choice in opt.type.choices:
+            yield ''
+            yield _indent(_get_choice_text(choice))
+            yield _indent(_indent(
+                opt.type.choices[choice] or '<No description provided>'))
+
+    if opt.deprecated_opts:
+        yield ''
+        for line in _list_table(
+                ['Group', 'Name'],
+                ((d.group or group_name,
+                  d.name or opt.dest or 'UNSET')
+                 for d in opt.deprecated_opts),
+                title='Deprecated Variations'):
+            yield _indent(line)
+
+    if opt.deprecated_for_removal:
+        yield ''
+        yield _indent('.. warning::')
+        if opt.deprecated_since:
+            yield _indent('   This option is deprecated for removal '
+                          'since %s.' % opt.deprecated_since)
+        else:
+            yield _indent('   This option is deprecated for removal.')
+        yield _indent('   Its value may be silently ignored ')
+        yield _indent('   in the future.')
+        if opt.deprecated_reason:
+            yield ''
+            yield _indent('   :Reason: ' + opt.deprecated_reason)
+
+    yield ''
+
+
+def _format_group(namespace, group_name, group_obj):
     yield '.. oslo.config:group:: %s' % group_name
     if namespace:
         yield '   :namespace: %s' % namespace
@@ -103,103 +199,17 @@ def _format_group(app, namespace, group_name, group_obj, opt_list):
         yield _indent(group_obj.help.rstrip())
         yield ''
 
+
+def _format_group_opts(app, namespace, group_name, group_obj, opt_list):
+    group_name = group_name or 'DEFAULT'
+    app.debug('[oslo.config] %s %s' % (namespace, group_name))
+
+    for line in _format_group(namespace, group_name, group_obj):
+        yield line
+
     for opt in opt_list:
-        opt_type = _TYPE_DESCRIPTIONS.get(type(opt),
-                                          'unknown type')
-        yield '.. oslo.config:option:: %s' % opt.dest
-        yield ''
-        yield _indent(':Type: %s' % opt_type)
-        for default in generator._format_defaults(opt):
-            if default:
-                default = '``' + default + '``'
-            yield _indent(':Default: %s' % default)
-        if getattr(opt.type, 'min', None) is not None:
-            yield _indent(':Minimum Value: %s' % opt.type.min)
-        if getattr(opt.type, 'max', None) is not None:
-            yield _indent(':Maximum Value: %s' % opt.type.max)
-        if getattr(opt.type, 'choices', None):
-            choices_text = ', '.join([_get_choice_text(choice)
-                                      for choice in opt.type.choices])
-            yield _indent(':Valid Values: %s' % choices_text)
-        try:
-            if opt.mutable:
-                yield _indent(
-                    ':Mutable: This option can be changed without restarting.'
-                )
-        except AttributeError as err:
-            # NOTE(dhellmann): keystoneauth defines its own Opt class,
-            # and neutron (at least) returns instances of those
-            # classes instead of oslo_config Opt instances. The new
-            # mutable attribute is the first property where the API
-            # isn't supported in the external class, so we can use
-            # this failure to emit a warning. See
-            # https://bugs.launchpad.net/keystoneauth/+bug/1548433 for
-            # more details.
-            import warnings
-            if not isinstance(cfg.Opt, opt):
-                warnings.warn(
-                    'Incompatible option class for %s (%r): %s' %
-                    (opt.dest, opt.__class__, err),
-                )
-            else:
-                warnings.warn('Failed to fully format sample for %s: %s' %
-                              (opt.dest, err))
-        if opt.advanced:
-            yield _indent(
-                ':Advanced Option: Intended for advanced users and not used')
-            yield _indent(
-                'by the majority of users, and might have a significant', 6)
-            yield _indent(
-                'effect on stability and/or performance.', 6)
-
-        try:
-            help_text = opt.help % {'default': 'the value above'}
-        except (TypeError, KeyError, ValueError):
-            # There is no mention of the default in the help string,
-            # the string had some unknown key, or the string contained
-            # invalid formatting characters
-            help_text = opt.help
-        if help_text:
-            yield ''
-            yield _indent(help_text)
-
-        # We don't bother outputting this if not using new-style choices with
-        # inline descriptions
-        if getattr(opt.type, 'choices', None) and not all(
-                x is None for x in opt.type.choices.values()):
-            yield ''
-            yield _indent('.. rubric:: Possible values')
-            for choice in opt.type.choices:
-                yield ''
-                yield _indent(_get_choice_text(choice))
-                yield _indent(_indent(
-                    opt.type.choices[choice] or '<No description provided>'))
-
-        if opt.deprecated_opts:
-            yield ''
-            for line in _list_table(
-                    ['Group', 'Name'],
-                    ((d.group or group_name,
-                      d.name or opt.dest or 'UNSET')
-                     for d in opt.deprecated_opts),
-                    title='Deprecated Variations'):
-                yield _indent(line)
-
-        if opt.deprecated_for_removal:
-            yield ''
-            yield _indent('.. warning::')
-            if opt.deprecated_since:
-                yield _indent('   This option is deprecated for removal '
-                              'since %s.' % opt.deprecated_since)
-            else:
-                yield _indent('   This option is deprecated for removal.')
-            yield _indent('   Its value may be silently ignored ')
-            yield _indent('   in the future.')
-            if opt.deprecated_reason:
-                yield ''
-                yield _indent('   :Reason: ' + opt.deprecated_reason)
-
-        yield ''
+        for line in _format_opt(opt, group_name):
+            yield line
 
 
 def _format_option_help(app, namespaces, split_namespaces):
@@ -220,7 +230,7 @@ def _format_option_help(app, namespaces, split_namespaces):
                     group = None
                 if group_name is None:
                     group_name = 'DEFAULT'
-                lines = _format_group(
+                lines = _format_group_opts(
                     app=app,
                     namespace=namespace,
                     group_name=group_name,
@@ -247,7 +257,7 @@ def _format_option_help(app, namespaces, split_namespaces):
                 group_objs.setdefault(group_name, group)
                 by_section.setdefault(group_name, []).extend(group_opts)
         for group_name, group_opts in sorted(by_section.items()):
-            lines = _format_group(
+            lines = _format_group_opts(
                 app=app,
                 namespace=None,
                 group_name=group_name,
