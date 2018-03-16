@@ -20,6 +20,7 @@ from sphinx.directives import ObjectDescription
 from sphinx.domains import Domain
 from sphinx.domains import ObjType
 from sphinx.roles import XRefRole
+from sphinx.util import logging
 from sphinx.util.nodes import make_refnode
 from sphinx.util.nodes import nested_parse_with_titles
 
@@ -53,7 +54,7 @@ def _list_table(headers, data, title='', columns=None):
 
 def _indent(text, n=2):
     padding = ' ' * n
-    return '\n'.join(padding + l for l in text.splitlines())
+    return '\n'.join(padding + l if l else l for l in text.splitlines())
 
 
 def _make_anchor_target(group_name, option_name):
@@ -98,8 +99,9 @@ def _format_opt(opt, group_name):
     yield _indent(':Type: %s' % opt_type)
     for default in generator._format_defaults(opt):
         if default:
-            default = '``' + default + '``'
-        yield _indent(':Default: %s' % default)
+            yield _indent(':Default: ``%s``' % default)
+        else:
+            yield _indent(':Default: ``%r``' % default)
     if getattr(opt.type, 'min', None) is not None:
         yield _indent(':Minimum Value: %s' % opt.type.min)
     if getattr(opt.type, 'max', None) is not None:
@@ -148,7 +150,8 @@ def _format_opt(opt, group_name):
         help_text = opt.help
     if help_text:
         yield ''
-        yield _indent(help_text.strip())
+        for line in help_text.strip().splitlines():
+            yield _indent(line.rstrip())
 
     # We don't bother outputting this if not using new-style choices with
     # inline descriptions
@@ -183,8 +186,10 @@ def _format_opt(opt, group_name):
         yield _indent('   Its value may be silently ignored ')
         yield _indent('   in the future.')
         if opt.deprecated_reason:
+            reason = ' '.join([x.strip() for x in
+                               opt.deprecated_reason.splitlines()])
             yield ''
-            yield _indent('   :Reason: ' + opt.deprecated_reason)
+            yield _indent('   :Reason: ' + reason)
 
     yield ''
 
@@ -307,7 +312,14 @@ class ShowOptionsDirective(rst.Directive):
 
         node = nodes.section()
         node.document = self.state.document
-        nested_parse_with_titles(self.state, result, node)
+
+        # With the resolution for bug #1755783, we now parse the 'Opt.help'
+        # attribute as rST. Unfortunately, there are a lot of broken option
+        # descriptions out there and we don't want to break peoples' builds
+        # suddenly. As a result, we disable 'warning-is-error' temporarily.
+        # Users will still see the warnings but the build will continue.
+        with logging.skip_warningiserror():
+            nested_parse_with_titles(self.state, result, node)
 
         return node.children
 
