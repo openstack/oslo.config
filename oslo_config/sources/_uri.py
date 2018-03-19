@@ -17,8 +17,8 @@ from oslo_config import cfg
 from oslo_config import sources
 
 
-class INIConfigurationSourceDriver(sources.ConfigurationSourceDriver):
-    """A configuration source driver for INI files served through http[s].
+class URIConfigurationSourceDriver(sources.ConfigurationSourceDriver):
+    """A configuration source driver for remote files served through http[s].
 
     Required options:
       - uri: URI containing the file location.
@@ -47,15 +47,15 @@ class INIConfigurationSourceDriver(sources.ConfigurationSourceDriver):
         conf.register_opt(cfg.StrOpt("client_cert"), group)
         conf.register_opt(cfg.StrOpt("client_key"), group)
 
-        return INIConfigurationSource(
+        return URIConfigurationSource(
             conf[group_name].uri,
             conf[group_name].ca_path,
             conf[group_name].client_cert,
             conf[group_name].client_key)
 
 
-class INIConfigurationSource(sources.ConfigurationSource):
-    """A configuration source for INI files server through http[s].
+class URIConfigurationSource(sources.ConfigurationSource):
+    """A configuration source for remote files served through http[s].
 
     :uri: The Uniform Resource Identifier of the configuration to be
           retrieved.
@@ -71,7 +71,7 @@ class INIConfigurationSource(sources.ConfigurationSource):
                  specified but does not includes the private key.
     """
 
-    def __init__(self, uri, ca_path, client_cert, client_key):
+    def __init__(self, uri, ca_path=None, client_cert=None, client_key=None):
         self._uri = uri
         self._namespace = cfg._Namespace(cfg.ConfigOpts())
 
@@ -102,7 +102,9 @@ class INIConfigurationSource(sources.ConfigurationSource):
         :type option_name: str
         :param opt: The option definition.
         :type opt: Opt
-        :return: Option value or NoValue.
+        :returns: A tuple (value, location) where value is the option value
+                  or oslo_config.sources._NoValue if the (group, option) is
+                  not present in the source, and location is a LocationInfo.
         """
         try:
             return self._namespace._get_value(

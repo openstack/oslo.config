@@ -2472,7 +2472,7 @@ class MappingInterfaceTestCase(BaseTestCase):
 
         self.assertIn('foo', self.conf)
         self.assertIn('config_file', self.conf)
-        self.assertEqual(len(self.conf), 3)
+        self.assertEqual(len(self.conf), 4)
         self.assertEqual('bar', self.conf['foo'])
         self.assertEqual('bar', self.conf.get('foo'))
         self.assertIn('bar', list(self.conf.values()))
@@ -3874,6 +3874,7 @@ class OptDumpingTestCase(BaseTestCase):
                          "=" * 80,
                          "config_dir                     = []",
                          "config_file                    = []",
+                         "config_source                  = []",
                          "foo                            = this",
                          "passwd                         = ****",
                          "blaa.bar                       = that",
@@ -3900,6 +3901,7 @@ class OptDumpingTestCase(BaseTestCase):
                          "command line args: None",
                          "config files: []",
                          "=" * 80,
+                         "config_source                  = []",
                          "*" * 80,
                          ], logger.logged)
 
