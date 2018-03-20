@@ -3964,84 +3964,6 @@ class ConfigParserTestCase(BaseTestCase):
                               namespace)
 
 
-class MultiConfigParserTestCase(BaseTestCase):
-
-    def test_parse_single_file(self):
-        paths = self.create_tempfiles([('test',
-                                        '[DEFAULT]\n'
-                                        'foo = bar\n'
-                                        '[BLAA]\n'
-                                        'bar = foo\n')])
-
-        parser = cfg.MultiConfigParser()
-        read_ok = parser.read(paths)
-
-        self.assertEqual(read_ok, paths)
-
-        self.assertIn('DEFAULT', parser.parsed[0])
-        self.assertEqual(parser.parsed[0]['DEFAULT']['foo'], ['bar'])
-        self.assertEqual(parser.get([('DEFAULT', 'foo')]), ['bar'])
-        self.assertEqual(parser.get([('DEFAULT', 'foo')], multi=True),
-                         ['bar'])
-        self.assertEqual(parser.get([('DEFAULT', 'foo')], multi=True),
-                         ['bar'])
-        self.assertEqual(parser.get([(None, 'foo')], multi=True),
-                         ['bar'])
-        self.assertEqual(parser._get([('DEFAULT', 'foo')],
-                                     multi=True, normalized=True),
-                         ['bar'])
-
-        self.assertIn('BLAA', parser.parsed[0])
-        self.assertEqual(parser.parsed[0]['BLAA']['bar'], ['foo'])
-        self.assertEqual(parser.get([('BLAA', 'bar')]), ['foo'])
-        self.assertEqual(parser.get([('BLAA', 'bar')], multi=True),
-                         ['foo'])
-        self.assertEqual(parser._get([('blaa', 'bar')],
-                                     multi=True, normalized=True),
-                         ['foo'])
-
-    def test_parse_multiple_files(self):
-        paths = self.create_tempfiles([('test1',
-                                        '[DEFAULT]\n'
-                                        'foo = bar\n'
-                                        '[BLAA]\n'
-                                        'bar = foo'),
-                                       ('test2',
-                                        '[DEFAULT]\n'
-                                        'foo = barbar\n'
-                                        '[BLAA]\n'
-                                        'bar = foofoo\n'
-                                        '[bLAa]\n'
-                                        'bar = foofoofoo\n')])
-
-        parser = cfg.MultiConfigParser()
-        read_ok = parser.read(paths)
-
-        self.assertEqual(read_ok, paths)
-
-        self.assertIn('DEFAULT', parser.parsed[0])
-        self.assertEqual(parser.parsed[0]['DEFAULT']['foo'], ['barbar'])
-        self.assertIn('DEFAULT', parser.parsed[1])
-        self.assertEqual(parser.parsed[1]['DEFAULT']['foo'], ['bar'])
-        self.assertEqual(parser.get([('DEFAULT', 'foo')]), ['barbar'])
-        self.assertEqual(parser.get([('DEFAULT', 'foo')], multi=True),
-                         ['bar', 'barbar'])
-
-        self.assertIn('BLAA', parser.parsed[0])
-        self.assertIn('bLAa', parser.parsed[0])
-        self.assertEqual(parser.parsed[0]['BLAA']['bar'], ['foofoo'])
-        self.assertEqual(parser.parsed[0]['bLAa']['bar'], ['foofoofoo'])
-        self.assertIn('BLAA', parser.parsed[1])
-        self.assertEqual(parser.parsed[1]['BLAA']['bar'], ['foo'])
-        self.assertEqual(parser.get([('BLAA', 'bar')]), ['foofoo'])
-        self.assertEqual(parser.get([('bLAa', 'bar')]), ['foofoofoo'])
-        self.assertEqual(parser.get([('BLAA', 'bar')], multi=True),
-                         ['foo', 'foofoo'])
-        self.assertEqual(parser._get([('BLAA', 'bar')],
-                                     multi=True, normalized=True),
-                         ['foo', 'foofoo', 'foofoofoo'])
-
-
 class NamespaceTestCase(BaseTestCase):
     def setUp(self):
         super(NamespaceTestCase, self).setUp()
@@ -4909,7 +4831,7 @@ class DeprecationWarningTestBase(BaseTestCase):
     def setUp(self):
         super(DeprecationWarningTestBase, self).setUp()
         self.log_fixture = self.useFixture(fixtures.FakeLogger())
-        self._parser_class = cfg.MultiConfigParser
+        self._parser_class = cfg.ConfigParser
 
 
 class DeprecationWarningTestScenarios(DeprecationWarningTestBase):
@@ -4945,7 +4867,7 @@ class DeprecationWarningTestScenarios(DeprecationWarningTestBase):
             self.assertEqual('baz', self.conf.other.foo)
             self.assertEqual('baz', self.conf.other.foo)
         if self.deprecated:
-            expected = (self._parser_class._deprecated_opt_message %
+            expected = (cfg._Namespace._deprecated_opt_message %
                         {'dep_option': 'bar',
                          'dep_group': self.group,
                          'option': 'foo',
@@ -4979,15 +4901,15 @@ class DeprecationWarningTests(DeprecationWarningTestBase):
                       self.log_fixture.output)
 
     def test_check_deprecated(self):
-        parser = self._parser_class()
+        namespace = cfg._Namespace(None)
         deprecated_list = [('DEFAULT', 'bar')]
-        parser._check_deprecated(('DEFAULT', 'bar'), (None, 'foo'),
-                                 deprecated_list)
+        namespace._check_deprecated(('DEFAULT', 'bar'), (None, 'foo'),
+                                    deprecated_list)
         self.assert_message_logged('bar', 'DEFAULT', 'foo', 'DEFAULT')
 
     def assert_message_logged(self, deprecated_name, deprecated_group,
                               current_name, current_group):
-        expected = (self._parser_class._deprecated_opt_message %
+        expected = (cfg._Namespace._deprecated_opt_message %
                     {'dep_option': deprecated_name,
                      'dep_group': deprecated_group,
                      'option': current_name,
@@ -5048,7 +4970,7 @@ class DeprecationWarningTests(DeprecationWarningTestBase):
 
         self.conf(['--config-file', paths[0]])
         self.assertEqual('baz', self.conf.other.foo)
-        expected = (self._parser_class._deprecated_opt_message %
+        expected = (cfg._Namespace._deprecated_opt_message %
                     {'dep_option': 'bar',
                      'dep_group': 'other',
                      'option': 'foo-bar',

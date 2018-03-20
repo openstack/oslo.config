@@ -496,10 +496,8 @@ import os
 import string
 import sys
 
-from debtcollector import removals
 import enum
 import six
-
 
 from oslo_config import iniparser
 from oslo_config import types
@@ -2007,116 +2005,6 @@ class ConfigParser(iniparser.BaseParser):
         namespace._add_parsed_config_file(config_file, sections, normalized)
         namespace._parse_cli_opts_from_config_file(
             config_file, sections, normalized)
-
-
-@removals.remove(version='3.4', removal_version='4.0')
-class MultiConfigParser(object):
-    """A ConfigParser which handles multi-opts.
-
-    All methods in this class which accept config names should treat a section
-    name of None as 'DEFAULT'.
-
-    This class was deprecated in Mitaka and should be removed in Ocata.
-    _Namespace holds values, ConfigParser._parse_file reads one file into a
-    _Namespace and ConfigOpts._parse_config_files reads multiple files into a
-    _Namespace.
-    """
-
-    _deprecated_opt_message = ('Option "%(dep_option)s" from group '
-                               '"%(dep_group)s" is deprecated. Use option '
-                               '"%(option)s" from group "%(group)s".')
-
-    def __init__(self):
-        self.parsed = []
-        self._normalized = []
-        self._emitted_deprecations = set()
-
-    def read(self, config_files):
-        read_ok = []
-
-        for filename in config_files:
-            sections = {}
-            normalized = {}
-            parser = ConfigParser(filename, sections)
-            parser._add_normalized(normalized)
-
-            try:
-                parser.parse()
-            except IOError:
-                continue
-            self._add_parsed_config_file(filename, sections, normalized)
-            read_ok.append(filename)
-
-        return read_ok
-
-    def _add_parsed_config_file(self, filename, sections, normalized):
-        """Add a parsed config file to the list of parsed files.
-
-        :param sections: a mapping of section name to dicts of config values
-        :param normalized: sections mapping with section names normalized
-        :raises: ConfigFileValueError
-        """
-        self.parsed.insert(0, sections)
-        self._normalized.insert(0, normalized)
-
-    def get(self, names, multi=False):
-        return self._get(names, multi=multi)
-
-    def _get(self, names, multi=False, normalized=False, current_name=None):
-        """Fetch a config file value from the parsed files.
-
-        :param names: a list of (section, name) tuples
-        :param multi: a boolean indicating whether to return multiple values
-        :param normalized: whether to normalize group names to lowercase
-        :param current_name: current name in tuple being checked
-        """
-        rvalue = []
-
-        def normalize(name):
-            if name is None:
-                name = 'DEFAULT'
-            return _normalize_group_name(name) if normalized else name
-
-        names = [(normalize(section), name) for section, name in names]
-
-        for sections in (self._normalized if normalized else self.parsed):
-            for section, name in names:
-                if section not in sections:
-                    continue
-                if name in sections[section]:
-                    current_name = current_name or names[0]
-                    self._check_deprecated((section, name), current_name,
-                                           names[1:])
-                    val = sections[section][name]
-                    if multi:
-                        rvalue = val + rvalue
-                    else:
-                        return val
-        if multi and rvalue != []:
-            return rvalue
-        raise KeyError
-
-    def _check_deprecated(self, name, current, deprecated):
-        """Check for usage of deprecated names.
-
-        :param name: A tuple of the form (group, name) representing the group
-                     and name where an opt value was found.
-        :param current: A tuple of the form (group, name) representing the
-                        current name for an option.
-        :param deprecated: A list of tuples with the same format as the name
-                    param which represent any deprecated names for an option.
-                    If the name param matches any entries in this list a
-                    deprecation warning will be logged.
-        """
-        if name in deprecated and name not in self._emitted_deprecations:
-            self._emitted_deprecations.add(name)
-            current = (current[0] or 'DEFAULT', current[1])
-            # NOTE(bnemec): Not using versionutils for this to avoid a
-            # circular dependency between oslo.config and whatever library
-            # versionutils ends up in.
-            LOG.warning(self._deprecated_opt_message,
-                        {'dep_option': name[1], 'dep_group': name[0],
-                         'option': current[1], 'group': current[0]})
 
 
 class _Namespace(argparse.Namespace):
