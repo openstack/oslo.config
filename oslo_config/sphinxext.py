@@ -10,6 +10,10 @@
 # License for the specific language governing permissions and limitations
 # under the License.
 
+from __future__ import print_function
+
+import tempfile
+
 from docutils import nodes
 from docutils.parsers import rst
 from docutils.parsers.rst import directives
@@ -302,9 +306,29 @@ class ShowOptionsDirective(rst.Directive):
             ]
 
         result = ViewList()
-        source_name = '<' + __name__ + '>'
-        for line in _format_option_help(namespaces, split_namespaces):
-            result.append(line, source_name)
+        source_name = self.state.document.current_source
+
+        with tempfile.NamedTemporaryFile(suffix='.rst', delete=False) as tmp:
+            # NOTE(stephenfin): We dump the output to a tempfile to assist
+            # people in debugging their broken config options. It would be good
+            # to conditionalize this but that would require access to error
+            # state from the directive, which we don't have, and would
+            # necessitate holding the whole file, which could be rather large,
+            # in memory while we wait on the decision.
+            LOG.info('dumping output to %r', tmp.name)
+            offset = 0
+            for count, line in enumerate(_format_option_help(
+                    namespaces, split_namespaces)):
+                # FIXME(stephenfin): Some lines emitted are actually multiple
+                # lines. This throws off our counter, which is rather annoying.
+                # We handle this here but we should really handle it higher up.
+                parts = line.split('\n')
+                if len(parts) > 1:
+                    offset += len(parts) - 1
+
+                for part in parts:
+                    result.append(line, source_name, count + offset)
+                tmp.write(line.encode('utf-8'))
 
         node = nodes.section()
         node.document = self.state.document
