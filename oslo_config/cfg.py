@@ -512,6 +512,7 @@ class Locations(enum.Enum):
     set_default = (2, False)
     set_override = (3, False)
     user = (4, True)
+    command_line = (5, True)
 
     def __init__(self, num, is_user_controlled):
         self.num = num
@@ -1052,7 +1053,7 @@ class Opt(object):
                 names.append((dgroup if dgroup else group_name,
                               dname if dname else self.dest))
 
-        value = namespace._get_value(
+        value, loc = namespace._get_value(
             names, multi=self.multi,
             positional=self.positional, current_name=current_name)
         # The previous line will raise a KeyError if no value is set in the
@@ -1070,7 +1071,7 @@ class Opt(object):
                         {'option': self.dest,
                          'group': pretty_group,
                          'reason': pretty_reason})
-        return value
+        return (value, loc)
 
     def _add_to_cli(self, parser, group=None):
         """Makes the option available in the command line interface.
@@ -2003,8 +2004,9 @@ class ConfigParser(iniparser.BaseParser):
                 return
             raise
 
-        namespace._add_parsed_config_file(sections, normalized)
-        namespace._parse_cli_opts_from_config_file(sections, normalized)
+        namespace._add_parsed_config_file(config_file, sections, normalized)
+        namespace._parse_cli_opts_from_config_file(
+            config_file, sections, normalized)
 
 
 @removals.remove(version='3.4', removal_version='4.0')
@@ -2042,12 +2044,12 @@ class MultiConfigParser(object):
                 parser.parse()
             except IOError:
                 continue
-            self._add_parsed_config_file(sections, normalized)
+            self._add_parsed_config_file(filename, sections, normalized)
             read_ok.append(filename)
 
         return read_ok
 
-    def _add_parsed_config_file(self, sections, normalized):
+    def _add_parsed_config_file(self, filename, sections, normalized):
         """Add a parsed config file to the list of parsed files.
 
         :param sections: a mapping of section name to dicts of config values
@@ -2143,8 +2145,10 @@ class _Namespace(argparse.Namespace):
         self._files_not_found = []
         self._files_permission_denied = []
         self._config_dirs = []
+        self._sections_to_file = {}
 
-    def _parse_cli_opts_from_config_file(self, sections, normalized):
+    def _parse_cli_opts_from_config_file(self, config_file, sections,
+                                         normalized):
         """Parse CLI options from a config file.
 
         CLI options are special - we require they be registered before the
@@ -2167,12 +2171,12 @@ class _Namespace(argparse.Namespace):
         override values found in this file.
         """
         namespace = _Namespace(self._conf)
-        namespace._add_parsed_config_file(sections, normalized)
+        namespace._add_parsed_config_file(config_file, sections, normalized)
 
         for opt, group in self._conf._all_cli_opts():
             group_name = group.name if group is not None else None
             try:
-                value = opt._get_from_namespace(namespace, group_name)
+                value, loc = opt._get_from_namespace(namespace, group_name)
             except KeyError:
                 continue
             except ValueError as ve:
@@ -2193,13 +2197,16 @@ class _Namespace(argparse.Namespace):
             else:
                 setattr(self, dest, value)
 
-    def _add_parsed_config_file(self, sections, normalized):
+    def _add_parsed_config_file(self, filename, sections, normalized):
         """Add a parsed config file to the list of parsed files.
 
+        :param filename: the full name of the file that was parsed
         :param sections: a mapping of section name to dicts of config values
         :param normalized: sections mapping with section names normalized
         :raises: ConfigFileValueError
         """
+        for s in sections:
+            self._sections_to_file[s] = filename
         self._parsed.insert(0, sections)
         self._normalized.insert(0, normalized)
 
@@ -2258,6 +2265,7 @@ class _Namespace(argparse.Namespace):
 
         names = [(normalize(section), name) for section, name in names]
 
+        loc = None
         for sections in (self._normalized if normalized else self._parsed):
             for section, name in names:
                 if section not in sections:
@@ -2267,12 +2275,17 @@ class _Namespace(argparse.Namespace):
                     self._check_deprecated((section, name), current_name,
                                            names[1:])
                     val = sections[section][name]
+                    if loc is None:
+                        loc = LocationInfo(
+                            Locations.user,
+                            self._sections_to_file.get(section, ''),
+                        )
                     if multi:
                         rvalue = val + rvalue
                     else:
-                        return val
+                        return (val, loc)
         if multi and rvalue != []:
-            return rvalue
+            return (rvalue, loc)
         raise KeyError
 
     def _check_deprecated(self, name, current, deprecated):
@@ -2310,14 +2323,43 @@ class _Namespace(argparse.Namespace):
         :param multi: a boolean indicating whether to return multiple values
         :param normalized: whether to normalize group names to lowercase
         """
+        # NOTE(dhellmann): We don't have a way to track which options
+        # that are registered as command line values show up on the
+        # command line or in the configuration files. So we look up
+        # the value in the file first to get the location, and then
+        # try looking it up as a CLI value in case it was set there.
+
+        # Set a default location indicating that the value came from
+        # the command line. This will be overridden if we find a value
+        # in a file.
+        loc = LocationInfo(Locations.command_line, '')
+
         try:
-            return self._get_cli_value(names, positional)
-        except KeyError:
-            names = [(g if g is not None else 'DEFAULT', n) for g, n in names]
-            values = self._get_file_value(
-                names, multi=multi, normalized=normalized,
+            file_names = [(g if g is not None else 'DEFAULT', n)
+                          for g, n in names]
+            values, loc = self._get_file_value(
+                file_names, multi=multi, normalized=normalized,
                 current_name=current_name)
-            return values if multi else values[-1]
+        except KeyError:
+            # If we receive a KeyError when looking for the CLI, just
+            # go ahead and throw it because we know we don't have a
+            # value.
+            raise_later = True
+        else:
+            raise_later = False
+
+        # Now try the CLI
+        try:
+            value = self._get_cli_value(names, positional)
+            return (value, loc)
+        except KeyError:
+            if raise_later:
+                # Re-raise to indicate that we haven't found the value
+                # anywhere.
+                raise
+
+        # Return the value we found in the file.
+        return (values if multi else values[-1], loc)
 
     def _sections(self):
         for sections in self._parsed:
@@ -3037,10 +3079,8 @@ class ConfigOpts(collections.Mapping):
         if namespace is not None:
             group_name = group.name if group else None
             try:
-                return (
-                    convert(opt._get_from_namespace(namespace, group_name)),
-                    loc,
-                )
+                val, alt_loc = opt._get_from_namespace(namespace, group_name)
+                return (convert(val), alt_loc)
             except KeyError:  # nosec: Valid control flow instruction
                 pass
             except ValueError as ve:
@@ -3272,7 +3312,7 @@ class ConfigOpts(collections.Mapping):
                                  key=lambda x: x[0].name):
             group_name = group.name if group else None
             try:
-                value = opt._get_from_namespace(namespace, group_name)
+                value, loc = opt._get_from_namespace(namespace, group_name)
             except KeyError:
                 continue
 
@@ -3373,11 +3413,11 @@ class ConfigOpts(collections.Mapping):
                 continue
             groupname = group.name if group else 'DEFAULT'
             try:
-                old = opt._get_from_namespace(self._namespace, groupname)
+                old, _ = opt._get_from_namespace(self._namespace, groupname)
             except KeyError:
                 old = None
             try:
-                new = opt._get_from_namespace(self._mutable_ns, groupname)
+                new, _ = opt._get_from_namespace(self._mutable_ns, groupname)
             except KeyError:
                 new = None
             if old != new:
@@ -3399,11 +3439,11 @@ class ConfigOpts(collections.Mapping):
                 continue
             groupname = group.name if group else None
             try:
-                old = opt._get_from_namespace(old_ns, groupname)
+                old, _ = opt._get_from_namespace(old_ns, groupname)
             except KeyError:
                 old = None
             try:
-                new = opt._get_from_namespace(new_ns, groupname)
+                new, _ = opt._get_from_namespace(new_ns, groupname)
             except KeyError:
                 new = None
             if old != new:

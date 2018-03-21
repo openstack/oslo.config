@@ -4057,7 +4057,8 @@ class NamespaceTestCase(BaseTestCase):
                           normalized=normalized)
 
     def assertValue(self, key, expect, multi=False, normalized=False):
-        actual = self.ns._get_value([key], multi=multi, normalized=normalized)
+        actual, _ = self.ns._get_value([key], multi=multi,
+                                       normalized=normalized)
         self.assertEqual(actual, expect)
 
     def test_cli(self):
