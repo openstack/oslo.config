@@ -481,7 +481,7 @@ class List(ConfigType):
         if isinstance(value, (list, tuple)):
             return list(six.moves.map(self.item_type, value))
 
-        s = value.strip()
+        s = value.strip().rstrip(',')
         if self.bounds:
             if not s.startswith('['):
                 raise ValueError('Value should start with "["')

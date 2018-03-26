@@ -534,6 +534,10 @@ class ListTypeTests(TypeTestHelper, unittest.TestCase):
                                    'bar, baz',
                                    'bam'])
 
+    def test_list_of_values_containing_trailing_comma(self):
+        self.assertConvertedValue('foo, bar, baz, ',
+                                  ['foo', 'bar', 'baz'])
+
     def test_list_of_lists(self):
         self.type_instance = types.List(
             types.List(types.String(), bounds=True)
@@ -544,6 +548,11 @@ class ListTypeTests(TypeTestHelper, unittest.TestCase):
     def test_list_of_custom_type(self):
         self.type_instance = types.List(types.Integer())
         self.assertConvertedValue('1,2,3,5',
+                                  [1, 2, 3, 5])
+
+    def test_list_of_custom_type_containing_trailing_comma(self):
+        self.type_instance = types.List(types.Integer())
+        self.assertConvertedValue('1,2,3,5,',
                                   [1, 2, 3, 5])
 
     def test_tuple_of_custom_type(self):
