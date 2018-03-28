@@ -489,7 +489,7 @@ import copy
 import errno
 import functools
 import glob
-import inspect
+# import inspect
 import itertools
 import logging
 import os
@@ -811,20 +811,23 @@ def _get_caller_detail(n=2):
     :type n: int
     :returns: str
     """
-    s = inspect.stack()[:n + 1]
-    try:
-        frame = s[n]
-        try:
-            return frame[1]
-            # WARNING(dhellmann): Using frame.lineno to include the
-            # line number in the return value causes some sort of
-            # memory or stack corruption that manifests in values not
-            # being cleaned up in the cfgfilter tests.
-            # return '%s:%s' % (frame[1], frame[2])
-        finally:
-            del frame
-    finally:
-        del s
+    return None
+    # FIXME(dhellmann): We need to look at the performance issues with
+    # doing this for every Opt instance.
+    # s = inspect.stack()[:n + 1]
+    # try:
+    #     frame = s[n]
+    #     try:
+    #         return frame[1]
+    #         # WARNING(dhellmann): Using frame.lineno to include the
+    #         # line number in the return value causes some sort of
+    #         # memory or stack corruption that manifests in values not
+    #         # being cleaned up in the cfgfilter tests.
+    #         # return '%s:%s' % (frame[1], frame[2])
+    #     finally:
+    #         del frame
+    # finally:
+    #     del s
 
 
 def set_defaults(opts, **kwargs):

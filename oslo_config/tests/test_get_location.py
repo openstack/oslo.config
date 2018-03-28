@@ -70,7 +70,8 @@ class GetLocationTestCase(base.BaseTestCase):
             cfg.Locations.opt_default,
             loc.location,
         )
-        self.assertIn('test_get_location.py', loc.detail)
+        self.assertIsNone(loc.detail)
+        # self.assertIn('test_get_location.py', loc.detail)
 
     def test_set_default_on_config_opt(self):
         self.conf.set_default('normal_opt', self.id())
@@ -80,7 +81,8 @@ class GetLocationTestCase(base.BaseTestCase):
             cfg.Locations.set_default,
             loc.location,
         )
-        self.assertIn('test_get_location.py', loc.detail)
+        self.assertIsNone(loc.detail)
+        # self.assertIn('test_get_location.py', loc.detail)
 
     def test_set_defaults_func(self):
         cfg.set_defaults([self.normal_opt], normal_opt=self.id())
@@ -90,7 +92,8 @@ class GetLocationTestCase(base.BaseTestCase):
             cfg.Locations.set_default,
             loc.location,
         )
-        self.assertIn('test_get_location.py', loc.detail)
+        self.assertIsNone(loc.detail)
+        # self.assertIn('test_get_location.py', loc.detail)
 
     def test_set_override(self):
         self.conf.set_override('normal_opt', self.id())
@@ -100,7 +103,8 @@ class GetLocationTestCase(base.BaseTestCase):
             cfg.Locations.set_override,
             loc.location,
         )
-        self.assertIn('test_get_location.py', loc.detail)
+        self.assertIsNone(loc.detail)
+        # self.assertIn('test_get_location.py', loc.detail)
 
     def test_user_cli(self):
         filename = self._write_opt_to_tmp_file(
