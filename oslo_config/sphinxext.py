@@ -13,8 +13,9 @@
 from docutils import nodes
 from docutils.parsers import rst
 from docutils.parsers.rst import directives
-
 from docutils.statemachine import ViewList
+import oslo_i18n
+import six
 from sphinx import addnodes
 from sphinx.directives import ObjectDescription
 from sphinx.domains import Domain
@@ -26,9 +27,8 @@ from sphinx.util.nodes import nested_parse_with_titles
 
 from oslo_config import cfg
 from oslo_config import generator
-import oslo_i18n
 
-import six
+LOG = logging.getLogger(__name__)
 
 
 def _list_table(headers, data, title='', columns=None):
@@ -205,9 +205,9 @@ def _format_group(namespace, group_name, group_obj):
         yield ''
 
 
-def _format_group_opts(app, namespace, group_name, group_obj, opt_list):
+def _format_group_opts(namespace, group_name, group_obj, opt_list):
     group_name = group_name or 'DEFAULT'
-    app.debug('[oslo.config] %s %s' % (namespace, group_name))
+    LOG.debug('%s %s', namespace, group_name)
 
     for line in _format_group(namespace, group_name, group_obj):
         yield line
@@ -217,7 +217,7 @@ def _format_group_opts(app, namespace, group_name, group_obj, opt_list):
             yield line
 
 
-def _format_option_help(app, namespaces, split_namespaces):
+def _format_option_help(namespaces, split_namespaces):
     """Generate a series of lines of restructuredtext.
 
     Format the option help as restructuredtext and return it as a list
@@ -236,7 +236,6 @@ def _format_option_help(app, namespaces, split_namespaces):
                 if group_name is None:
                     group_name = 'DEFAULT'
                 lines = _format_group_opts(
-                    app=app,
                     namespace=namespace,
                     group_name=group_name,
                     group_obj=group,
@@ -263,7 +262,6 @@ def _format_option_help(app, namespaces, split_namespaces):
                 by_section.setdefault(group_name, []).extend(group_opts)
         for group_name, group_opts in sorted(by_section.items()):
             lines = _format_group_opts(
-                app=app,
                 namespace=None,
                 group_name=group_name,
                 group_obj=group_objs.get(group_name),
@@ -283,14 +281,11 @@ class ShowOptionsDirective(rst.Directive):
     has_content = True
 
     def run(self):
-        env = self.state.document.settings.env
-        app = env.app
-
         split_namespaces = 'split-namespaces' in self.options
 
         config_file = self.options.get('config-file')
         if config_file:
-            app.info('loading config file %s' % config_file)
+            LOG.info('loading config file %s', config_file)
             conf = cfg.ConfigOpts()
             conf.register_opts(generator._generator_opts)
             conf(
@@ -307,7 +302,7 @@ class ShowOptionsDirective(rst.Directive):
 
         result = ViewList()
         source_name = '<' + __name__ + '>'
-        for line in _format_option_help(app, namespaces, split_namespaces):
+        for line in _format_option_help(namespaces, split_namespaces):
             result.append(line, source_name)
 
         node = nodes.section()
@@ -368,7 +363,6 @@ class ConfigGroup(rst.Directive):
 
     def run(self):
         env = self.state.document.settings.env
-        app = env.app
 
         group_name = self.arguments[0]
         namespace = self.options.get('namespace')
@@ -377,7 +371,7 @@ class ConfigGroup(rst.Directive):
 
         # Store the current group for use later in option directives
         env.temp_data['oslo.config:group'] = group_name
-        app.debug('oslo.config group %s' % group_name)
+        LOG.debug('oslo.config group %s' % group_name)
 
         # Store the location where this group is being defined
         # for use when resolving cross-references later.
@@ -422,7 +416,7 @@ class ConfigOption(ObjectDescription):
     def handle_signature(self, sig, signode):
         """Transform an option description into RST nodes."""
         optname = sig
-        self.env.app.debug('oslo.config option %s' % optname)
+        LOG.debug('oslo.config option %s', optname)
         # Insert a node into the output showing the option name
         signode += addnodes.desc_name(optname, optname)
         signode['allnames'] = [optname]

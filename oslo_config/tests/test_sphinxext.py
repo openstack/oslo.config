@@ -24,7 +24,6 @@ class FormatGroupTest(base.BaseTestCase):
     def test_none_in_default(self):
         # option with None group placed in DEFAULT
         results = '\n'.join(list(sphinxext._format_group_opts(
-            app=mock.Mock(),
             namespace=None,
             group_name=None,
             group_obj=None,
@@ -46,7 +45,6 @@ class FormatGroupTest(base.BaseTestCase):
 
     def test_with_default_value(self):
         results = '\n'.join(list(sphinxext._format_group_opts(
-            app=mock.Mock(),
             namespace=None,
             group_name=None,
             group_obj=None,
@@ -69,7 +67,6 @@ class FormatGroupTest(base.BaseTestCase):
 
     def test_with_min(self):
         results = '\n'.join(list(sphinxext._format_group_opts(
-            app=mock.Mock(),
             namespace=None,
             group_name=None,
             group_obj=None,
@@ -90,7 +87,6 @@ class FormatGroupTest(base.BaseTestCase):
 
     def test_with_min_0(self):
         results = '\n'.join(list(sphinxext._format_group_opts(
-            app=mock.Mock(),
             namespace=None,
             group_name=None,
             group_obj=None,
@@ -111,7 +107,6 @@ class FormatGroupTest(base.BaseTestCase):
 
     def test_with_max(self):
         results = '\n'.join(list(sphinxext._format_group_opts(
-            app=mock.Mock(),
             namespace=None,
             group_name=None,
             group_obj=None,
@@ -132,7 +127,6 @@ class FormatGroupTest(base.BaseTestCase):
 
     def test_with_max_0(self):
         results = '\n'.join(list(sphinxext._format_group_opts(
-            app=mock.Mock(),
             namespace=None,
             group_name=None,
             group_obj=None,
@@ -153,7 +147,6 @@ class FormatGroupTest(base.BaseTestCase):
 
     def test_with_choices(self):
         results = '\n'.join(list(sphinxext._format_group_opts(
-            app=mock.Mock(),
             namespace=None,
             group_name=None,
             group_obj=None,
@@ -174,7 +167,6 @@ class FormatGroupTest(base.BaseTestCase):
 
     def test_with_choices_with_descriptions(self):
         results = '\n'.join(list(sphinxext._format_group_opts(
-            app=mock.Mock(),
             namespace=None,
             group_name=None,
             group_obj=None,
@@ -219,7 +211,6 @@ class FormatGroupTest(base.BaseTestCase):
     def test_group_obj_without_help(self):
         # option with None group placed in DEFAULT
         results = '\n'.join(list(sphinxext._format_group_opts(
-            app=mock.Mock(),
             namespace=None,
             group_name='group',
             group_obj=cfg.OptGroup('group'),
@@ -237,7 +228,6 @@ class FormatGroupTest(base.BaseTestCase):
     def test_group_obj_with_help(self):
         # option with None group placed in DEFAULT
         results = '\n'.join(list(sphinxext._format_group_opts(
-            app=mock.Mock(),
             namespace=None,
             group_name='group',
             group_obj=cfg.OptGroup('group', help='group help'),
@@ -256,7 +246,6 @@ class FormatGroupTest(base.BaseTestCase):
 
     def test_deprecated_opts_without_deprecated_group(self):
         results = '\n'.join(list(sphinxext._format_group_opts(
-            app=mock.Mock(),
             namespace=None,
             group_name=None,
             group_obj=None,
@@ -285,7 +274,6 @@ class FormatGroupTest(base.BaseTestCase):
 
     def test_deprecated_opts_with_deprecated_group(self):
         results = '\n'.join(list(sphinxext._format_group_opts(
-            app=mock.Mock(),
             namespace=None,
             group_name=None,
             group_obj=None,
@@ -315,7 +303,6 @@ class FormatGroupTest(base.BaseTestCase):
 
     def test_deprecated_for_removal(self):
         results = '\n'.join(list(sphinxext._format_group_opts(
-            app=mock.Mock(),
             namespace=None,
             group_name=None,
             group_obj=None,
@@ -333,7 +320,6 @@ class FormatGroupTest(base.BaseTestCase):
 
     def test_mutable(self):
         results = '\n'.join(list(sphinxext._format_group_opts(
-            app=mock.Mock(),
             namespace=None,
             group_name=None,
             group_obj=None,
@@ -354,7 +340,6 @@ class FormatGroupTest(base.BaseTestCase):
 
     def test_not_mutable(self):
         results = '\n'.join(list(sphinxext._format_group_opts(
-            app=mock.Mock(),
             namespace=None,
             group_name=None,
             group_obj=None,
@@ -374,7 +359,6 @@ class FormatGroupTest(base.BaseTestCase):
 
     def test_advanced(self):
         results = '\n'.join(list(sphinxext._format_group_opts(
-            app=mock.Mock(),
             namespace=None,
             group_name=None,
             group_obj=None,
@@ -397,7 +381,6 @@ class FormatGroupTest(base.BaseTestCase):
 
     def test_not_advanced(self):
         results = '\n'.join(list(sphinxext._format_group_opts(
-            app=mock.Mock(),
             namespace=None,
             group_name=None,
             group_obj=None,
@@ -426,18 +409,15 @@ class FormatOptionHelpTest(base.BaseTestCase):
             ('namespace2', [(None, ['opt2'])]),
         ]
         list(sphinxext._format_option_help(
-            app=None,
             namespaces=['namespace1', 'namespace2'],
             split_namespaces=True))
         _format_group_opts.assert_any_call(
-            app=None,
             namespace='namespace1',
             group_name='DEFAULT',
             group_obj=None,
             opt_list=['opt1'],
         )
         _format_group_opts.assert_any_call(
-            app=None,
             namespace='namespace2',
             group_name='DEFAULT',
             group_obj=None,
@@ -452,11 +432,9 @@ class FormatOptionHelpTest(base.BaseTestCase):
             ('namespace2', [(None, ['opt2'])]),
         ]
         list(sphinxext._format_option_help(
-            app=None,
             namespaces=['namespace1', 'namespace2'],
             split_namespaces=False))
         _format_group_opts.assert_called_once_with(
-            app=None,
             namespace=None,
             group_name='DEFAULT',
             group_obj=None,
@@ -473,11 +451,9 @@ class FormatOptionHelpTest(base.BaseTestCase):
             ('namespace2', [('grp1', ['opt2'])]),
         ]
         list(sphinxext._format_option_help(
-            app=None,
             namespaces=['namespace1', 'namespace2'],
             split_namespaces=False))
         _format_group_opts.assert_any_call(
-            app=None,
             namespace=None,
             group_name='grp1',
             group_obj=grp_obj,
@@ -494,19 +470,16 @@ class FormatOptionHelpTest(base.BaseTestCase):
             ('namespace2', [('grp1', ['opt2'])]),
         ]
         list(sphinxext._format_option_help(
-            app=None,
             namespaces=['namespace1', 'namespace2'],
             split_namespaces=True))
         print(_format_group_opts.call_args_list)
         _format_group_opts.assert_any_call(
-            app=None,
             namespace='namespace1',
             group_name='grp1',
             group_obj=grp_obj,
             opt_list=['opt1'],
         )
         _format_group_opts.assert_any_call(
-            app=None,
             namespace='namespace2',
             group_name='grp1',
             group_obj=None,
