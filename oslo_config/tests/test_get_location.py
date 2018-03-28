@@ -163,3 +163,23 @@ class GetLocationTestCase(base.BaseTestCase):
             filename,
             loc.detail,
         )
+
+    def test_duplicate_registration(self):
+        # NOTE(dhellmann): The ZFS driver in Cinder uses multiple Opt
+        # instances with the same settings but in different
+        # modules. We don't want to break that case with the option
+        # location stuff, so we need to test that it works. To
+        # reproduce that test we have to simulate the option being
+        # created in a different file, so we create a new Opt instance
+        # and replace its _set_location data.
+        dupe_opt = cfg.StrOpt(
+            'normal_opt',
+            default='normal_opt_default',
+        )
+        dupe_opt._set_location = cfg.LocationInfo(
+            cfg.Locations.opt_default,
+            'an alternative file',
+        )
+        # We expect register_opt() to return False to indicate that
+        # the option was already registered.
+        self.assertFalse(self.conf.register_opt(dupe_opt))

@@ -1030,11 +1030,27 @@ class Opt(object):
                                         % {'default': self.default,
                                            'opt': self.type})
 
+    def _vars_for_cmp(self):
+        # NOTE(dhellmann): Get the instance variables of this Opt and
+        # then make a new dictionary so we can modify the contents
+        # before returning it without removing any attributes of the
+        # object.
+        v = dict(vars(self))
+
+        # NOTE(dhellmann): Ignore the location where the option is
+        # defined when comparing them. Ideally we could use this to
+        # detect duplicate settings in code bases, but as long as the
+        # options match otherwise they should be safe.
+        if '_set_location' in v:
+            del v['_set_location']
+
+        return v
+
     def __ne__(self, another):
-        return vars(self) != vars(another)
+        return self._vars_for_cmp() != another._vars_for_cmp()
 
     def __eq__(self, another):
-        return vars(self) == vars(another)
+        return self._vars_for_cmp() == another._vars_for_cmp()
 
     __hash__ = object.__hash__
 
