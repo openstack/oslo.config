@@ -52,7 +52,7 @@ declared::
 However, import_opt() has a weakness - if 'bar' imports 'foo' using the
 import builtin and doesn't use import_opt() to import 'blaa', then 'blaa'
 can still be used without problems. Similarly, where multiple options
-are registered a module imported via importopt(), a lazy programmer can
+are registered a module imported via import_opt(), a lazy programmer can
 get away with only declaring a dependency on a single option.
 
 The ConfigFilter class provides a way to ensure that options are not
