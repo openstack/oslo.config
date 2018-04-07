@@ -23,7 +23,7 @@ class FormatGroupTest(base.BaseTestCase):
 
     def test_none_in_default(self):
         # option with None group placed in DEFAULT
-        results = '\n'.join(list(sphinxext._format_group(
+        results = '\n'.join(list(sphinxext._format_group_opts(
             app=mock.Mock(),
             namespace=None,
             group_name=None,
@@ -45,7 +45,7 @@ class FormatGroupTest(base.BaseTestCase):
         ''').lstrip(), results)
 
     def test_with_default_value(self):
-        results = '\n'.join(list(sphinxext._format_group(
+        results = '\n'.join(list(sphinxext._format_group_opts(
             app=mock.Mock(),
             namespace=None,
             group_name=None,
@@ -68,7 +68,7 @@ class FormatGroupTest(base.BaseTestCase):
         ''').lstrip(), results)
 
     def test_with_min(self):
-        results = '\n'.join(list(sphinxext._format_group(
+        results = '\n'.join(list(sphinxext._format_group_opts(
             app=mock.Mock(),
             namespace=None,
             group_name=None,
@@ -89,7 +89,7 @@ class FormatGroupTest(base.BaseTestCase):
         ''').lstrip(), results)
 
     def test_with_min_0(self):
-        results = '\n'.join(list(sphinxext._format_group(
+        results = '\n'.join(list(sphinxext._format_group_opts(
             app=mock.Mock(),
             namespace=None,
             group_name=None,
@@ -110,7 +110,7 @@ class FormatGroupTest(base.BaseTestCase):
         ''').lstrip(), results)
 
     def test_with_max(self):
-        results = '\n'.join(list(sphinxext._format_group(
+        results = '\n'.join(list(sphinxext._format_group_opts(
             app=mock.Mock(),
             namespace=None,
             group_name=None,
@@ -131,7 +131,7 @@ class FormatGroupTest(base.BaseTestCase):
         ''').lstrip(), results)
 
     def test_with_max_0(self):
-        results = '\n'.join(list(sphinxext._format_group(
+        results = '\n'.join(list(sphinxext._format_group_opts(
             app=mock.Mock(),
             namespace=None,
             group_name=None,
@@ -152,7 +152,7 @@ class FormatGroupTest(base.BaseTestCase):
         ''').lstrip(), results)
 
     def test_with_choices(self):
-        results = '\n'.join(list(sphinxext._format_group(
+        results = '\n'.join(list(sphinxext._format_group_opts(
             app=mock.Mock(),
             namespace=None,
             group_name=None,
@@ -173,7 +173,7 @@ class FormatGroupTest(base.BaseTestCase):
         ''').lstrip(), results)
 
     def test_with_choices_with_descriptions(self):
-        results = '\n'.join(list(sphinxext._format_group(
+        results = '\n'.join(list(sphinxext._format_group_opts(
             app=mock.Mock(),
             namespace=None,
             group_name=None,
@@ -218,7 +218,7 @@ class FormatGroupTest(base.BaseTestCase):
 
     def test_group_obj_without_help(self):
         # option with None group placed in DEFAULT
-        results = '\n'.join(list(sphinxext._format_group(
+        results = '\n'.join(list(sphinxext._format_group_opts(
             app=mock.Mock(),
             namespace=None,
             group_name='group',
@@ -236,7 +236,7 @@ class FormatGroupTest(base.BaseTestCase):
 
     def test_group_obj_with_help(self):
         # option with None group placed in DEFAULT
-        results = '\n'.join(list(sphinxext._format_group(
+        results = '\n'.join(list(sphinxext._format_group_opts(
             app=mock.Mock(),
             namespace=None,
             group_name='group',
@@ -255,7 +255,7 @@ class FormatGroupTest(base.BaseTestCase):
         ''').lstrip(), results)
 
     def test_deprecated_opts_without_deprecated_group(self):
-        results = '\n'.join(list(sphinxext._format_group(
+        results = '\n'.join(list(sphinxext._format_group_opts(
             app=mock.Mock(),
             namespace=None,
             group_name=None,
@@ -284,7 +284,7 @@ class FormatGroupTest(base.BaseTestCase):
         ''').lstrip(), results)
 
     def test_deprecated_opts_with_deprecated_group(self):
-        results = '\n'.join(list(sphinxext._format_group(
+        results = '\n'.join(list(sphinxext._format_group_opts(
             app=mock.Mock(),
             namespace=None,
             group_name=None,
@@ -314,7 +314,7 @@ class FormatGroupTest(base.BaseTestCase):
         ''').lstrip(), results)
 
     def test_deprecated_for_removal(self):
-        results = '\n'.join(list(sphinxext._format_group(
+        results = '\n'.join(list(sphinxext._format_group_opts(
             app=mock.Mock(),
             namespace=None,
             group_name=None,
@@ -332,7 +332,7 @@ class FormatGroupTest(base.BaseTestCase):
         self.assertIn('since 13.0', results)
 
     def test_mutable(self):
-        results = '\n'.join(list(sphinxext._format_group(
+        results = '\n'.join(list(sphinxext._format_group_opts(
             app=mock.Mock(),
             namespace=None,
             group_name=None,
@@ -353,7 +353,7 @@ class FormatGroupTest(base.BaseTestCase):
         ''').lstrip(), results)
 
     def test_not_mutable(self):
-        results = '\n'.join(list(sphinxext._format_group(
+        results = '\n'.join(list(sphinxext._format_group_opts(
             app=mock.Mock(),
             namespace=None,
             group_name=None,
@@ -373,7 +373,7 @@ class FormatGroupTest(base.BaseTestCase):
         ''').lstrip(), results)
 
     def test_advanced(self):
-        results = '\n'.join(list(sphinxext._format_group(
+        results = '\n'.join(list(sphinxext._format_group_opts(
             app=mock.Mock(),
             namespace=None,
             group_name=None,
@@ -396,7 +396,7 @@ class FormatGroupTest(base.BaseTestCase):
         ''').lstrip(), results)
 
     def test_not_advanced(self):
-        results = '\n'.join(list(sphinxext._format_group(
+        results = '\n'.join(list(sphinxext._format_group_opts(
             app=mock.Mock(),
             namespace=None,
             group_name=None,
@@ -419,8 +419,8 @@ class FormatGroupTest(base.BaseTestCase):
 class FormatOptionHelpTest(base.BaseTestCase):
 
     @mock.patch('oslo_config.generator._list_opts')
-    @mock.patch('oslo_config.sphinxext._format_group')
-    def test_split_namespaces(self, _format_group, _list_opts):
+    @mock.patch('oslo_config.sphinxext._format_group_opts')
+    def test_split_namespaces(self, _format_group_opts, _list_opts):
         _list_opts.return_value = [
             ('namespace1', [(None, ['opt1'])]),
             ('namespace2', [(None, ['opt2'])]),
@@ -429,14 +429,14 @@ class FormatOptionHelpTest(base.BaseTestCase):
             app=None,
             namespaces=['namespace1', 'namespace2'],
             split_namespaces=True))
-        _format_group.assert_any_call(
+        _format_group_opts.assert_any_call(
             app=None,
             namespace='namespace1',
             group_name='DEFAULT',
             group_obj=None,
             opt_list=['opt1'],
         )
-        _format_group.assert_any_call(
+        _format_group_opts.assert_any_call(
             app=None,
             namespace='namespace2',
             group_name='DEFAULT',
@@ -445,8 +445,8 @@ class FormatOptionHelpTest(base.BaseTestCase):
         )
 
     @mock.patch('oslo_config.generator._list_opts')
-    @mock.patch('oslo_config.sphinxext._format_group')
-    def test_dont_split_namespaces(self, _format_group, _list_opts):
+    @mock.patch('oslo_config.sphinxext._format_group_opts')
+    def test_dont_split_namespaces(self, _format_group_opts, _list_opts):
         _list_opts.return_value = [
             ('namespace1', [(None, ['opt1'])]),
             ('namespace2', [(None, ['opt2'])]),
@@ -455,7 +455,7 @@ class FormatOptionHelpTest(base.BaseTestCase):
             app=None,
             namespaces=['namespace1', 'namespace2'],
             split_namespaces=False))
-        _format_group.assert_called_once_with(
+        _format_group_opts.assert_called_once_with(
             app=None,
             namespace=None,
             group_name='DEFAULT',
@@ -464,8 +464,9 @@ class FormatOptionHelpTest(base.BaseTestCase):
         )
 
     @mock.patch('oslo_config.generator._list_opts')
-    @mock.patch('oslo_config.sphinxext._format_group')
-    def test_dont_split_namespaces_with_group(self, _format_group, _list_opts):
+    @mock.patch('oslo_config.sphinxext._format_group_opts')
+    def test_dont_split_namespaces_with_group(self, _format_group_opts,
+                                              _list_opts):
         grp_obj = cfg.OptGroup('grp1')
         _list_opts.return_value = [
             ('namespace1', [(grp_obj, ['opt1'])]),
@@ -475,7 +476,7 @@ class FormatOptionHelpTest(base.BaseTestCase):
             app=None,
             namespaces=['namespace1', 'namespace2'],
             split_namespaces=False))
-        _format_group.assert_any_call(
+        _format_group_opts.assert_any_call(
             app=None,
             namespace=None,
             group_name='grp1',
@@ -484,8 +485,9 @@ class FormatOptionHelpTest(base.BaseTestCase):
         )
 
     @mock.patch('oslo_config.generator._list_opts')
-    @mock.patch('oslo_config.sphinxext._format_group')
-    def test_split_namespaces_with_group(self, _format_group, _list_opts):
+    @mock.patch('oslo_config.sphinxext._format_group_opts')
+    def test_split_namespaces_with_group(self, _format_group_opts,
+                                         _list_opts):
         grp_obj = cfg.OptGroup('grp1')
         _list_opts.return_value = [
             ('namespace1', [(grp_obj, ['opt1'])]),
@@ -495,15 +497,15 @@ class FormatOptionHelpTest(base.BaseTestCase):
             app=None,
             namespaces=['namespace1', 'namespace2'],
             split_namespaces=True))
-        print(_format_group.call_args_list)
-        _format_group.assert_any_call(
+        print(_format_group_opts.call_args_list)
+        _format_group_opts.assert_any_call(
             app=None,
             namespace='namespace1',
             group_name='grp1',
             group_obj=grp_obj,
             opt_list=['opt1'],
         )
-        _format_group.assert_any_call(
+        _format_group_opts.assert_any_call(
             app=None,
             namespace='namespace2',
             group_name='grp1',
