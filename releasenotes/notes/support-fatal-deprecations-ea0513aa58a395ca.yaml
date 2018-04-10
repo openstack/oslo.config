@@ -1,0 +1,13 @@
+---
+features:
+  - |
+    oslo.config now supports the fatal-deprecations option from oslo.log.  This
+    behavior is only enabled if oslo.log is installed, but oslo.log is still
+    not a hard requirement to avoid a circular dependency.
+upgrade:
+  - |
+    Because support for fatal-deprecations was added in this release, users who
+    have fatal-deprecations enabled and have deprecated config opts in use
+    (which previously was not a problem because oslo.config didn't respect the
+    fatal-deprecations option) will need to resolve that before upgrading or
+    services may fail to start.

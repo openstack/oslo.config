@@ -964,6 +964,15 @@ class PositionalTestCase(BaseTestCase):
         self.assertEqual('arg1', self.conf.arg1)
 
 
+# The real report_deprecated_feature has caching that causes races in our
+# unit tests.  This replicates the relevant functionality.
+def _fake_deprecated_feature(logger, msg, *args, **kwargs):
+    stdmsg = 'Deprecated: %s' % msg
+    logger.warning(stdmsg, *args, **kwargs)
+
+
+@mock.patch('oslo_log.versionutils.report_deprecated_feature',
+            _fake_deprecated_feature)
 class ConfigFileOptsTestCase(BaseTestCase):
 
     def setUp(self):
@@ -4834,6 +4843,8 @@ class DeprecationWarningTestBase(BaseTestCase):
         self._parser_class = cfg.ConfigParser
 
 
+@mock.patch('oslo_log.versionutils.report_deprecated_feature',
+            _fake_deprecated_feature)
 class DeprecationWarningTestScenarios(DeprecationWarningTestBase):
     scenarios = [('default-deprecated', dict(deprecated=True,
                                              group='DEFAULT')),
@@ -4867,7 +4878,8 @@ class DeprecationWarningTestScenarios(DeprecationWarningTestBase):
             self.assertEqual('baz', self.conf.other.foo)
             self.assertEqual('baz', self.conf.other.foo)
         if self.deprecated:
-            expected = (cfg._Namespace._deprecated_opt_message %
+            expected = ('Deprecated: ' +
+                        cfg._Namespace._deprecated_opt_message %
                         {'dep_option': 'bar',
                          'dep_group': self.group,
                          'option': 'foo',
@@ -4877,7 +4889,11 @@ class DeprecationWarningTestScenarios(DeprecationWarningTestBase):
         self.assertEqual(expected, self.log_fixture.output)
 
 
+@mock.patch('oslo_log.versionutils.report_deprecated_feature',
+            _fake_deprecated_feature)
 class DeprecationWarningTests(DeprecationWarningTestBase):
+    log_prefix = 'Deprecated: '
+
     def test_DeprecatedOpt(self):
         default_deprecated = [cfg.DeprecatedOpt('bar')]
         other_deprecated = [cfg.DeprecatedOpt('baz', group='other')]
@@ -4915,7 +4931,8 @@ class DeprecationWarningTests(DeprecationWarningTestBase):
                      'option': current_name,
                      'group': current_group}
                     )
-        self.assertEqual(expected + '\n', self.log_fixture.output)
+        self.assertEqual(self.log_prefix + expected + '\n',
+                         self.log_fixture.output)
 
     def test_deprecated_for_removal(self):
         self.conf.register_opt(cfg.StrOpt('foo',
@@ -4934,7 +4951,7 @@ class DeprecationWarningTests(DeprecationWarningTestBase):
         expected = ('Option "foo" from group "DEFAULT" is deprecated for '
                     'removal.  Its value may be silently ignored in the '
                     'future.\n')
-        self.assertEqual(expected, self.log_fixture.output)
+        self.assertEqual(self.log_prefix + expected, self.log_fixture.output)
 
     def test_deprecated_for_removal_with_group(self):
         self.conf.register_group(cfg.OptGroup('other'))
@@ -4956,7 +4973,7 @@ class DeprecationWarningTests(DeprecationWarningTestBase):
         expected = ('Option "foo" from group "other" is deprecated for '
                     'removal.  Its value may be silently ignored in the '
                     'future.\n')
-        self.assertEqual(expected, self.log_fixture.output)
+        self.assertEqual(self.log_prefix + expected, self.log_fixture.output)
 
     def test_deprecated_with_dest(self):
         self.conf.register_group(cfg.OptGroup('other'))
@@ -4975,4 +4992,14 @@ class DeprecationWarningTests(DeprecationWarningTestBase):
                      'dep_group': 'other',
                      'option': 'foo-bar',
                      'group': 'other'} + '\n')
-        self.assertEqual(expected, self.log_fixture.output)
+        self.assertEqual(self.log_prefix + expected, self.log_fixture.output)
+
+
+class DeprecationWarningTestsNoOsloLog(DeprecationWarningTests):
+    log_prefix = ''
+
+    def setUp(self):
+        super(DeprecationWarningTestsNoOsloLog, self).setUp()
+        # NOTE(bnemec): For some reason if I apply this as a class decorator
+        # it ends up applying to the parent class too and breaks those tests.
+        self.useFixture(fixtures.MockPatchObject(cfg, 'oslo_log', None))

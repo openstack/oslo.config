@@ -498,6 +498,13 @@ import sys
 
 import enum
 import six
+# NOTE(bnemec): oslo.log depends on oslo.config, so we can't
+# have a hard dependency on oslo.log.  However, in most cases
+# oslo.log will be installed so we can use it.
+try:
+    import oslo_log
+except ImportError:
+    oslo_log = None
 
 from oslo_config import iniparser
 from oslo_config import types
@@ -847,6 +854,27 @@ def _normalize_group_name(group_name):
     return group_name.lower()
 
 
+def _report_deprecation(format_str, format_dict):
+    """Report use of a deprecated option
+
+    Uses versionutils from oslo.log if it is available.  If not, logs
+    a simple warning message.
+
+    :param format_str: The message to use for the report
+    :param format_dict: A dict containing keys for any parameters in format_str
+    """
+    if oslo_log:
+        # We can't import versionutils at the module level because of circular
+        # imports.  Importing just oslo_log at the module level and
+        # versionutils locally allows us to unit test this and still avoid the
+        # circular problem.
+        from oslo_log import versionutils
+        versionutils.report_deprecated_feature(LOG, format_str,
+                                               format_dict)
+    else:
+        LOG.warning(format_str, format_dict)
+
+
 @functools.total_ordering
 class Opt(object):
 
@@ -1085,12 +1113,13 @@ class Opt(object):
                 pretty_reason = ' ({})'.format(self.deprecated_reason)
             else:
                 pretty_reason = ''
-            LOG.warning('Option "%(option)s" from group "%(group)s" is '
-                        'deprecated for removal%(reason)s.  Its value may be '
-                        'silently ignored in the future.',
-                        {'option': self.dest,
-                         'group': pretty_group,
-                         'reason': pretty_reason})
+            format_str = ('Option "%(option)s" from group "%(group)s" is '
+                          'deprecated for removal%(reason)s.  Its value may '
+                          'be silently ignored in the future.')
+            format_dict = {'option': self.dest,
+                           'group': pretty_group,
+                           'reason': pretty_reason}
+            _report_deprecation(format_str, format_dict)
         return (value, loc)
 
     def _add_to_cli(self, parser, group=None):
@@ -2213,12 +2242,9 @@ class _Namespace(argparse.Namespace):
         if name in deprecated and name not in self._emitted_deprecations:
             self._emitted_deprecations.add(name)
             current = (current[0] or 'DEFAULT', current[1])
-            # NOTE(bnemec): Not using versionutils for this to avoid a
-            # circular dependency between oslo.config and whatever library
-            # versionutils ends up in.
-            LOG.warning(self._deprecated_opt_message,
-                        {'dep_option': name[1], 'dep_group': name[0],
-                         'option': current[1], 'group': current[0]})
+            format_dict = {'dep_option': name[1], 'dep_group': name[0],
+                           'option': current[1], 'group': current[0]}
+            _report_deprecation(self._deprecated_opt_message, format_dict)
 
     def _get_value(self, names, multi=False, positional=False,
                    current_name=None, normalized=True):
