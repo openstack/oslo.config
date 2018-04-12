@@ -54,7 +54,8 @@ def _list_table(headers, data, title='', columns=None):
 
 def _indent(text, n=2):
     padding = ' ' * n
-    return '\n'.join(padding + l if l else l for l in text.splitlines())
+    # we don't want to indent blank lines so just output them as-is
+    return '\n'.join(padding + x if x else '' for x in text.splitlines())
 
 
 def _make_anchor_target(group_name, option_name):
