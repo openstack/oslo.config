@@ -151,6 +151,10 @@ class GeneratorTestCase(base.BaseTestCase):
         'list_opt': cfg.ListOpt('list_opt',
                                 default=['1', '2', '3'],
                                 help='a list'),
+        'list_opt_with_bounds': cfg.ListOpt('list_opt_with_bounds',
+                                            default=['1', '2', '3'],
+                                            help='a list',
+                                            bounds=True),
         'list_opt_single': cfg.ListOpt('list_opt_single',
                                        default='1',
                                        help='a list'),
@@ -630,6 +634,17 @@ class GeneratorTestCase(base.BaseTestCase):
 
 # a list (list value)
 #list_opt = 1,2,3
+''')),
+        ('list_opt_with_bounds',
+         dict(opts=[('test', [(None, [opts['list_opt_with_bounds']])])],
+              expected='''[DEFAULT]
+
+#
+# From test
+#
+
+# a list (list value)
+#list_opt_with_bounds = [1,2,3]
 ''')),
         ('list_opt_single',
          dict(opts=[('test', [(None, [opts['list_opt_single']])])],

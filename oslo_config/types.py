@@ -525,14 +525,15 @@ class List(ConfigType):
         )
 
     def _formatter(self, value):
+        fmtstr = '[{}]' if self.bounds else '{}'
         if isinstance(value, six.string_types):
-            return value
+            return fmtstr.format(value)
         if isinstance(value, list):
             value = [
                 six.text_type(v)
                 for v in value
             ]
-        return ','.join(value)
+        return fmtstr.format(','.join(value))
 
 
 class Range(ConfigType):
