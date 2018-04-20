@@ -804,7 +804,7 @@ class Hostname(ConfigType):
         return value
 
 
-class HostAddress(object):
+class HostAddress(ConfigType):
     """Host Address type.
 
     Represents both valid IP addresses and valid host domain names
