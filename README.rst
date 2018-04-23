@@ -12,11 +12,11 @@ Oslo Configuration Library
 ==========================
 
 .. image:: https://img.shields.io/pypi/v/oslo.config.svg
-    :target: https://pypi.python.org/pypi/oslo.config/
+    :target: https://pypi.org/project/oslo.config/
     :alt: Latest Version
 
 .. image:: https://img.shields.io/pypi/dm/oslo.config.svg
-    :target: https://pypi.python.org/pypi/oslo.config/
+    :target: https://pypi.org/project/oslo.config/
     :alt: Downloads
 
 The Oslo configuration API supports parsing command line arguments and
