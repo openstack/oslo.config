@@ -25,6 +25,7 @@ import re
 import warnings
 
 import abc
+from debtcollector import removals
 import netaddr
 import rfc3986
 import six
@@ -891,17 +892,37 @@ class URI(ConfigType):
                 raise ValueError("URI scheme '%s' not in %s" %
                                  (scheme, self.schemes))
 
-        self.value = value
+        # NOTE(dhellmann): self.value is deprecated, and we don't want
+        # to trigger a deprecation warning ourselves so we modify
+        # self._value directly.
+        self._value = value
         return value
+
+    @removals.removed_property
+    def value(self):
+        return self._value
+
+    @value.setter
+    def value(self, newval):
+        self._value = newval
+
+    @value.deleter
+    def value(self):
+        del self._value
 
     def __repr__(self):
         return 'URI'
 
     def __eq__(self, other):
-        return (
-            (self.__class__ == other.__class__) and
-            (self.value == other.value)
+        to_compare = ['__class__', 'max_length', 'schemes']
+        unset = object()
+        my_values = tuple(
+            getattr(self, name, unset) for name in to_compare
         )
+        other_values = tuple(
+            getattr(other, name, unset) for name in to_compare
+        )
+        return my_values == other_values
 
     def _formatter(self, value):
         return value
