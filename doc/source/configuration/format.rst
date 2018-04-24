@@ -111,9 +111,6 @@ string value (``StrOpt``)
 
  .. code-block:: ini
 
-    # Enables or disables publication of error events. (boolean value)
-    publish_errors = false
-
     # The format for an instance that is passed with the log message.
     # (string value)
     instance_format = "[instance: %(uuid)s] "
