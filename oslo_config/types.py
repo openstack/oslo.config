@@ -823,6 +823,7 @@ class HostAddress(ConfigType):
 
         """
 
+        super(HostAddress, self).__init__(type_name=type_name)
         self.ip_address = IPAddress(version, type_name)
         self.hostname = Hostname('localhost')
 

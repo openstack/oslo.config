@@ -13,6 +13,7 @@
 #    under the License.
 
 import sys
+import textwrap
 
 import fixtures
 import mock
@@ -1797,6 +1798,32 @@ class AdvancedOptionsTestCase(base.BaseTestCase):
             actual = f.read()
         self.assertEqual(expected, actual)
 
+
+class HostAddressTestCase(base.BaseTestCase):
+
+    opts = [cfg.HostAddressOpt('foo', help='foo option', default='0.0.0.0')]
+
+    def test_host_address(self):
+
+        config = [("namespace", [("alpha", self.opts)])]
+        groups = generator._get_groups(config)
+
+        out = moves.StringIO()
+        formatter = generator._OptFormatter(output_file=out)
+        generator._output_opts(formatter, 'alpha', groups.pop('alpha'))
+        result = out.getvalue()
+
+        expected = textwrap.dedent('''
+        [alpha]
+
+        #
+        # From namespace
+        #
+
+        # foo option (host address value)
+        #foo = 0.0.0.0
+        ''').lstrip()
+        self.assertEqual(expected, result)
 
 GeneratorTestCase.generate_scenarios()
 MachineReadableGeneratorTestCase.generate_scenarios()
