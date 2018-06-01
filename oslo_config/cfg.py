@@ -3137,6 +3137,10 @@ class ConfigOpts(collections.Mapping):
                                       'option': real_opt_name,
                                       'group': log_real_group_name})
             opt_name = real_opt_name
+            if opt_name not in opts:
+                opt = ListOpt(real_opt_name)
+                opt_name = opt.dest
+
             if real_group_name:
                 group = self._get_group(real_group_name)
                 opts = group._opts
