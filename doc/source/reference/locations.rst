@@ -58,7 +58,7 @@ user-controlled separately.
 
 .. code-block:: python
 
-   loc = CONF.get_location('normal_opt')
+   loc = CONF.get_location('normal_opt').location
    if loc.is_user_controlled:
       print('normal_opt was set by the user')
    else:

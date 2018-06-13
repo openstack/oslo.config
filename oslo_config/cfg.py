@@ -3383,6 +3383,10 @@ class ConfigOpts(collections.Mapping):
         :type group: str
         :return: LocationInfo
 
+        .. seealso::
+
+           :doc:`/reference/locations`
+
         .. versionadded:: 5.3.0
         """
         value, loc = self._do_get(name, group, None)
