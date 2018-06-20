@@ -21,4 +21,5 @@
    builtins
    sphinxext
    sphinxconfiggen
+   drivers
    faq
