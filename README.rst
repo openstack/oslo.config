@@ -26,3 +26,4 @@ The Oslo configuration API supports parsing command line arguments and
 * Documentation: https://docs.openstack.org/oslo.config/latest/
 * Source: https://git.openstack.org/cgit/openstack/oslo.config
 * Bugs: https://bugs.launchpad.net/oslo.config
+* Release notes:  https://docs.openstack.org/releasenotes/oslo.config/
