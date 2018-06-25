@@ -12,6 +12,8 @@
 
 from oslo_config import cfg
 
+import stevedore
+
 
 def list_opts():
     default_config_files = [
@@ -26,8 +28,17 @@ def list_opts():
         '/etc/project/project.conf.d/',
         '/etc/project.conf.d/',
     ]
-    options = cfg.ConfigOpts._list_options_for_discovery(
+    options = [(None, cfg.ConfigOpts._list_options_for_discovery(
         default_config_files,
         default_config_dirs,
-    )
-    return [(None, options)]
+    ))]
+
+    ext_mgr = stevedore.ExtensionManager(
+        "oslo.config.driver",
+        invoke_on_load=True)
+
+    for driver in ext_mgr.names():
+        options.append(('sample_%s_source' % driver,
+                       ext_mgr[driver].obj.list_options_for_discovery()))
+
+    return options
