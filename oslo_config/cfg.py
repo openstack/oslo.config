@@ -2408,6 +2408,7 @@ class ConfigOpts(collections.Mapping):
         self._mutable_ns = None
         self._mutate_hooks = set([])
         self.__cache = {}
+        self.__drivers_cache = {}
         self._config_opts = []
         self._cli_opts = collections.deque()
         self._validate_default_values = False
@@ -2495,6 +2496,18 @@ class ConfigOpts(collections.Mapping):
             if kwargs.pop('clear_cache', True):
                 result = f(self, *args, **kwargs)
                 self.__cache.clear()
+                return result
+            else:
+                return f(self, *args, **kwargs)
+
+        return __inner
+
+    def __clear_drivers_cache(f):
+        @functools.wraps(f)
+        def __inner(self, *args, **kwargs):
+            if kwargs.pop('clear_drivers_cache', True):
+                result = f(self, *args, **kwargs)
+                self.__drivers_cache.clear()
                 return result
             else:
                 return f(self, *args, **kwargs)
@@ -3105,10 +3118,18 @@ class ConfigOpts(collections.Mapping):
                     "Value for option %s is not valid: %s"
                     % (opt.name, str(ve)))
 
+        key = (group_name, name)
+        try:
+            return self.__drivers_cache[key]
+        except KeyError:  # nosec: Valid control flow instruction
+            pass
+
         for source in self._sources:
             val = source.get(group_name, name, opt)
             if val[0] != sources._NoValue:
-                return (convert(val[0]), val[1])
+                result = (convert(val[0]), val[1])
+                self.__drivers_cache[key] = result
+                return result
 
         if 'default' in info:
             return (self._substitute(info['default']), loc)
@@ -3358,6 +3379,7 @@ class ConfigOpts(collections.Mapping):
         return namespace
 
     @__clear_cache
+    @__clear_drivers_cache
     def reload_config_files(self):
         """Reload configure files and parse all options
 
