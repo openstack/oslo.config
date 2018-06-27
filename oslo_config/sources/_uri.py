@@ -40,16 +40,19 @@ class URIConfigurationSourceDriver(sources.ConfigurationSourceDriver):
             'uri',
             schemes=['http', 'https'],
             required=True,
+            sample_default='https://example.com/my-configuration.ini',
             help=('Required option with the URI of the '
                   'extra configuration file\'s location.'),
         ),
         cfg.StrOpt(
             'ca_path',
+            sample_default='/etc/ca-certificates',
             help=('The path to a CA_BUNDLE file or directory '
                   'with certificates of trusted CAs.'),
         ),
         cfg.StrOpt(
             'client_cert',
+            sample_default='/etc/ca-certificates/service-client-keystore',
             help=('Client side certificate, as a single file path '
                   'containing either the certificate only or the '
                   'private key and the certificate.'),
@@ -62,19 +65,7 @@ class URIConfigurationSourceDriver(sources.ConfigurationSourceDriver):
     ]
 
     def list_options_for_discovery(self):
-        # NOTE(moguimar): This option is only used to provide a better
-        #                 description of the driver option registered
-        #                 by ConfigOpts._open_source_from_opt_group().
-        driver_opt = cfg.StrOpt(
-            'driver',
-            default='remote_file',
-            help=('Required option and value for this group to be '
-                  'parsed as an extra source by the URI driver. '
-                  'This group\'s name must be set as one of the '
-                  'config_source\'s values in the [DEFAULT] group.'),
-        )
-
-        return [driver_opt] + self._uri_driver_opts
+        return self._uri_driver_opts
 
     def open_source_from_opt_group(self, conf, group_name):
         conf.register_opts(self._uri_driver_opts, group_name)

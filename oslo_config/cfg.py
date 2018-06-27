@@ -507,6 +507,11 @@ import stevedore
 
 LOG = logging.getLogger(__name__)
 
+_SOURCE_DRIVER_OPTION_HELP = (
+    'The name of the driver that can load this '
+    'configuration source.'
+)
+
 
 class Locations(enum.Enum):
     opt_default = (1, False)
@@ -2551,8 +2556,7 @@ class ConfigOpts(collections.Mapping):
         self.register_opt(
             StrOpt('driver',
                    choices=self._ext_mgr.names(),
-                   help=('The name of the driver that can load this '
-                         'configuration source.')),
+                   help=_SOURCE_DRIVER_OPTION_HELP),
             group=group_name)
 
         try:

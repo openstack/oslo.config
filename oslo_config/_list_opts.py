@@ -10,6 +10,8 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+import inspect
+
 from oslo_config import cfg
 
 import stevedore
@@ -37,8 +39,33 @@ def list_opts():
         "oslo.config.driver",
         invoke_on_load=True)
 
-    for driver in ext_mgr.names():
-        options.append(('sample_%s_source' % driver,
-                       ext_mgr[driver].obj.list_options_for_discovery()))
+    source_names = ext_mgr.names()
+    for source_name in source_names:
+        source = ext_mgr[source_name].obj
+        source_options = source.list_options_for_discovery()
+        source_description = inspect.getdoc(source)
+        source_options.insert(
+            0,
+            cfg.StrOpt(
+                name='driver',
+                sample_default=source_name,
+                help=cfg._SOURCE_DRIVER_OPTION_HELP,
+            )
+        )
+        group_name = 'sample_{}_source'.format(source_name)
+        group_help = 'Example of using a {} source'.format(source_name)
+        if source_description:
+            group_help = '{}\n\n{}: {}'.format(
+                group_help,
+                source_name,
+                source_description,
+            )
+        group = cfg.OptGroup(
+            name=group_name,
+            help=group_help,
+            driver_option='driver',
+            dynamic_group_owner='config_source',
+        )
+        options.append((group, source_options))
 
     return options
