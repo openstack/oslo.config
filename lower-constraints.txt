@@ -26,6 +26,7 @@ netaddr==0.7.18
 openstackdocstheme==1.18.1
 os-client-config==1.28.0
 oslo.i18n==3.15.3
+oslo.log==3.36.0
 oslotest==3.2.0
 pbr==2.0.0
 pep8==1.5.7
