@@ -18,7 +18,6 @@
    styleguide
    mutable
    locations
-   builtins
    sphinxext
    sphinxconfiggen
    faq
