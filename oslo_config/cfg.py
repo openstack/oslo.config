@@ -507,7 +507,10 @@ except ImportError:
     oslo_log = None
 
 from oslo_config import iniparser
+from oslo_config import sources
 from oslo_config import types
+
+from stevedore.extension import ExtensionManager
 
 LOG = logging.getLogger(__name__)
 
@@ -2377,6 +2380,16 @@ class ConfigOpts(collections.Mapping):
     disallow_names = ('project', 'prog', 'version',
                       'usage', 'default_config_files', 'default_config_dirs')
 
+    # NOTE(dhellmann): This instance is reused by list_opts().
+    _config_source_opt = ListOpt(
+        'config_source',
+        metavar='SOURCE',
+        default=[],
+        help=('Lists configuration groups that provide more '
+              'details for accessing configuration settings '
+              'from locations other than local files.'),
+    )
+
     def __init__(self):
         """Construct a ConfigOpts object."""
         self._opts = {}  # dict of dicts of (opt:, override:, default:)
@@ -2393,6 +2406,10 @@ class ConfigOpts(collections.Mapping):
         self._config_opts = []
         self._cli_opts = collections.deque()
         self._validate_default_values = False
+        self._sources = []
+        self._ext_mgr = None
+
+        self.register_opt(self._config_source_opt)
 
     def _pre_setup(self, project, prog, version, usage, description, epilog,
                    default_config_files, default_config_dirs):
@@ -2442,6 +2459,16 @@ class ConfigOpts(collections.Mapping):
                                'over-ridden options in the directory take '
                                'precedence.'),
         ]
+
+    @classmethod
+    def _list_options_for_discovery(cls,
+                                    default_config_files,
+                                    default_config_dirs):
+        "Return options to be used by list_opts() for the sample generator."
+        options = cls._make_config_options(default_config_files,
+                                           default_config_dirs)
+        options.append(cls._config_source_opt)
+        return options
 
     def _setup(self, project, prog, version, usage, default_config_files,
                default_config_dirs):
@@ -2530,7 +2557,56 @@ class ConfigOpts(collections.Mapping):
             raise ConfigFilesPermissionDeniedError(
                 self._namespace._files_permission_denied)
 
+        self._load_alternative_sources()
+
         self._check_required_opts()
+
+    def _load_alternative_sources(self):
+        # Look for other sources of option data.
+        for source_group_name in self.config_source:
+            source = self._open_source_from_opt_group(source_group_name)
+            if source is not None:
+                self._sources.append(source)
+
+    def _open_source_from_opt_group(self, group_name):
+        if not self._ext_mgr:
+            self._ext_mgr = ExtensionManager(
+                "oslo.config.driver",
+                invoke_on_load=True)
+
+        self.register_opt(
+            StrOpt('driver',
+                   choices=self._ext_mgr.names(),
+                   help=('The name of the driver that can load this '
+                         'configuration source.')),
+            group=group_name)
+
+        try:
+            driver_name = self[group_name].driver
+        except ConfigFileValueError as err:
+            LOG.error(
+                "could not load configuration from %r. %s",
+                group_name, err.msg)
+            return None
+
+        if driver_name is None:
+            LOG.error(
+                "could not load configuration from %r, no 'driver' is set.",
+                group_name)
+            return None
+
+        LOG.info('loading configuration from %r using %r',
+                 group_name, driver_name)
+
+        driver = self._ext_mgr[driver_name].obj
+
+        try:
+            return driver.open_source_from_opt_group(self, group_name)
+        except Exception as err:
+            LOG.error(
+                "could not load configuration from %r using %s driver: %s",
+                group_name, driver_name, err)
+            return None
 
     def __getattr__(self, name):
         """Look up an option value and perform string substitution.
@@ -3008,12 +3084,13 @@ class ConfigOpts(collections.Mapping):
             return self._convert_value(
                 self._substitute(value, group, namespace), opt)
 
+        group_name = group.name if group else None
+
         if opt.mutable and namespace is None:
             namespace = self._mutable_ns
         if namespace is None:
             namespace = self._namespace
         if namespace is not None:
-            group_name = group.name if group else None
             try:
                 val, alt_loc = opt._get_from_namespace(namespace, group_name)
                 return (convert(val), alt_loc)
@@ -3023,6 +3100,11 @@ class ConfigOpts(collections.Mapping):
                 raise ConfigFileValueError(
                     "Value for option %s is not valid: %s"
                     % (opt.name, str(ve)))
+
+        for source in self._sources:
+            val = source.get(group_name, name, opt)
+            if val[0] != sources._NoValue:
+                return (convert(val[0]), val[1])
 
         if 'default' in info:
             return (self._substitute(info['default']), loc)

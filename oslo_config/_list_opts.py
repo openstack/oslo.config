@@ -26,7 +26,8 @@ def list_opts():
         '/etc/project/project.conf.d/',
         '/etc/project.conf.d/',
     ]
-    return [
-        (None, cfg.ConfigOpts._make_config_options(default_config_files,
-                                                   default_config_dirs)),
-    ]
+    options = cfg.ConfigOpts._list_options_for_discovery(
+        default_config_files,
+        default_config_dirs,
+    )
+    return [(None, options)]

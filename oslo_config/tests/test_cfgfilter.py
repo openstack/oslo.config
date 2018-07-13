@@ -38,11 +38,11 @@ class RegisterTestCase(BaseTestCase):
         self.assertEqual('bar', self.fconf.foo)
         self.assertEqual('bar', self.fconf['foo'])
         self.assertIn('foo', self.fconf)
-        self.assertEqual(['foo'], list(self.fconf))
-        self.assertEqual(1, len(self.fconf))
+        self.assertEqual(set(['config_source', 'foo']), set(self.fconf))
+        self.assertEqual(2, len(self.fconf))
 
         self.assertNotIn('foo', self.conf)
-        self.assertEqual(0, len(self.conf))
+        self.assertEqual(1, len(self.conf))
         self.assertRaises(cfg.NoSuchOptError, getattr, self.conf, 'foo')
 
     def test_register_opt_none_default(self):
@@ -51,11 +51,11 @@ class RegisterTestCase(BaseTestCase):
         self.assertIsNone(self.fconf.foo)
         self.assertIsNone(self.fconf['foo'])
         self.assertIn('foo', self.fconf)
-        self.assertEqual(['foo'], list(self.fconf))
-        self.assertEqual(1, len(self.fconf))
+        self.assertEqual(set(['config_source', 'foo']), set(self.fconf))
+        self.assertEqual(2, len(self.fconf))
 
         self.assertNotIn('foo', self.conf)
-        self.assertEqual(0, len(self.conf))
+        self.assertEqual(1, len(self.conf))
         self.assertRaises(cfg.NoSuchOptError, getattr, self.conf, 'foo')
 
     def test_register_grouped_opt_default(self):
@@ -66,13 +66,13 @@ class RegisterTestCase(BaseTestCase):
         self.assertEqual('bar', self.fconf['blaa']['foo'])
         self.assertIn('blaa', self.fconf)
         self.assertIn('foo', self.fconf.blaa)
-        self.assertEqual(['blaa'], list(self.fconf))
+        self.assertEqual(set(['config_source', 'blaa']), set(self.fconf))
         self.assertEqual(['foo'], list(self.fconf.blaa))
-        self.assertEqual(1, len(self.fconf))
+        self.assertEqual(2, len(self.fconf))
         self.assertEqual(1, len(self.fconf.blaa))
 
         self.assertNotIn('blaa', self.conf)
-        self.assertEqual(0, len(self.conf))
+        self.assertEqual(1, len(self.conf))
         self.assertRaises(cfg.NoSuchOptError, getattr, self.conf, 'blaa')
 
     def test_register_grouped_opt_none_default(self):
@@ -82,13 +82,13 @@ class RegisterTestCase(BaseTestCase):
         self.assertIsNone(self.fconf['blaa']['foo'])
         self.assertIn('blaa', self.fconf)
         self.assertIn('foo', self.fconf.blaa)
-        self.assertEqual(['blaa'], list(self.fconf))
+        self.assertEqual(set(['config_source', 'blaa']), set(self.fconf))
         self.assertEqual(['foo'], list(self.fconf.blaa))
-        self.assertEqual(1, len(self.fconf))
+        self.assertEqual(2, len(self.fconf))
         self.assertEqual(1, len(self.fconf.blaa))
 
         self.assertNotIn('blaa', self.conf)
-        self.assertEqual(0, len(self.conf))
+        self.assertEqual(1, len(self.conf))
         self.assertRaises(cfg.NoSuchOptError, getattr, self.conf, 'blaa')
 
     def test_register_group(self):
@@ -100,13 +100,13 @@ class RegisterTestCase(BaseTestCase):
         self.assertIsNone(self.fconf['blaa']['foo'])
         self.assertIn('blaa', self.fconf)
         self.assertIn('foo', self.fconf.blaa)
-        self.assertEqual(['blaa'], list(self.fconf))
+        self.assertEqual(set(['config_source', 'blaa']), set(self.fconf))
         self.assertEqual(['foo'], list(self.fconf.blaa))
-        self.assertEqual(1, len(self.fconf))
+        self.assertEqual(2, len(self.fconf))
         self.assertEqual(1, len(self.fconf.blaa))
 
         self.assertNotIn('blaa', self.conf)
-        self.assertEqual(0, len(self.conf))
+        self.assertEqual(1, len(self.conf))
         self.assertRaises(cfg.NoSuchOptError, getattr, self.conf, 'blaa')
 
     def test_register_opts(self):
@@ -181,7 +181,7 @@ class RegisterTestCase(BaseTestCase):
 
     def test_unknown_opt(self):
         self.assertNotIn('foo', self.fconf)
-        self.assertEqual(0, len(self.fconf))
+        self.assertEqual(1, len(self.fconf))
         self.assertRaises(cfg.NoSuchOptError, getattr, self.fconf, 'foo')
         self.assertNotIn('blaa', self.conf)
 
@@ -189,10 +189,10 @@ class RegisterTestCase(BaseTestCase):
         self.conf.register_opt(cfg.StrOpt('foo'))
 
         self.assertIn('foo', self.conf)
-        self.assertEqual(1, len(self.conf))
+        self.assertEqual(2, len(self.conf))
         self.assertIsNone(self.conf.foo)
         self.assertNotIn('foo', self.fconf)
-        self.assertEqual(0, len(self.fconf))
+        self.assertEqual(1, len(self.fconf))
         self.assertRaises(cfg.NoSuchOptError, getattr, self.fconf, 'foo')
 
     def test_already_registered_opt(self):
@@ -200,10 +200,10 @@ class RegisterTestCase(BaseTestCase):
         self.fconf.register_opt(cfg.StrOpt('foo'))
 
         self.assertIn('foo', self.conf)
-        self.assertEqual(1, len(self.conf))
+        self.assertEqual(2, len(self.conf))
         self.assertIsNone(self.conf.foo)
         self.assertIn('foo', self.fconf)
-        self.assertEqual(1, len(self.fconf))
+        self.assertEqual(2, len(self.fconf))
         self.assertIsNone(self.fconf.foo)
 
         self.conf.set_override('foo', 'bar')
@@ -220,13 +220,13 @@ class RegisterTestCase(BaseTestCase):
         self.assertIn('foo', self.conf)
         self.assertIn('fu', self.conf)
         self.assertNotIn('bu', self.conf)
-        self.assertEqual(2, len(self.conf))
+        self.assertEqual(3, len(self.conf))
         self.assertIsNone(self.conf.foo)
         self.assertIsNone(self.conf.fu)
         self.assertIn('foo', self.fconf)
         self.assertIn('bu', self.fconf)
         self.assertNotIn('fu', self.fconf)
-        self.assertEqual(2, len(self.fconf))
+        self.assertEqual(3, len(self.fconf))
         self.assertIsNone(self.fconf.foo)
         self.assertIsNone(self.fconf.bu)
 
@@ -240,10 +240,10 @@ class RegisterTestCase(BaseTestCase):
         self.fconf.register_cli_opt(cfg.StrOpt('foo'))
 
         self.assertIn('foo', self.conf)
-        self.assertEqual(1, len(self.conf))
+        self.assertEqual(2, len(self.conf))
         self.assertIsNone(self.conf.foo)
         self.assertIn('foo', self.fconf)
-        self.assertEqual(1, len(self.fconf))
+        self.assertEqual(2, len(self.fconf))
         self.assertIsNone(self.fconf.foo)
 
         self.conf.set_override('foo', 'bar')
@@ -259,12 +259,12 @@ class RegisterTestCase(BaseTestCase):
 
         self.assertIn('foo', self.conf)
         self.assertIn('fu', self.conf)
-        self.assertEqual(2, len(self.conf))
+        self.assertEqual(3, len(self.conf))
         self.assertIsNone(self.conf.foo)
         self.assertIsNone(self.conf.fu)
         self.assertIn('foo', self.fconf)
         self.assertIn('fu', self.fconf)
-        self.assertEqual(2, len(self.fconf))
+        self.assertEqual(3, len(self.fconf))
         self.assertIsNone(self.fconf.foo)
         self.assertIsNone(self.fconf.fu)
 

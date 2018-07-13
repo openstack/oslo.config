@@ -1085,7 +1085,8 @@ GENERATOR_OPTS = {'format_': 'yaml',
                   'namespace': ['test'],
                   'output_file': None,
                   'summarize': False,
-                  'wrap_width': 70}
+                  'wrap_width': 70,
+                  'config_source': []}
 
 
 class MachineReadableGeneratorTestCase(base.BaseTestCase):
