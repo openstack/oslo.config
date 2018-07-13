@@ -13,6 +13,11 @@ import abc
 import six
 
 
+# We cannot use None as a sentinel indicating a missing value because it
+# may be a valid value or default, so we use a custom singleton instead.
+_NoValue = object()
+
+
 @six.add_metaclass(abc.ABCMeta)
 class ConfigurationSourceDriver(object):
     """A config driver option for Oslo.config.
