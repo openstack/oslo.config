@@ -46,6 +46,19 @@ class ConfigurationSourceDriver(object):
         :returns: an instance of a subclass of ConfigurationSource
         """
 
+    @abc.abstractmethod
+    def list_options_for_discovery(self):
+        """Return a list of options used by the driver to create the source.
+
+        Drivers should advertise all supported options in this method for the
+        purpose of sample generation by oslo-config-generator.
+
+        For an example on how to implement this method you can check the URI
+        driver at oslo_config.sources._uri.URIConfigurationSourceDriver.
+
+        :returns: a list of supported options of a ConfigurationSource.
+        """
+
 
 @six.add_metaclass(abc.ABCMeta)
 class ConfigurationSource(object):

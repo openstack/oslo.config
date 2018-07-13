@@ -12,6 +12,7 @@
 
 from requests import HTTPError
 
+from oslo_config import _list_opts
 from oslo_config import cfg
 from oslo_config import fixture
 from oslo_config import sources
@@ -279,3 +280,17 @@ class URISourceTestCase(base.BaseTestCase):
         # the option name and option value will match correctly
         for option in _extra_configs[uri]["data"]["DEFAULT"]:
             self.assertEqual(option, self.conf[option])
+
+    def test_list_opts(self):
+        expected_group = None
+        for group in _list_opts.list_opts():
+            if group[0] == "sample_remote_file_source":
+                expected_group = group
+                break
+
+        self.assertIsNotNone(expected_group)
+
+        self.assertEqual(
+            expected_group[1],
+            _uri.URIConfigurationSourceDriver().list_options_for_discovery()
+        )

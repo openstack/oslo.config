@@ -35,17 +35,49 @@ class URIConfigurationSourceDriver(sources.ConfigurationSourceDriver):
                     specified but does not includes the private key.
     """
 
+    _uri_driver_opts = [
+        cfg.URIOpt(
+            'uri',
+            schemes=['http', 'https'],
+            required=True,
+            help=('Required option with the URI of the '
+                  'extra configuration file\'s location.'),
+        ),
+        cfg.StrOpt(
+            'ca_path',
+            help=('The path to a CA_BUNDLE file or directory '
+                  'with certificates of trusted CAs.'),
+        ),
+        cfg.StrOpt(
+            'client_cert',
+            help=('Client side certificate, as a single file path '
+                  'containing either the certificate only or the '
+                  'private key and the certificate.'),
+        ),
+        cfg.StrOpt(
+            'client_key',
+            help=('Client side private key, in case client_cert is '
+                  'specified but does not includes the private key.'),
+        ),
+    ]
+
+    def list_options_for_discovery(self):
+        # NOTE(moguimar): This option is only used to provide a better
+        #                 description of the driver option registered
+        #                 by ConfigOpts._open_source_from_opt_group().
+        driver_opt = cfg.StrOpt(
+            'driver',
+            default='remote_file',
+            help=('Required option and value for this group to be '
+                  'parsed as an extra source by the URI driver. '
+                  'This group\'s name must be set as one of the '
+                  'config_source\'s values in the [DEFAULT] group.'),
+        )
+
+        return [driver_opt] + self._uri_driver_opts
+
     def open_source_from_opt_group(self, conf, group_name):
-        group = cfg.OptGroup(group_name)
-
-        conf.register_opt(cfg.URIOpt("uri",
-                                     schemes=["http", "https"],
-                                     required=True),
-                          group)
-
-        conf.register_opt(cfg.StrOpt("ca_path"), group)
-        conf.register_opt(cfg.StrOpt("client_cert"), group)
-        conf.register_opt(cfg.StrOpt("client_key"), group)
+        conf.register_opts(self._uri_driver_opts, group_name)
 
         return URIConfigurationSource(
             conf[group_name].uri,

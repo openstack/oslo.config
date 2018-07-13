@@ -510,7 +510,7 @@ from oslo_config import iniparser
 from oslo_config import sources
 from oslo_config import types
 
-from stevedore.extension import ExtensionManager
+import stevedore
 
 LOG = logging.getLogger(__name__)
 
@@ -2570,7 +2570,7 @@ class ConfigOpts(collections.Mapping):
 
     def _open_source_from_opt_group(self, group_name):
         if not self._ext_mgr:
-            self._ext_mgr = ExtensionManager(
+            self._ext_mgr = stevedore.ExtensionManager(
                 "oslo.config.driver",
                 invoke_on_load=True)
 
