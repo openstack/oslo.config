@@ -165,14 +165,16 @@ class _OptFormatter(object):
 
     """Format configuration option descriptions to a file."""
 
-    def __init__(self, output_file=None, wrap_width=70):
+    def __init__(self, conf, output_file=None):
         """Construct an OptFormatter object.
 
+        :param conf: The config object from _generator_opts
         :param output_file: a writeable file object
-        :param wrap_width: The maximum length of help lines, 0 to not wrap
         """
         self.output_file = output_file or sys.stdout
-        self.wrap_width = wrap_width
+        self.wrap_width = conf.wrap_width
+        self.minimal = conf.minimal
+        self.summarize = conf.summarize
 
     def _format_help(self, help_text):
         """Format the help for a group or option to the output file.
@@ -217,13 +219,11 @@ class _OptFormatter(object):
             lines = ['[%s]\n' % groupname]
         self.writelines(lines)
 
-    def format(self, opt, group_name, minimal=False, summarize=False):
+    def format(self, opt, group_name):
         """Format a description of an option to the output file.
 
         :param opt: a cfg.Opt instance
         :param group_name: name of the group to which the opt is assigned
-        :param minimal: enable option by default, marking it as required
-        :param summarize: output a summarized description of the opt
         :returns: a formatted opt description string
         """
         if not opt.help:
@@ -238,7 +238,7 @@ class _OptFormatter(object):
         if opt.help:
             # an empty line signifies a new paragraph. We only want the
             # summary line
-            if summarize:
+            if self.summarize:
                 _split = opt.help.split('\n\n')
                 opt_help = _split[0].rstrip(':').rstrip('.')
                 if len(_split) > 1:
@@ -335,7 +335,7 @@ class _OptFormatter(object):
         for default_str in defaults:
             if default_str:
                 default_str = ' ' + default_str.replace('\n', '\n#    ')
-            if minimal:
+            if self.minimal:
                 lines.append('%s =%s\n' % (opt.dest, default_str))
             else:
                 lines.append('#%s =%s\n' % (opt.dest, default_str))
@@ -520,18 +520,18 @@ def on_load_failure_callback(*args, **kwargs):
     raise
 
 
-def _output_opts(f, group, group_data, minimal=False, summarize=False):
+def _output_opts(f, group, group_data):
     f.format_group(group_data['object'] or group)
     for (namespace, opts) in sorted(group_data['namespaces'],
                                     key=operator.itemgetter(0)):
         f.write('\n#\n# From %s\n#\n' % namespace)
         for opt in sorted(opts, key=operator.attrgetter('advanced')):
             try:
-                if minimal and not opt.required:
+                if f.minimal and not opt.required:
                     pass
                 else:
                     f.write('\n')
-                    f.format(opt, group, minimal, summarize)
+                    f.format(opt, group)
             except Exception as err:
                 f.write('# Warning: Failed to format sample for %s\n' %
                         (opt.dest,))
@@ -731,18 +731,15 @@ def generate(conf, output_file=None):
     groups = _get_groups(_list_opts(conf.namespace))
 
     if conf.format_ == 'ini':
-        formatter = _OptFormatter(output_file=output_file,
-                                  wrap_width=conf.wrap_width)
+        formatter = _OptFormatter(conf, output_file=output_file)
 
         # Output the "DEFAULT" section as the very first section
-        _output_opts(formatter, 'DEFAULT', groups.pop('DEFAULT'), conf.minimal,
-                     conf.summarize)
+        _output_opts(formatter, 'DEFAULT', groups.pop('DEFAULT'))
 
         # output all other config sections with groups in alphabetical order
         for group, group_data in sorted(groups.items()):
             formatter.write('\n\n')
-            _output_opts(formatter, group, group_data, conf.minimal,
-                         conf.summarize)
+            _output_opts(formatter, group, group_data)
     elif conf.format_ == 'rst':
         _output_human_readable(
             conf.namespace,
