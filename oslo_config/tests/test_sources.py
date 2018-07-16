@@ -284,9 +284,10 @@ class URISourceTestCase(base.BaseTestCase):
     def test_list_opts(self):
         expected_group = None
         for group in _list_opts.list_opts():
-            if group[0] == "sample_remote_file_source":
-                expected_group = group
-                break
+            if group[0] is not None:
+                if group[0].name == "sample_remote_file_source":
+                    expected_group = group
+                    break
 
         self.assertIsNotNone(expected_group)
 
