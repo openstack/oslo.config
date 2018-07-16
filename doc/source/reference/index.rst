@@ -20,4 +20,5 @@
    locations
    sphinxext
    sphinxconfiggen
+   drivers
    faq

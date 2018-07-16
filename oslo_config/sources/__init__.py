@@ -9,6 +9,38 @@
 # WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
 # License for the specific language governing permissions and limitations
 # under the License.
+r"""
+Oslo.config's primary source of configuration data are plaintext, INI-like
+style, configuration files. With the addition of backend drivers support,
+it is possible to store configuration data in different places and with
+different formats, as long as, exists a proper driver to connect to those
+external sources and provides a way to fetch configuration values from them.
+
+A backend driver implementation is divided in two main classes, a driver
+class of type :class:`ConfigurationSourceDriver` and a configuration source
+class of type :class:`ConfigurationSource`.
+
+**IMPORTANT:** At this point, all backend drivers are only able to provide
+unmutable values, this protects applications and services to have options
+from external sources mutaded when they reload configuration files.
+
+Abstract Classes
+----------------
+
+The Driver Class
+================
+
+.. autoclass:: ConfigurationSourceDriver
+   :members:
+
+The Configuration Source Class
+==============================
+
+.. autoclass:: ConfigurationSource
+   :members:
+
+"""
+
 import abc
 import six
 
@@ -20,22 +52,43 @@ _NoValue = object()
 
 @six.add_metaclass(abc.ABCMeta)
 class ConfigurationSourceDriver(object):
-    """A config driver option for Oslo.config.
+    """A backend driver option for oslo.config.
 
-    Represents an oslo.config driver to allow store configuration data in
-    other places, such as secret stores managed by a proper key management
-    store solution.
+    For each group name listed in **config_source** on the **DEFAULT** group,
+    a :class:`ConfigurationSourceDriver` is responsible for creating one new
+    instance of a :class:`ConfigurationSource`. The proper driver class to be
+    used is selected based on the **driver** option inside each one of the
+    groups listed in config_source and loaded through entry points managed by
+    stevedore using the namespace oslo.config.driver::
+
+        [DEFAULT]
+        config_source = source1
+        config_source = source2
+        ...
+
+        [source1]
+        driver = remote_file
+        ...
+
+        [source2]
+        driver = castellan
+        ...
+
+    Each specific driver knows all the available options to properly instatiate
+    a ConfigurationSource using the values comming from the given group in the
+    open_source_from_opt_group() method and is able to generate sample config
+    through the list_options_for_discovery() method.
 
     """
 
     @abc.abstractmethod
     def open_source_from_opt_group(self, conf, group_name):
-        """Return an open option source.
+        """Return an open configuration source.
 
-        Use group_name to find the configuration settings for the new
-        source then open the source and return it.
+        Uses group_name to find the configuration settings for the new
+        source and then open the configuration source and return it.
 
-        If a source cannot be open, raise an appropriate exception.
+        If a source cannot be open, raises an appropriate exception.
 
         :param conf: The active configuration option handler from which
                      to seek configuration values.
@@ -48,13 +101,14 @@ class ConfigurationSourceDriver(object):
 
     @abc.abstractmethod
     def list_options_for_discovery(self):
-        """Return a list of options used by the driver to create the source.
+        """Return the list of options available to configure a new source.
 
-        Drivers should advertise all supported options in this method for the
-        purpose of sample generation by oslo-config-generator.
+        Drivers should advertise all supported options in this method
+        for the purpose of sample generation by oslo-config-generator.
 
-        For an example on how to implement this method you can check the URI
-        driver at oslo_config.sources._uri.URIConfigurationSourceDriver.
+        For an example on how to implement this method
+        you can check the **remote_file** driver at
+        oslo_config.sources._uri.URIConfigurationSourceDriver.
 
         :returns: a list of supported options of a ConfigurationSource.
         """
