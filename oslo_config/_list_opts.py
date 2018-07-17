@@ -10,6 +10,7 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+import copy
 import inspect
 
 from oslo_config import cfg
@@ -42,7 +43,7 @@ def list_opts():
     source_names = ext_mgr.names()
     for source_name in source_names:
         source = ext_mgr[source_name].obj
-        source_options = source.list_options_for_discovery()
+        source_options = copy.deepcopy(source.list_options_for_discovery())
         source_description = inspect.getdoc(source)
         source_options.insert(
             0,

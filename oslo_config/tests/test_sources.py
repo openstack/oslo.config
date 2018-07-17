@@ -282,16 +282,17 @@ class URISourceTestCase(base.BaseTestCase):
             self.assertEqual(option, self.conf[option])
 
     def test_list_opts(self):
-        expected_group = None
+        discovered_group = None
         for group in _list_opts.list_opts():
             if group[0] is not None:
                 if group[0].name == "sample_remote_file_source":
-                    expected_group = group
+                    discovered_group = group
                     break
 
-        self.assertIsNotNone(expected_group)
+        self.assertIsNotNone(discovered_group)
 
         self.assertEqual(
-            expected_group[1],
-            _uri.URIConfigurationSourceDriver().list_options_for_discovery()
+            _uri.URIConfigurationSourceDriver().list_options_for_discovery(),
+            # NOTE: Ignore 'driver' option inserted automatically.
+            discovered_group[1][1:],
         )
