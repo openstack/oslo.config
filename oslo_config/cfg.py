@@ -40,6 +40,8 @@ except ImportError:
 
 from oslo_config import iniparser
 from oslo_config import sources
+# Absolute import to avoid circular import in Python 2.7
+import oslo_config.sources._environment as _environment
 from oslo_config import types
 
 import stevedore
@@ -58,6 +60,7 @@ class Locations(enum.Enum):
     set_override = (3, False)
     user = (4, True)
     command_line = (5, True)
+    environment = (6, True)
 
     def __init__(self, num, is_user_controlled):
         self.num = num
@@ -189,7 +192,12 @@ class ConfigFileParseError(Error):
         return 'Failed to parse %s: %s' % (self.config_file, self.msg)
 
 
-class ConfigFileValueError(Error, ValueError):
+class ConfigSourceValueError(Error, ValueError):
+    """Raised if a config source value does not match its opt type."""
+    pass
+
+
+class ConfigFileValueError(ConfigSourceValueError):
     """Raised if a config file value does not match its opt type."""
     pass
 
@@ -1946,6 +1954,9 @@ class ConfigOpts(collections.Mapping):
         self._validate_default_values = False
         self._sources = []
         self._ext_mgr = None
+        # Though the env_driver is a Source, we load it by default.
+        self._use_env = True
+        self._env_driver = _environment.EnvironmentConfigurationSource()
 
         self.register_opt(self._config_source_opt)
 
@@ -2009,7 +2020,7 @@ class ConfigOpts(collections.Mapping):
         return options
 
     def _setup(self, project, prog, version, usage, default_config_files,
-               default_config_dirs):
+               default_config_dirs, use_env):
         """Initialize a ConfigOpts object for option parsing."""
         self._config_opts = self._make_config_options(default_config_files,
                                                       default_config_dirs)
@@ -2021,6 +2032,7 @@ class ConfigOpts(collections.Mapping):
         self.usage = usage
         self.default_config_files = default_config_files
         self.default_config_dirs = default_config_dirs
+        self._use_env = use_env
 
     def __clear_cache(f):
         @functools.wraps(f)
@@ -2056,7 +2068,8 @@ class ConfigOpts(collections.Mapping):
                  default_config_dirs=None,
                  validate_default_values=False,
                  description=None,
-                 epilog=None):
+                 epilog=None,
+                 use_env=True):
         """Parse command line arguments and config files.
 
         Calling a ConfigOpts object causes the supplied command line arguments
@@ -2084,6 +2097,8 @@ class ConfigOpts(collections.Mapping):
         :param default_config_files: config files to use by default
         :param default_config_dirs: config dirs to use by default
         :param validate_default_values: whether to validate the default values
+        :param use_env: If True (the default) look in the environment as one
+                        source of option values.
         :raises: SystemExit, ConfigFilesNotFoundError, ConfigFileParseError,
                  ConfigFilesPermissionDeniedError,
                  RequiredOptError, DuplicateOptError
@@ -2097,7 +2112,7 @@ class ConfigOpts(collections.Mapping):
             default_config_files, default_config_dirs)
 
         self._setup(project, prog, version, usage, default_config_files,
-                    default_config_dirs)
+                    default_config_dirs, use_env)
 
         self._namespace = self._parse_cli_opts(args if args is not None
                                                else sys.argv[1:])
@@ -2634,6 +2649,13 @@ class ConfigOpts(collections.Mapping):
                 self._substitute(value, group, namespace), opt)
 
         group_name = group.name if group else None
+        key = (group_name, name)
+
+        # If use_env is true, get a value from the environment but don't use
+        # it yet. We will look at the command line first, below.
+        env_val = (sources._NoValue, None)
+        if self._use_env:
+            env_val = self._env_driver.get(group_name, name, opt)
 
         if opt.mutable and namespace is None:
             namespace = self._mutable_ns
@@ -2641,16 +2663,33 @@ class ConfigOpts(collections.Mapping):
             namespace = self._namespace
         if namespace is not None:
             try:
-                val, alt_loc = opt._get_from_namespace(namespace, group_name)
-                return (convert(val), alt_loc)
-            except KeyError:  # nosec: Valid control flow instruction
-                pass
+                try:
+                    val, alt_loc = opt._get_from_namespace(namespace,
+                                                           group_name)
+                    # Try command line first
+                    if (val != sources._NoValue
+                            and alt_loc.location == Locations.command_line):
+                        return (convert(val), alt_loc)
+                    # Environment source second
+                    if env_val[0] != sources._NoValue:
+                        return (convert(env_val[0]), env_val[1])
+                    # Default file source third
+                    if val != sources._NoValue:
+                        return (convert(val), alt_loc)
+                except KeyError:  # nosec: Valid control flow instruction
+                    # If there was a KeyError looking at config files or
+                    # command line, retry the env_val.
+                    if env_val[0] != sources._NoValue:
+                        return (convert(env_val[0]), env_val[1])
             except ValueError as ve:
-                raise ConfigFileValueError(
-                    "Value for option %s is not valid: %s"
-                    % (opt.name, str(ve)))
+                message = "Value for option %s from %s is not valid: %s" % (
+                    opt.name, alt_loc, str(ve))
+                # Preserve backwards compatibility for file-based value
+                # errors.
+                if alt_loc.location == Locations.user:
+                    raise ConfigFileValueError(message)
+                raise ConfigSourceValueError(message)
 
-        key = (group_name, name)
         try:
             return self.__drivers_cache[key]
         except KeyError:  # nosec: Valid control flow instruction

@@ -10,6 +10,8 @@
 # License for the specific language governing permissions and limitations
 # under the License.
 
+import os
+
 from requests import HTTPError
 
 from oslo_config import _list_opts
@@ -110,6 +112,65 @@ class TestLoading(base.BaseTestCase):
         )
         source = self.conf._open_source_from_opt_group('unknown_driver')
         self.assertIsNone(source)
+
+
+class TestEnvironmentConfigurationSource(base.BaseTestCase):
+
+    def setUp(self):
+        super(TestEnvironmentConfigurationSource, self).setUp()
+        self.conf = cfg.ConfigOpts()
+        self.conf_fixture = self.useFixture(fixture.Config(self.conf))
+        self.conf.register_opt(cfg.StrOpt('bar'), 'foo')
+
+        def cleanup():
+            if 'OS_FOO__BAR' in os.environ:
+                del os.environ['OS_FOO__BAR']
+        self.addCleanup(cleanup)
+
+    def test_simple_environment_get(self):
+        self.conf(args=[])
+        env_value = 'goodbye'
+        os.environ['OS_FOO__BAR'] = env_value
+
+        self.assertEqual(env_value, self.conf['foo']['bar'])
+
+    def test_env_beats_files(self):
+        file_value = 'hello'
+        env_value = 'goodbye'
+        self.conf(args=[])
+        self.conf_fixture.load_raw_values(
+            group='foo',
+            bar=file_value,
+        )
+
+        self.assertEqual(file_value, self.conf['foo']['bar'])
+        self.conf.reload_config_files()
+        os.environ['OS_FOO__BAR'] = env_value
+        self.assertEqual(env_value, self.conf['foo']['bar'])
+
+    def test_cli_beats_env(self):
+        env_value = 'goodbye'
+        cli_value = 'cli'
+        os.environ['OS_FOO__BAR'] = env_value
+        self.conf.register_cli_opt(cfg.StrOpt('bar'), 'foo')
+        self.conf(args=['--foo=%s' % cli_value])
+
+        self.assertEqual(cli_value, self.conf['foo']['bar'])
+
+    def test_use_env_false_allows_files(self):
+        file_value = 'hello'
+        env_value = 'goodbye'
+        os.environ['OS_FOO__BAR'] = env_value
+        self.conf(args=[], use_env=False)
+        self.conf_fixture.load_raw_values(
+            group='foo',
+            bar=file_value,
+        )
+
+        self.assertEqual(file_value, self.conf['foo']['bar'])
+        self.conf.reset()
+        self.conf(args=[], use_env=True)
+        self.assertEqual(env_value, self.conf['foo']['bar'])
 
 
 def make_uri(name):
