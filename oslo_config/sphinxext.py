@@ -328,7 +328,7 @@ class ShowOptionsDirective(rst.Directive):
 
                 for part in parts:
                     result.append(line, source_name, count + offset)
-                tmp.write(line.encode('utf-8'))
+                tmp.write(line.encode('utf-8') + b'\n')
 
         node = nodes.section()
         node.document = self.state.document
