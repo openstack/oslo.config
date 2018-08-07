@@ -13,3 +13,4 @@
       - lib-forward-testing
       - release-notes-jobs-python3
       - periodic-stable-jobs
+      - openstack-python36-jobs
