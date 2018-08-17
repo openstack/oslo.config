@@ -25,6 +25,7 @@ import logging
 import sys
 
 import pkg_resources
+import yaml
 
 from oslo_config import cfg
 from oslo_config import generator
@@ -33,13 +34,16 @@ from oslo_config import generator
 _validator_opts = [
     cfg.MultiStrOpt(
         'namespace',
-        required=True,
         help='Option namespace under "oslo.config.opts" in which to query '
              'for options.'),
     cfg.StrOpt(
         'input-file',
         required=True,
         help='Config file to validate.'),
+    cfg.StrOpt(
+        'opt-data',
+        help='Path to a YAML file containing definitions of options, as '
+             'output by the config generator.'),
     cfg.BoolOpt(
         'fatal-warnings',
         default=False,
@@ -77,8 +81,15 @@ def _validate_opt(group, option, opt_data):
 
 def _validate(conf):
     conf.register_opts(_validator_opts)
-    groups = generator._get_groups(generator._list_opts(conf.namespace))
-    opt_data = generator._generate_machine_readable_data(groups, conf)
+    if conf.namespace:
+        groups = generator._get_groups(generator._list_opts(conf.namespace))
+        opt_data = generator._generate_machine_readable_data(groups, conf)
+    elif conf.opt_data:
+        with open(conf.opt_data) as f:
+            opt_data = yaml.safe_load(f)
+    else:
+        # TODO(bnemec): Implement this logic with group?
+        raise RuntimeError('Neither namespace or opt-data provided.')
     sections = {}
     parser = cfg.ConfigParser(conf.input_file, sections)
     parser.parse()
