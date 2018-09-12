@@ -1,0 +1,9 @@
+---
+features:
+  - |
+    A validator for config files is now available. When run against a config
+    file, it will report an error for any options present that aren't defined
+    in the service and will report a warning for any deprecated options in
+    the file. In order to discover the available options for a service, it
+    can either use the sample config generator configuration file or a
+    machine-readable sample config generated elsewhere.
