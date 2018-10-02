@@ -146,6 +146,16 @@ def _format_opt(opt, group_name):
         yield _indent(
             'effect on stability and/or performance.', 6)
 
+    if opt.sample_default:
+        yield _indent(
+            '')
+        yield _indent(
+            'This option has a sample default set, which means that')
+        yield _indent(
+            'its actual default value may vary from the one documented')
+        yield _indent(
+            'above.')
+
     try:
         help_text = opt.help % {'default': 'the value above'}
     except (TypeError, KeyError, ValueError):
