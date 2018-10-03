@@ -44,7 +44,10 @@ class ConfigType(object):
 
         """
         if sample_default is not None:
-            default_str = sample_default
+            if isinstance(sample_default, six.string_types):
+                default_str = sample_default
+            else:
+                default_str = self._formatter(sample_default)
         elif default is None:
             default_str = self.NONE_DEFAULT
         else:
@@ -348,7 +351,7 @@ class Number(ConfigType):
         )
 
     def _formatter(self, value):
-        return str(value)
+        return six.text_type(value)
 
 
 class Integer(Number):
@@ -458,7 +461,8 @@ class List(ConfigType):
     comma and next item until validation succeeds or there is no parts left.
     In the later case it will signal validation error.
 
-    :param item_type: type of list items
+    :param item_type: Type of list items. Should be an instance of
+                      ``ConfigType``.
     :param bounds: if True, value should be inside "[" and "]" pair
     :param type_name: Type name to be used in the sample config file.
 
@@ -531,10 +535,11 @@ class List(ConfigType):
             return fmtstr.format(value)
         if isinstance(value, list):
             value = [
-                six.text_type(v)
+                self.item_type._formatter(v)
                 for v in value
             ]
-        return fmtstr.format(','.join(value))
+            return fmtstr.format(','.join(value))
+        return fmtstr.format(self.item_type._formatter(value))
 
 
 class Range(ConfigType):
