@@ -1,8 +1,8 @@
 .. _option-definitions:
 
-------------------
-Option Definitions
-------------------
+====================
+ Opt and Subclasses
+====================
 
 .. currentmodule:: oslo_config.cfg
 

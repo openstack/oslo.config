@@ -1,11 +1,17 @@
-===================
- Using oslo.config
-===================
+=============================
+ oslo.config Reference Guide
+=============================
 
 .. toctree::
    :maxdepth: 2
 
-   cfg
+   defining
+   naming
+   accessing
+   configuration-files
+   command-line
+   deprecating
+   globals
    opts
    types
    configopts
@@ -14,7 +20,6 @@
    fixture
    parser
    exceptions
-   namespaces
    styleguide
    mutable
    locations
