@@ -2181,7 +2181,8 @@ class ConfigOpts(collections.Mapping):
 
     def __iter__(self):
         """Iterate over all registered opt and group names."""
-        for key in itertools.chain(self._opts.keys(), self._groups.keys()):
+        for key in itertools.chain(list(self._opts.keys()),
+                                   list(self._groups.keys())):
             yield key
 
     def __len__(self):
