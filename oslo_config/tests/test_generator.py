@@ -38,6 +38,14 @@ def custom_type(a):
     return a
 
 
+def build_formatter(output_file, **kwargs):
+    conf = cfg.ConfigOpts()
+    conf.register_opts(generator._generator_opts)
+    for k, v in kwargs.items():
+        conf.set_override(k, v)
+    return generator._OptFormatter(conf, output_file=output_file)
+
+
 class GeneratorTestCase(base.BaseTestCase):
 
     groups = {
@@ -1498,7 +1506,7 @@ class GeneratorAdditionalTestCase(base.BaseTestCase):
 
         fd, tmp_file = tempfile.mkstemp()
         with open(tmp_file, 'w+') as f:
-            formatter = generator._OptFormatter(output_file=f)
+            formatter = build_formatter(f)
             generator._output_opts(formatter, 'DEFAULT', groups.pop('DEFAULT'))
         expected = '''[DEFAULT]
 '''
@@ -1514,7 +1522,7 @@ class GeneratorAdditionalTestCase(base.BaseTestCase):
 
         fd, tmp_file = tempfile.mkstemp()
         with open(tmp_file, 'w+') as f:
-            formatter = generator._OptFormatter(output_file=f)
+            formatter = build_formatter(f)
             generator._output_opts(formatter, 'alpha', groups.pop('alpha'))
         expected = '''[alpha]
 
@@ -1537,7 +1545,7 @@ class GeneratorAdditionalTestCase(base.BaseTestCase):
 
         fd, tmp_file = tempfile.mkstemp()
         f = open(tmp_file, 'w+')
-        formatter = generator._OptFormatter(output_file=f)
+        formatter = build_formatter(f)
         expected = '''[alpha]
 
 #
@@ -1564,7 +1572,7 @@ class GeneratorMutableOptionTestCase(base.BaseTestCase):
     def test_include_message(self):
         out = moves.StringIO()
         opt = cfg.StrOpt('foo', help='foo option', mutable=True)
-        gen = generator._OptFormatter(output_file=out)
+        gen = build_formatter(out)
         gen.format(opt, 'group1')
         result = out.getvalue()
         self.assertIn(
@@ -1575,7 +1583,7 @@ class GeneratorMutableOptionTestCase(base.BaseTestCase):
     def test_do_not_include_message(self):
         out = moves.StringIO()
         opt = cfg.StrOpt('foo', help='foo option', mutable=False)
-        gen = generator._OptFormatter(output_file=out)
+        gen = build_formatter(out)
         gen.format(opt, 'group1')
         result = out.getvalue()
         self.assertNotIn(
@@ -1669,11 +1677,10 @@ class RequiredOptionTestCase(base.BaseTestCase):
 
         fd, tmp_file = tempfile.mkstemp()
         with open(tmp_file, 'w+') as f:
-            formatter = generator._OptFormatter(output_file=f)
+            formatter = build_formatter(f, minimal=True)
             generator._output_opts(formatter,
                                    'alpha',
-                                   groups.pop('alpha'),
-                                   minimal=True)
+                                   groups.pop('alpha'))
         expected = '''[alpha]
 
 #
@@ -1727,11 +1734,10 @@ messages!""")]
 
         fd, tmp_file = tempfile.mkstemp()
         with open(tmp_file, 'w+') as f:
-            formatter = generator._OptFormatter(output_file=f)
+            formatter = build_formatter(f, summarize=True)
             generator._output_opts(formatter,
                                    'alpha',
-                                   groups.pop('alpha'),
-                                   summarize=True)
+                                   groups.pop('alpha'))
         expected = '''[alpha]
 
 #
@@ -1769,7 +1775,7 @@ class AdvancedOptionsTestCase(base.BaseTestCase):
 
         fd, tmp_file = tempfile.mkstemp()
         with open(tmp_file, 'w+') as f:
-            formatter = generator._OptFormatter(output_file=f)
+            formatter = build_formatter(f)
             generator._output_opts(formatter, 'alpha', groups.pop('alpha'))
         expected = '''[alpha]
 
@@ -1810,7 +1816,7 @@ class HostAddressTestCase(base.BaseTestCase):
         groups = generator._get_groups(config)
 
         out = moves.StringIO()
-        formatter = generator._OptFormatter(output_file=out)
+        formatter = build_formatter(out)
         generator._output_opts(formatter, 'alpha', groups.pop('alpha'))
         result = out.getvalue()
 
