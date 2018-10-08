@@ -202,7 +202,8 @@ def _format_group(namespace, group_name, group_obj):
     yield ''
 
     if group_obj and group_obj.help:
-        yield _indent(group_obj.help.rstrip())
+        for line in group_obj.help.strip().splitlines():
+            yield _indent(line.rstrip())
         yield ''
 
 
@@ -304,19 +305,10 @@ class ShowOptionsDirective(rst.Directive):
         result = ViewList()
         source_name = self.state.document.current_source
 
-        offset = 0
         for count, line in enumerate(_format_option_help(
                 namespaces, split_namespaces)):
-            # FIXME(stephenfin): Some lines emitted are actually multiple
-            # lines. This throws off our counter, which is rather annoying.
-            # We handle this here but we should really handle it higher up.
-            parts = line.split('\n')
-            if len(parts) > 1:
-                offset += len(parts) - 1
-
-            for part in parts:
-                result.append(part, source_name, count + offset)
-                LOG.debug(' '.join(['%5d' % (count + offset), part]))
+            result.append(line, source_name, count)
+            LOG.debug(' '.join(['%5d' % (count), line]))
 
         node = nodes.section()
         node.document = self.state.document
