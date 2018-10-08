@@ -1,0 +1,117 @@
+#!/usr/bin/env python
+# Copyright 2018 Red Hat, Inc.
+#
+#    Licensed under the Apache License, Version 2.0 (the "License"); you may
+#    not use this file except in compliance with the License. You may obtain
+#    a copy of the License at
+#
+#         http://www.apache.org/licenses/LICENSE-2.0
+#
+#    Unless required by applicable law or agreed to in writing, software
+#    distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+#    WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+#    License for the specific language governing permissions and limitations
+#    under the License.
+
+"""Configuration Validator
+
+Uses the sample config generator configuration file to retrieve a list of all
+the available options in a project, then compares it to what is configured in
+the provided file.  If there are any options set that are not defined in the
+project then it returns those errors.
+"""
+
+import logging
+import sys
+
+import pkg_resources
+
+from oslo_config import cfg
+from oslo_config import generator
+
+
+_validator_opts = [
+    cfg.MultiStrOpt(
+        'namespace',
+        required=True,
+        help='Option namespace under "oslo.config.opts" in which to query '
+             'for options.'),
+    cfg.StrOpt(
+        'input-file',
+        required=True,
+        help='Config file to validate.'),
+    cfg.BoolOpt(
+        'fatal-warnings',
+        default=False,
+        help='Report failure if any warnings are found.'),
+]
+
+
+def _register_cli_opts(conf):
+    """Register the formatter's CLI options with a ConfigOpts instance.
+
+    Note, this must be done before the ConfigOpts instance is called to parse
+    the configuration.
+
+    :param conf: a ConfigOpts instance
+    :raises: DuplicateOptError, ArgsAlreadyParsedError
+    """
+    conf.register_cli_opts(_validator_opts)
+
+
+def _validate_deprecated_opt(group, option, opt_data):
+    if group not in opt_data['deprecated_options']:
+        return False
+    name_data = [o['name'] for o in opt_data['deprecated_options'][group]]
+    name_data += [o.get('dest') for o in opt_data['deprecated_options'][group]]
+    return option in name_data
+
+
+def _validate_opt(group, option, opt_data):
+    if group not in opt_data['options']:
+        return False
+    name_data = [o['name'] for o in opt_data['options'][group]['opts']]
+    name_data += [o.get('dest') for o in opt_data['options'][group]['opts']]
+    return option in name_data
+
+
+def _validate(conf):
+    conf.register_opts(_validator_opts)
+    groups = generator._get_groups(generator._list_opts(conf.namespace))
+    opt_data = generator._generate_machine_readable_data(groups, conf)
+    sections = {}
+    parser = cfg.ConfigParser(conf.input_file, sections)
+    parser.parse()
+    warnings = False
+    errors = False
+    for section, options in sections.items():
+        for option in options:
+            if _validate_deprecated_opt(section, option, opt_data):
+                logging.warn('Deprecated opt %s/%s found', section, option)
+                warnings = True
+            elif not _validate_opt(section, option, opt_data):
+                logging.error('%s/%s not found', section, option)
+                errors = True
+    if errors or (warnings and conf.fatal_warnings):
+        return 1
+    return 0
+
+
+def main():
+    """The main function of oslo-config-validator."""
+    version = pkg_resources.get_distribution('oslo.config').version
+    logging.basicConfig(level=logging.WARN)
+    conf = cfg.ConfigOpts()
+    _register_cli_opts(conf)
+    try:
+        conf(sys.argv[1:], version=version)
+    except cfg.RequiredOptError:
+        conf.print_help()
+        if not sys.argv[1:]:
+            raise SystemExit
+        raise
+    return _validate(conf)
+
+
+if __name__ == '__main__':
+    sys.exit(main())
