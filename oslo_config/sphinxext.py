@@ -308,7 +308,7 @@ class ShowOptionsDirective(rst.Directive):
         for count, line in enumerate(_format_option_help(
                 namespaces, split_namespaces)):
             result.append(line, source_name, count)
-            LOG.debug(' '.join(['%5d' % (count), line]))
+            LOG.debug('%5d%s%s', count, ' ' if line else '', line)
 
         node = nodes.section()
         node.document = self.state.document
