@@ -724,9 +724,14 @@ def generate(conf, output_file=None):
     """
     conf.register_opts(_generator_opts)
 
+    own_file = False
+
     if output_file is None:
-        output_file = (open(conf.output_file, 'w')
-                       if conf.output_file else sys.stdout)
+        if conf.output_file:
+            output_file = open(conf.output_file, 'w')
+            own_file = True
+        else:
+            output_file = sys.stdout
 
     groups = _get_groups(_list_opts(conf.namespace))
 
@@ -749,6 +754,9 @@ def generate(conf, output_file=None):
         _output_machine_readable(groups,
                                  output_file=output_file,
                                  conf=conf)
+
+    if own_file:
+        output_file.close()
 
 
 def main(args=None):
