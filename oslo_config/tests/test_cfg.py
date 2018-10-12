@@ -893,14 +893,124 @@ class PositionalTestCase(BaseTestCase):
     def test_positional_bool(self):
         self.assertRaises(ValueError, cfg.BoolOpt, 'foo', positional=True)
 
-    def test_required_positional_opt(self):
+    def test_required_positional_opt_defined(self):
         self.conf.register_cli_opt(
             cfg.StrOpt('foo', required=True, positional=True))
+
+        self.useFixture(fixtures.MonkeyPatch('sys.stdout', moves.StringIO()))
+        self.assertRaises(SystemExit, self.conf, ['--help'])
+        self.assertIn(' foo\n', sys.stdout.getvalue())
 
         self.conf(['bar'])
 
         self.assertTrue(hasattr(self.conf, 'foo'))
         self.assertEqual('bar', self.conf.foo)
+
+    def test_required_positional_opt_undefined(self):
+        self.conf.register_cli_opt(
+            cfg.StrOpt('foo', required=True, positional=True))
+
+        self.useFixture(fixtures.MonkeyPatch('sys.stdout', moves.StringIO()))
+        self.assertRaises(SystemExit, self.conf, ['--help'])
+        self.assertIn(' foo\n', sys.stdout.getvalue())
+
+        self.assertRaises(cfg.RequiredOptError, self.conf, [])
+
+    def test_optional_positional_opt_defined(self):
+        self.conf.register_cli_opt(
+            cfg.StrOpt('foo', required=False, positional=True))
+
+        self.useFixture(fixtures.MonkeyPatch('sys.stdout', moves.StringIO()))
+        self.assertRaises(SystemExit, self.conf, ['--help'])
+        # FIXME(dolphm): Due to bug 1676989, this argument appears as a
+        # required argument in the CLI help. Instead, the following
+        # commented-out code should work:
+        # self.assertIn(' [foo]\n', sys.stdout.getvalue())
+        self.assertIn(' foo\n', sys.stdout.getvalue())
+
+        self.conf(['bar'])
+
+        self.assertTrue(hasattr(self.conf, 'foo'))
+        self.assertEqual('bar', self.conf.foo)
+
+    def test_optional_positional_opt_undefined(self):
+        self.conf.register_cli_opt(
+            cfg.StrOpt('foo', required=False, positional=True))
+
+        self.useFixture(fixtures.MonkeyPatch('sys.stdout', moves.StringIO()))
+        self.assertRaises(SystemExit, self.conf, ['--help'])
+        # FIXME(dolphm): Due to bug 1676989, this argument appears as a
+        # required argument in the CLI help. Instead, the following
+        # commented-out code should work:
+        # self.assertIn(' [foo]\n', sys.stdout.getvalue())
+        self.assertIn(' foo\n', sys.stdout.getvalue())
+
+        self.conf([])
+
+        self.assertTrue(hasattr(self.conf, 'foo'))
+        self.assertIsNone(self.conf.foo)
+
+    def test_optional_positional_hyphenated_opt_defined(self):
+        self.conf.register_cli_opt(
+            cfg.StrOpt('foo-bar', required=False, positional=True))
+
+        self.useFixture(fixtures.MonkeyPatch('sys.stdout', moves.StringIO()))
+        self.assertRaises(SystemExit, self.conf, ['--help'])
+        # FIXME(dolphm): Due to bug 1676989, this argument appears as a
+        # required argument in the CLI help. Instead, the following
+        # commented-out code should work:
+        # self.assertIn(' [foo-bar]\n', sys.stdout.getvalue())
+        self.assertIn(' foo-bar\n', sys.stdout.getvalue())
+
+        self.conf(['baz'])
+        self.assertTrue(hasattr(self.conf, 'foo_bar'))
+        # FIXME(dolphm): Due to bug 1676989, this argument cannot be retrieved
+        # by oslo_config.cfg. Instead, the following commented-out code should
+        # work:
+        # self.assertEqual('baz', self.conf.foo_bar)
+        self.assertIsNone(self.conf.foo_bar)
+
+    def test_optional_positional_hyphenated_opt_undefined(self):
+        self.conf.register_cli_opt(
+            cfg.StrOpt('foo-bar', required=False, positional=True))
+
+        self.useFixture(fixtures.MonkeyPatch('sys.stdout', moves.StringIO()))
+        self.assertRaises(SystemExit, self.conf, ['--help'])
+        # FIXME(dolphm): Due to bug 1676989, this argument appears as a
+        # required argument in the CLI help. Instead, the following
+        # commented-out code should work:
+        # self.assertIn(' [foo-bar]\n', sys.stdout.getvalue())
+        self.assertIn(' foo-bar\n', sys.stdout.getvalue())
+
+        self.conf([])
+        self.assertTrue(hasattr(self.conf, 'foo_bar'))
+        self.assertIsNone(self.conf.foo_bar)
+
+    def test_required_positional_hyphenated_opt_defined(self):
+        self.conf.register_cli_opt(
+            cfg.StrOpt('foo-bar', required=True, positional=True))
+
+        self.useFixture(fixtures.MonkeyPatch('sys.stdout', moves.StringIO()))
+        self.assertRaises(SystemExit, self.conf, ['--help'])
+        self.assertIn(' foo-bar\n', sys.stdout.getvalue())
+
+        # FIXME(dolphm): Due to bug 1676989, this mistakenly raises an
+        # exception, even though the option is clearly defined. Instead, the
+        # following commented out lines should work:
+        # self.conf(['baz'])
+        # self.assertTrue(hasattr(self.conf, 'foo_bar'))
+        # self.assertEqual('baz', self.conf.foo_bar)
+        self.assertRaises(cfg.RequiredOptError, self.conf, ['baz'])
+
+    def test_required_positional_hyphenated_opt_undefined(self):
+        self.conf.register_cli_opt(
+            cfg.StrOpt('foo-bar', required=True, positional=True))
+
+        self.useFixture(fixtures.MonkeyPatch('sys.stdout', moves.StringIO()))
+        self.assertRaises(SystemExit, self.conf, ['--help'])
+        self.assertIn(' foo-bar\n', sys.stdout.getvalue())
+
+        self.assertRaises(cfg.RequiredOptError, self.conf, [])
 
     def test_missing_required_cli_opt(self):
         self.conf.register_cli_opt(
