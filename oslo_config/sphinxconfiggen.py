@@ -14,14 +14,18 @@
 
 import os
 
+from sphinx.util import logging
+
 from oslo_config import generator
+
+LOG = logging.getLogger(__name__)
 
 
 def generate_sample(app):
 
     if not app.config.config_generator_config_file:
-        app.warn("No config_generator_config_file is specified, "
-                 "skipping sample config generation")
+        LOG.warning("No config_generator_config_file is specified, "
+                    "skipping sample config generation")
         return
 
     # Decided to update the existing config option
@@ -52,7 +56,7 @@ def _get_default_basename(config_file):
 def _generate_sample(app, config_file, base_name):
 
     def info(msg):
-        app.info('[%s] %s' % (__name__, msg))
+        LOG.info('[%s] %s' % (__name__, msg))
 
     # If we are given a file that isn't an absolute path, look for it
     # in the source directory if it doesn't exist.
