@@ -13,16 +13,16 @@ r"""
 Oslo.config's primary source of configuration data are plaintext, INI-like
 style, configuration files. With the addition of backend drivers support,
 it is possible to store configuration data in different places and with
-different formats, as long as, exists a proper driver to connect to those
-external sources and provides a way to fetch configuration values from them.
+different formats, as long as there exists a proper driver to connect to those
+external sources and provide a way to fetch configuration values from them.
 
 A backend driver implementation is divided in two main classes, a driver
 class of type :class:`ConfigurationSourceDriver` and a configuration source
 class of type :class:`ConfigurationSource`.
 
 **IMPORTANT:** At this point, all backend drivers are only able to provide
-unmutable values, this protects applications and services to have options
-from external sources mutaded when they reload configuration files.
+immutable values. This protects applications and services from having options
+in external sources mutated when they reload configuration files.
 
 Abstract Classes
 ----------------
