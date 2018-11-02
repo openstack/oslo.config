@@ -811,6 +811,10 @@ class GeneratorTestCase(base.BaseTestCase):
 #
 
 # multiple strings (multi valued)
+#
+# This option has a sample default set, which means that
+# its actual default value may vary from the one documented
+# below.
 #multi_opt = 5
 #multi_opt = 6
 ''')),

@@ -321,6 +321,14 @@ class _OptFormatter(object):
                 '# effect on stability and/or performance.\n'
             )
 
+        if opt.sample_default:
+            lines.append(
+                '#\n'
+                '# This option has a sample default set, which means that\n'
+                '# its actual default value may vary from the one documented\n'
+                '# below.\n'
+            )
+
         if hasattr(opt.type, 'format_defaults'):
             defaults = opt.type.format_defaults(opt.default,
                                                 opt.sample_default)
