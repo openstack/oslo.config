@@ -47,6 +47,10 @@ describing the location. Its value depends on the ``location``.
      - ``True``
      - A value set by the user on the command line.
      - Empty string.
+   * - ``environment``
+     - ``True``
+     - A value set by the user in the process environment.
+     - The name of the environment variable.
 
 Did a user set a configuration option?
 ======================================

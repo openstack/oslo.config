@@ -2,7 +2,9 @@
  Defining Options
 ==================
 
-Configuration options may be set on the command line or in config files.
+Configuration options may be set on the command line, in the
+:mod:`environment <oslo_config.sources._environment>`, or in config files.
+Options are processed in that order.
 
 The schema for each option is defined using the
 :class:`Opt` class or its sub-classes, for example:

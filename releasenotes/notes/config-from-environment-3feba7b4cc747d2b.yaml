@@ -1,0 +1,22 @@
+---
+features:
+  - |
+    Support for accessing configuration data in environment variables via the
+    environment backend driver, enabled by default. The environment is checked
+    after command line options, but before configuration files.
+
+    Environment variables are checked for any configuration data. The variable
+    names take the form:
+
+    * A prefix of ``OS_``
+    * The group name, uppercased
+    * Separated from the option name by a `__` (double underscore)
+    * Followed by the name
+
+    For an option that looks like this in the usual INI format::
+
+        [placement_database]
+        connection = sqlite:///
+
+    the corresponding environment variable would be
+    ``OS_PLACEMENT_DATABASE__CONNECTION``.
