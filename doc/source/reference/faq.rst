@@ -27,7 +27,7 @@ projects.
 
 This debate will probably never completely go away, though. See `this
 latest discussion in August, 2014
-<http://lists.openstack.org/pipermail/openstack-dev/2014-August/044050.html>`__
+<https://lists.openstack.org/pipermail/openstack-dev/2014-August/044050.html>`__
 
 Why are configuration options not part of a library's API?
 ==========================================================
