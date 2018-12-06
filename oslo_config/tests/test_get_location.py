@@ -68,6 +68,11 @@ class GetLocationTestCase(base.BaseTestCase):
             default='cli_opt_default',
         )
         self.conf.register_cli_opt(self.cli_opt)
+        self.group_opt = cfg.StrOpt(
+            'group_opt',
+            default='group_opt_default',
+        )
+        self.conf.register_opt(self.group_opt, group='group')
 
     def test_opt_default(self):
         self.conf([])
@@ -189,3 +194,12 @@ class GetLocationTestCase(base.BaseTestCase):
         # We expect register_opt() to return False to indicate that
         # the option was already registered.
         self.assertFalse(self.conf.register_opt(dupe_opt))
+
+    def test_group_opt(self):
+        self.conf([])
+        loc = self.conf.get_location('group_opt', 'group')
+        self.assertEqual(
+            cfg.Locations.opt_default,
+            loc.location,
+        )
+        self.assertIn('test_get_location.py', loc.detail)
