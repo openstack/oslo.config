@@ -24,6 +24,7 @@ doc/source/api/
 dist/
 .testrepository/
 /doc/source/sample.config
+.stestr/
 
 # Files created by releasenotes build
 releasenotes/build
