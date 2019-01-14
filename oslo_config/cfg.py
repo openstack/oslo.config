@@ -3095,7 +3095,8 @@ class ConfigOpts(collections.Mapping):
 
         .. versionadded:: 5.3.0
         """
-        value, loc = self._do_get(name, group, None)
+        opt_group = OptGroup(group) if group is not None else None
+        value, loc = self._do_get(name, opt_group, None)
         return loc
 
     class GroupAttr(collections.Mapping):
