@@ -22,7 +22,6 @@ build/
 doc/build/
 doc/source/api/
 dist/
-.testrepository/
 /doc/source/sample.config
 .stestr/
 
