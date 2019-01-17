@@ -884,19 +884,22 @@ class URI(ConfigType):
         self.schemes = schemes
 
     def __call__(self, value):
-        if not rfc3986.is_valid_uri(value, require_scheme=True,
-                                    require_authority=True):
-            raise ValueError('invalid URI: %r' % value)
+        uri = rfc3986.uri_reference(value)
+        validator = rfc3986.validators.Validator().require_presence_of(
+            'scheme', 'host',
+        ).check_validity_of(
+            'scheme', 'host', 'path',
+        )
+        if self.schemes:
+            validator = validator.allow_schemes(*self.schemes)
+        try:
+            validator.validate(uri)
+        except rfc3986.exceptions.RFC3986Exception as exc:
+            raise ValueError(exc)
 
         if self.max_length is not None and len(value) > self.max_length:
             raise ValueError("Value '%s' exceeds maximum length %d" %
                              (value, self.max_length))
-
-        if self.schemes:
-            scheme = rfc3986.uri_reference(value).scheme
-            if scheme not in self.schemes:
-                raise ValueError("URI scheme '%s' not in %s" %
-                                 (scheme, self.schemes))
 
         # NOTE(dhellmann): self.value is deprecated, and we don't want
         # to trigger a deprecation warning ourselves so we modify
