@@ -118,8 +118,8 @@ class GeneratorTestCase(base.BaseTestCase):
         'opt_with_DeprecatedOpt': cfg.BoolOpt(
             'foo-bar',
             help='Opt with DeprecatedOpt',
-            deprecated_opts = [cfg.DeprecatedOpt('foo-bar',
-                                                 group='deprecated')]),
+            deprecated_opts=[cfg.DeprecatedOpt('foo-bar',
+                                               group='deprecated')]),
         # Unknown Opt default must be a string
         'unknown_type': cfg.Opt('unknown_opt',
                                 default='123',
