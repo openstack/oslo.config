@@ -9,21 +9,55 @@
 #
 # git config --global core.excludesfile '~/.gitignore'
 
+# Bytecompiled Python
+*.py[cod]
+
+# C extensions
+*.so
+
+# Packages
+*.egg*
+*.egg-info
+dist
+build
+eggs
+parts
+bin
+var
+sdist
+develop-eggs
+.installed.cfg
+lib
+lib64
+
+# Installer logs
+pip-log.txt
+
+# Unit test / coverage reports
+cover/
+.coverage*
+!.coveragerc
+.tox
+.stestr
+.venv
+
+# Translations
+*.mo
+
+# Complexity
+output/*.html
+output/*/index.html
+
+# Sphinx
+doc/build
+doc/source/api/
+/doc/source/sample.config
+
+# pbr generates these
 AUTHORS
 ChangeLog
-*.egg*
-*.pyc
-*.log
-.tox
-.coverage*
-cover
-oslo.config.egg-info/
-build/
-doc/build/
-doc/source/api/
-dist/
-/doc/source/sample.config
-.stestr/
 
 # Files created by releasenotes build
 releasenotes/build
+
+*.log
