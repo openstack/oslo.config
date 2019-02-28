@@ -29,7 +29,18 @@ import json
 import logging
 import operator
 import sys
-import textwrap
+
+try:
+    # For oslo.config[rst-generator]
+    from docutils import core as docutils_core
+    from docutils.parsers.rst import nodes as docutils_nodes
+    from docutils.parsers.rst import roles as docutils_roles
+    import rst2txt
+    from sphinx import roles as sphinx_roles
+except ImportError:
+    import textwrap
+
+    rst2txt = None
 
 try:
     # For Python 3.8 and later
@@ -53,6 +64,7 @@ _generator_opts = [
     cfg.IntOpt(
         'wrap-width',
         default=70,
+        min=0,
         help='The maximum length of help lines.'),
     cfg.MultiStrOpt(
         'namespace',
@@ -173,16 +185,43 @@ class _OptFormatter(object):
         :param output_file: a writeable file object
         """
         self.output_file = output_file or sys.stdout
-        self.wrap_width = conf.wrap_width
+        self.wrap_width = conf.wrap_width or 998  # arbitrary line length
         self.minimal = conf.minimal
         self.summarize = conf.summarize
+
+        if rst2txt:
+            # register the default Sphinx roles
+            for rolename, nodeclass in sphinx_roles.generic_docroles.items():
+                generic = docutils_roles.GenericRole(rolename, nodeclass)
+                docutils_roles.register_local_role(rolename, generic)
+
+            for rolename, func in sphinx_roles.specific_docroles.items():
+                docutils_roles.register_local_role(rolename, func)
+
+            # plus our custom roles
+            for rolename in ('oslo.config:option', 'oslo.config:group'):
+                generic = docutils_roles.GenericRole(rolename,
+                                                     docutils_nodes.strong)
+                docutils_roles.register_local_role(rolename, generic)
 
     def _format_help(self, help_text):
         """Format the help for a group or option to the output file.
 
         :param help_text: The text of the help string
         """
-        if self.wrap_width is not None and self.wrap_width > 0:
+        if rst2txt:
+            help_text = docutils_core.publish_string(
+                source=help_text,
+                writer=rst2txt.Writer(),
+                settings_overrides={'wrap_width': self.wrap_width}
+            ).decode()
+
+            lines = ''
+            for line in help_text.splitlines():
+                lines += '# ' + line + '\n' if line else '#\n'
+
+            lines = [lines]
+        elif self.wrap_width > 0:
             wrapped = ""
             for line in help_text.splitlines():
                 text = "\n".join(textwrap.wrap(line, self.wrap_width,
@@ -195,6 +234,7 @@ class _OptFormatter(object):
             lines = [wrapped]
         else:
             lines = ['# ' + help_text + '\n']
+
         return lines
 
     def _get_choice_text(self, choice):
