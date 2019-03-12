@@ -112,7 +112,11 @@ class which uses the option:
 
 An option may optionally be made available via the command line. Such options
 must be registered with the config manager before the command line is parsed
-(for the purposes of --help and CLI arg validation):
+(for the purposes of --help and CLI arg validation).
+
+Note that options registered for CLI use do not need to be registered again for
+use from other config sources, such as files. CLI options can be read from
+either the CLI or from the other enabled config sources.
 
 .. code-block:: python
 
