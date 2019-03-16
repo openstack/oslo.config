@@ -17,6 +17,10 @@
 
 import argparse
 import collections
+try:
+    import collections.abc as collections_abc
+except:
+    import collections as collections_abc
 import copy
 import errno
 import functools
@@ -1910,7 +1914,7 @@ class _CachedArgumentParser(argparse.ArgumentParser):
         super(_CachedArgumentParser, self).print_usage(file)
 
 
-class ConfigOpts(collections.Mapping):
+class ConfigOpts(collections_abc.Mapping):
 
     """Config options which may be set on the command line or in config files.
 
@@ -3099,7 +3103,7 @@ class ConfigOpts(collections.Mapping):
         value, loc = self._do_get(name, opt_group, None)
         return loc
 
-    class GroupAttr(collections.Mapping):
+    class GroupAttr(collections_abc.Mapping):
 
         """Helper class.
 
