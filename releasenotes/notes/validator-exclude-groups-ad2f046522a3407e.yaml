@@ -1,0 +1,8 @@
+---
+features:
+  - |
+    The ``oslo-config-validator`` tool now has a new option,
+    ``--exclude-group``, that allows deployers to ignore certain groups that
+    might not appear in the sample config data, perhaps because the name of
+    the group depends on other configuration values. This way the validator
+    can still be used on the known groups.
