@@ -57,6 +57,9 @@ _validator_opts = [
 ]
 
 
+KNOWN_BAD_GROUPS = ['keystone_authtoken']
+
+
 def _register_cli_opts(conf):
     """Register the formatter's CLI options with a ConfigOpts instance.
 
@@ -109,6 +112,13 @@ def _validate(conf):
                 logging.warn('Deprecated opt %s/%s found', section, option)
                 warnings = True
             elif not _validate_opt(section, option, opt_data):
+                if section in KNOWN_BAD_GROUPS:
+                    logging.info('Ignoring missing option "%s" from group '
+                                 '"%s" because the group is known to have '
+                                 'incomplete sample config data and thus '
+                                 'cannot be validated properly.',
+                                 option, section)
+                    continue
                 logging.error('%s/%s not found', section, option)
                 errors = True
     if errors or (warnings and conf.fatal_warnings):
@@ -119,7 +129,7 @@ def _validate(conf):
 def main():
     """The main function of oslo-config-validator."""
     version = pkg_resources.get_distribution('oslo.config').version
-    logging.basicConfig(level=logging.WARN)
+    logging.basicConfig(level=logging.INFO)
     conf = cfg.ConfigOpts()
     _register_cli_opts(conf)
     try:
