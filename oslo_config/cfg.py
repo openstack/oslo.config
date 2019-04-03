@@ -17,6 +17,14 @@
 
 import argparse
 import collections
+
+# TODO(smcginnis) update this once six has support for collections.abc
+# (https://github.com/benjaminp/six/pull/241) or clean up once we drop py2.7.
+try:
+    from collections.abc import Mapping
+except ImportError:
+    from collections import Mapping
+
 import copy
 import errno
 import functools
@@ -1910,7 +1918,7 @@ class _CachedArgumentParser(argparse.ArgumentParser):
         super(_CachedArgumentParser, self).print_usage(file)
 
 
-class ConfigOpts(collections.Mapping):
+class ConfigOpts(Mapping):
 
     """Config options which may be set on the command line or in config files.
 
@@ -3099,7 +3107,7 @@ class ConfigOpts(collections.Mapping):
         value, loc = self._do_get(name, opt_group, None)
         return loc
 
-    class GroupAttr(collections.Mapping):
+    class GroupAttr(Mapping):
 
         """Helper class.
 
