@@ -42,7 +42,10 @@ option name) can appear many times, in config files or on the command line.
 Later values always override earlier ones.
 
 The order of configuration files inside the same configuration directory is
-defined by the alphabetic sorting order of their file names.
+defined by the alphabetic sorting order of their file names. Files in a
+configuration directory are parsed after any individual configuration files,
+so values that appear in both a configuration file and configuration directory
+will use the value from the directory.
 
 The parsing of CLI args and config files is initiated by invoking the config
 manager for example:
