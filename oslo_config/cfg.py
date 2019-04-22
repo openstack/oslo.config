@@ -2003,7 +2003,8 @@ class ConfigOpts(Mapping):
                            help=('Path to a config file to use. Multiple '
                                  'config files can be specified, with values '
                                  'in later files taking precedence. Defaults '
-                                 'to %(default)s.')),
+                                 'to %(default)s. This option must be set '
+                                 'from the command-line.')),
             _ConfigDirOpt('config-dir',
                           metavar='DIR',
                           default=default_config_dirs,
@@ -2014,7 +2015,8 @@ class ConfigOpts(Mapping):
                                'is parsed after the file(s) specified via '
                                'previous --config-file, arguments hence '
                                'over-ridden options in the directory take '
-                               'precedence.'),
+                               'precedence. This option must be set from '
+                               'the command-line.'),
         ]
 
     @classmethod
