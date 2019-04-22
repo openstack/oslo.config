@@ -11,9 +11,9 @@ Contents
 .. toctree::
    :maxdepth: 2
 
+   configuration/index
    reference/index
    cli/index
-   configuration/index
    contributor/index
 
 Indices and tables
