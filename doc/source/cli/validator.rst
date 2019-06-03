@@ -61,3 +61,12 @@ a sample config file ``config-data.yaml`` created by the config generator::
     ERROR:root:keystone_authtoken/project_name not found
     ERROR:root:keystone_authtoken/password not found
     ERROR:root:keystone_authtoken/auth_url not found
+
+Handling Dynamic Groups
+-----------------------
+
+Some services register group names dynamically at runtime based on other
+configuration. This is problematic for the validator because these groups won't
+be present in the sample config data. The ``--exclude-group`` option for the
+validator can be used to ignore such groups and allow the other options in a
+config file to be validated normally.

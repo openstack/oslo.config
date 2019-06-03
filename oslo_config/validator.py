@@ -48,6 +48,12 @@ _validator_opts = [
         'fatal-warnings',
         default=False,
         help='Report failure if any warnings are found.'),
+    cfg.MultiStrOpt(
+        'exclude-group',
+        default=[],
+        help='Groups that should not be validated if they are present in the '
+             'specified input-file. This may be necessary for dynamically '
+             'named groups which do not appear in the sample config data.'),
 ]
 
 
@@ -96,6 +102,8 @@ def _validate(conf):
     warnings = False
     errors = False
     for section, options in sections.items():
+        if section in conf.exclude_group:
+            continue
         for option in options:
             if _validate_deprecated_opt(section, option, opt_data):
                 logging.warn('Deprecated opt %s/%s found', section, option)
