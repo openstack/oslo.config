@@ -85,17 +85,21 @@ def _validate_opt(group, option, opt_data):
     return option in name_data
 
 
+def load_opt_data(conf):
+    with open(conf.opt_data) as f:
+        return yaml.safe_load(f)
+
+
 def _validate(conf):
     conf.register_opts(_validator_opts)
     if conf.namespace:
         groups = generator._get_groups(generator._list_opts(conf.namespace))
         opt_data = generator._generate_machine_readable_data(groups, conf)
     elif conf.opt_data:
-        with open(conf.opt_data) as f:
-            opt_data = yaml.safe_load(f)
+        opt_data = load_opt_data(conf)
     else:
         # TODO(bnemec): Implement this logic with group?
-        raise RuntimeError('Neither namespace or opt-data provided.')
+        raise RuntimeError('Neither namespace nor opt-data provided.')
     sections = {}
     parser = cfg.ConfigParser(conf.input_file, sections)
     parser.parse()
