@@ -289,7 +289,7 @@ where the top-level keys are:
   the ``OptGroup`` they are assigned to which defaults to ``DEFAULT`` if unset.
 
   For information on the various attributes of each option, refer to
-  :ref:`option-definitions`.
+  :class:`oslo_config.cfg.Opt` and its subclasses.
 
 ``deprecated_options``
 
@@ -358,12 +358,3 @@ facilitate this, options can be supplied with a ``sample_default`` attribute:
    cfg.StrOpt('base_dir'
               default=os.getcwd(),
               sample_default='/usr/lib/myapp')
-
-API
----
-
-.. currentmodule:: oslo_config.generator
-
-.. autofunction:: main
-.. autofunction:: generate
-.. autofunction:: register_cli_opts

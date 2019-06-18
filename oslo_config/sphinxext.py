@@ -474,6 +474,7 @@ class ConfigDomain(Domain):
 
     def resolve_xref(self, env, fromdocname, builder,
                      typ, target, node, contnode):
+        """Resolve cross-references"""
         if typ == 'option':
             group_name, option_name = target.split('.', 1)
             return make_refnode(
