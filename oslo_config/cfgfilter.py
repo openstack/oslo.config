@@ -13,6 +13,9 @@
 #    under the License.
 
 r"""
+DEPRECATED: This module is deprecated and scheduled for removal in the
+U cycle.
+
 There are three use cases for the ConfigFilter class:
 
 1. Help enforce that a given module does not access options registered
@@ -128,9 +131,12 @@ we can expose options such that only those options are present::
 import collections
 import itertools
 
+from debtcollector import removals
+
 from oslo_config import cfg
 
 
+@removals.removed_class('CliOptRegisteredError')
 class CliOptRegisteredError(cfg.Error):
     """Raised when registering cli opt not in original ConfigOpts.
 
@@ -146,6 +152,7 @@ class CliOptRegisteredError(cfg.Error):
         return ret
 
 
+@removals.removed_class('ConfigFilter')
 class ConfigFilter(collections.Mapping):
     """A helper class which wraps a ConfigOpts object.
 
