@@ -13,6 +13,7 @@ extensions = [
     'openstackdocstheme',
     'oslo_config.sphinxconfiggen',
     'oslo_config.sphinxext',
+    'sphinxcontrib.apidoc',
 ]
 
 # openstackdocstheme options
@@ -74,4 +75,12 @@ latex_documents = [
      '%s.tex' % project,
      '%s Documentation' % project,
      'OpenStack Foundation', 'manual'),
+]
+
+# -- sphinxcontrib.apidoc configuration --------------------------------------
+
+apidoc_module_dir = '../../oslo_config'
+apidoc_output_dir = 'reference/api'
+apidoc_excluded_paths = [
+    'tests',
 ]

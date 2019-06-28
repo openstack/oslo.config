@@ -5,6 +5,7 @@
 .. toctree::
    :maxdepth: 2
 
+   API <api/modules>
    defining
    naming
    accessing
@@ -12,14 +13,7 @@
    command-line
    deprecating
    globals
-   opts
-   types
-   configopts
-   cfgfilter
    helpers
-   fixture
-   parser
-   exceptions
    styleguide
    mutable
    locations
