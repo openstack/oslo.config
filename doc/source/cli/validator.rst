@@ -28,15 +28,17 @@ location of the sample config generator configuration file, while
 ``--input-file`` should point at the location of the configuration file to be
 validated.
 
-Here's an example of using the validator on Nova as installed by Devstack::
+Here's an example of using the validator on Nova as installed by Devstack (with
+the option [foo]/bar added to demonstrate a failure)::
 
     $ oslo-config-validator --config-file /opt/stack/nova/etc/nova/nova-config-generator.conf --input-file /etc/nova/nova.conf
-    ERROR:root:keystone_authtoken/user_domain_name not found
-    ERROR:root:keystone_authtoken/password not found
-    ERROR:root:keystone_authtoken/project_domain_name not found
-    ERROR:root:keystone_authtoken/project_name not found
-    ERROR:root:keystone_authtoken/username not found
-    ERROR:root:keystone_authtoken/auth_url not found
+    ERROR:root:foo/bar not found
+    INFO:root:Ignoring missing option "project_domain_name" from group "keystone_authtoken" because the group is known to have incomplete sample config data and thus cannot be validated properly.
+    INFO:root:Ignoring missing option "project_name" from group "keystone_authtoken" because the group is known to have incomplete sample config data and thus cannot be validated properly.
+    INFO:root:Ignoring missing option "user_domain_name" from group "keystone_authtoken" because the group is known to have incomplete sample config data and thus cannot be validated properly.
+    INFO:root:Ignoring missing option "password" from group "keystone_authtoken" because the group is known to have incomplete sample config data and thus cannot be validated properly.
+    INFO:root:Ignoring missing option "username" from group "keystone_authtoken" because the group is known to have incomplete sample config data and thus cannot be validated properly.
+    INFO:root:Ignoring missing option "auth_url" from group "keystone_authtoken" because the group is known to have incomplete sample config data and thus cannot be validated properly.
 
 Machine-Readable Sample Config
 ------------------------------
@@ -52,15 +54,17 @@ This file is then passed to the validator with ``--opt-data``, along with the
 config file to validated in ``--input-file`` as above.
 
 Here's an example of using the validator on Nova as installed by Devstack, with
-a sample config file ``config-data.yaml`` created by the config generator::
+a sample config file ``config-data.yaml`` created by the config generator (with
+the option [foo]/bar added to demonstrate a failure)::
 
     $ oslo-config-validator --opt-data config-data.yaml --input-file /etc/nova/nova.conf
-    ERROR:root:keystone_authtoken/username not found
-    ERROR:root:keystone_authtoken/project_domain_name not found
-    ERROR:root:keystone_authtoken/user_domain_name not found
-    ERROR:root:keystone_authtoken/project_name not found
-    ERROR:root:keystone_authtoken/password not found
-    ERROR:root:keystone_authtoken/auth_url not found
+    ERROR:root:foo/bar not found
+    INFO:root:Ignoring missing option "project_domain_name" from group "keystone_authtoken" because the group is known to have incomplete sample config data and thus cannot be validated properly.
+    INFO:root:Ignoring missing option "project_name" from group "keystone_authtoken" because the group is known to have incomplete sample config data and thus cannot be validated properly.
+    INFO:root:Ignoring missing option "user_domain_name" from group "keystone_authtoken" because the group is known to have incomplete sample config data and thus cannot be validated properly.
+    INFO:root:Ignoring missing option "password" from group "keystone_authtoken" because the group is known to have incomplete sample config data and thus cannot be validated properly.
+    INFO:root:Ignoring missing option "username" from group "keystone_authtoken" because the group is known to have incomplete sample config data and thus cannot be validated properly.
+    INFO:root:Ignoring missing option "auth_url" from group "keystone_authtoken" because the group is known to have incomplete sample config data and thus cannot be validated properly.
 
 Handling Dynamic Groups
 -----------------------
@@ -70,3 +74,7 @@ configuration. This is problematic for the validator because these groups won't
 be present in the sample config data. The ``--exclude-group`` option for the
 validator can be used to ignore such groups and allow the other options in a
 config file to be validated normally.
+
+.. note:: The ``keystone_authtoken`` group is always ignored because of the
+          unusual way the options from that library are generated. The sample
+          configuration data is known to be incomplete as a result.
