@@ -20,7 +20,6 @@ extensions = [
 repository_name = 'openstack/oslo.config'
 bug_project = 'oslo.config'
 bug_tag = ''
-html_last_updated_fmt = '%Y-%m-%d %H:%M'
 
 config_generator_config_file = 'config-generator.conf'
 
@@ -38,7 +37,6 @@ source_suffix = '.rst'
 master_doc = 'index'
 
 # General information about the project.
-project = u'oslo.config'
 copyright = u'2013, OpenStack Foundation'
 
 # If true, '()' will be appended to :func: etc. cross-reference text.
@@ -63,19 +61,6 @@ modindex_common_prefix = ['oslo_config.']
 # html_theme = '_theme'
 # html_static_path = ['static']
 html_theme = 'openstackdocs'
-
-# Output file base name for HTML help builder.
-htmlhelp_basename = '%sdoc' % project
-
-# Grouping the document tree into LaTeX files. List of tuples
-# (source start file, target name, title, author, documentclass
-# [howto/manual]).
-latex_documents = [
-    ('index',
-     '%s.tex' % project,
-     '%s Documentation' % project,
-     'OpenStack Foundation', 'manual'),
-]
 
 # -- sphinxcontrib.apidoc configuration --------------------------------------
 

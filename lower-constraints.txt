@@ -23,7 +23,7 @@ mccabe==0.2.1
 mock==3.0.0
 mox3==0.20.0
 netaddr==0.7.18
-openstackdocstheme==1.18.1
+openstackdocstheme==1.20.0
 os-client-config==1.28.0
 oslo.i18n==3.15.3
 oslo.log==3.36.0
