@@ -1,6 +1,7 @@
 # The order of packages is significant, because pip processes them in the order
 # of appearance. Changing the order has an impact on the overall integration
 # process, which may cause wedges in the gate later.
+
 hacking>=1.1.0,<1.2.0 # Apache-2.0
 
 fixtures>=3.0.0 # Apache-2.0/BSD
@@ -19,15 +20,9 @@ oslo.log>=3.36.0  # Apache-2.0
 #  deps = {[testenv]deps} coverage
 coverage!=4.4,>=4.0 # Apache-2.0
 
-# this is required for the sphinx extension
-sphinx!=1.6.6,!=1.6.7,>=1.6.2,<2.0.0;python_version=='2.7' # BSD
-sphinx!=1.6.6,!=1.6.7,>=1.6.2;python_version>='3.4' # BSD
-
 # mocking framework
 mock>=3.0.0 # BSD
 requests_mock>=1.5.0 # Apache-2.0
 
 # Bandit security code scanner
 bandit>=1.1.0,<1.6.0 # Apache-2.0
-
-reno>=2.5.0 # Apache-2.0
