@@ -93,6 +93,11 @@ class StringTypeTests(TypeTestHelper, unittest.TestCase):
         self.type_instance = types.String(quotes=True)
         self.assertConvertedValue('foo bar"', 'foo bar"')
 
+    def test_single_quote_is_invalid(self):
+        self.type_instance = types.String(quotes=True)
+        self.assertInvalid('"')
+        self.assertInvalid("'")
+
     def test_repr(self):
         t = types.String()
         self.assertEqual('String', repr(t))

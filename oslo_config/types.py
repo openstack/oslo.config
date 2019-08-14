@@ -144,7 +144,7 @@ class String(ConfigType):
         value = str(value)
         if self.quotes and value:
             if value[0] in "\"'":
-                if value[-1] != value[0]:
+                if len(value) == 1 or value[-1] != value[0]:
                     raise ValueError('Non-closed quote: %s' % value)
                 value = value[1:-1]
 
