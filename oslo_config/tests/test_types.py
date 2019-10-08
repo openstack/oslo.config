@@ -16,7 +16,6 @@ import re
 import unittest
 
 from oslo_config import types
-from six.moves import range as compat_range
 
 
 class ConfigTypeTests(unittest.TestCase):
@@ -601,7 +600,7 @@ class RangeTypeTests(TypeTestHelper, unittest.TestCase):
     type = types.Range()
 
     def assertRange(self, s, r1, r2, step=1):
-        self.assertEqual(list(compat_range(r1, r2, step)),
+        self.assertEqual(list(range(r1, r2, step)),
                          list(self.type_instance(s)))
 
     def test_range(self):

@@ -15,6 +15,7 @@
 import argparse
 import errno
 import functools
+import io
 import logging
 import os
 import shutil
@@ -24,8 +25,6 @@ import tempfile
 import fixtures
 import mock
 from oslotest import base
-import six
-from six import moves
 import testscenarios
 
 from oslo_config import cfg
@@ -139,7 +138,7 @@ class BaseTestCase(base.BaseTestCase):
 class UsageTestCase(BaseTestCase):
 
     def test_print_usage(self):
-        f = moves.StringIO()
+        f = io.StringIO()
         self.conf([])
         self.conf.print_usage(file=f)
         self.assertIn(
@@ -154,7 +153,7 @@ class UsageTestCase(BaseTestCase):
         conf = self.TestConfigOpts()
 
         self.tempdirs = []
-        f = moves.StringIO()
+        f = io.StringIO()
         conf([], usage='%(prog)s FOO BAR')
         conf.print_usage(file=f)
         self.assertIn('usage: test FOO BAR', f.getvalue())
@@ -163,7 +162,7 @@ class UsageTestCase(BaseTestCase):
         self.assertNotIn('optional:', f.getvalue())
 
     def test_print_help(self):
-        f = moves.StringIO()
+        f = io.StringIO()
         self.conf([])
         self.conf.print_help(file=f)
         self.assertIn(
@@ -178,7 +177,7 @@ class UsageTestCase(BaseTestCase):
 class HelpTestCase(BaseTestCase):
 
     def test_print_help(self):
-        f = moves.StringIO()
+        f = io.StringIO()
         self.conf([])
         self.conf.print_help(file=f)
         self.assertIn(
@@ -189,7 +188,7 @@ class HelpTestCase(BaseTestCase):
         self.assertIn('-h, --help', f.getvalue())
 
     def test_print_strOpt_with_choices_help(self):
-        f = moves.StringIO()
+        f = io.StringIO()
         cli_opts = [
             cfg.StrOpt('aa', short='a', default='xx',
                        choices=['xx', 'yy', 'zz'],
@@ -218,7 +217,7 @@ class HelpTestCase(BaseTestCase):
                       f.getvalue())
 
     def test_print_sorted_help(self):
-        f = moves.StringIO()
+        f = io.StringIO()
         self.conf.register_cli_opt(cfg.StrOpt('abc'))
         self.conf.register_cli_opt(cfg.StrOpt('zba'))
         self.conf.register_cli_opt(cfg.StrOpt('ghi'))
@@ -233,7 +232,7 @@ class HelpTestCase(BaseTestCase):
         self.assertEqual(sorted(list), list)
 
     def test_print_sorted_help_with_positionals(self):
-        f = moves.StringIO()
+        f = io.StringIO()
         self.conf.register_cli_opt(
             cfg.StrOpt('pst', positional=True, required=False))
         self.conf.register_cli_opt(cfg.StrOpt('abc'))
@@ -248,7 +247,7 @@ class HelpTestCase(BaseTestCase):
         self.assertEqual(sorted(list), list)
 
     def test_print_help_with_deprecated(self):
-        f = moves.StringIO()
+        f = io.StringIO()
         abc = cfg.StrOpt('a-bc',
                          deprecated_opts=[cfg.DeprecatedOpt('d-ef')])
         uvw = cfg.StrOpt('u-vw',
@@ -779,7 +778,7 @@ class CliOptsTestCase(BaseTestCase):
 class CliSpecialOptsTestCase(BaseTestCase):
 
     def test_help(self):
-        self.useFixture(fixtures.MonkeyPatch('sys.stdout', moves.StringIO()))
+        self.useFixture(fixtures.MonkeyPatch('sys.stdout', io.StringIO()))
         self.assertRaises(SystemExit, self.conf, ['--help'])
         self.assertIn('usage: test', sys.stdout.getvalue())
         self.assertIn('[--version]', sys.stdout.getvalue())
@@ -796,7 +795,7 @@ class CliSpecialOptsTestCase(BaseTestCase):
         else:
             stream_name = 'stderr'
         self.useFixture(fixtures.MonkeyPatch("sys.%s" % stream_name,
-                                             moves.StringIO()))
+                                             io.StringIO()))
         self.assertRaises(SystemExit, self.conf, ['--version'])
         self.assertIn('1.0', getattr(sys, stream_name).getvalue())
 
@@ -925,7 +924,7 @@ class PositionalTestCase(BaseTestCase):
         self.conf.register_cli_opt(
             cfg.StrOpt('foo', required=True, positional=True))
 
-        self.useFixture(fixtures.MonkeyPatch('sys.stdout', moves.StringIO()))
+        self.useFixture(fixtures.MonkeyPatch('sys.stdout', io.StringIO()))
         self.assertRaises(SystemExit, self.conf, ['--help'])
         self.assertIn(' foo\n', sys.stdout.getvalue())
 
@@ -938,7 +937,7 @@ class PositionalTestCase(BaseTestCase):
         self.conf.register_cli_opt(
             cfg.StrOpt('foo', required=True, positional=True))
 
-        self.useFixture(fixtures.MonkeyPatch('sys.stdout', moves.StringIO()))
+        self.useFixture(fixtures.MonkeyPatch('sys.stdout', io.StringIO()))
         self.assertRaises(SystemExit, self.conf, ['--help'])
         self.assertIn(' foo\n', sys.stdout.getvalue())
 
@@ -948,7 +947,7 @@ class PositionalTestCase(BaseTestCase):
         self.conf.register_cli_opt(
             cfg.StrOpt('foo', required=False, positional=True))
 
-        self.useFixture(fixtures.MonkeyPatch('sys.stdout', moves.StringIO()))
+        self.useFixture(fixtures.MonkeyPatch('sys.stdout', io.StringIO()))
         self.assertRaises(SystemExit, self.conf, ['--help'])
         self.assertIn(' [foo]\n', sys.stdout.getvalue())
 
@@ -961,7 +960,7 @@ class PositionalTestCase(BaseTestCase):
         self.conf.register_cli_opt(
             cfg.StrOpt('foo', required=False, positional=True))
 
-        self.useFixture(fixtures.MonkeyPatch('sys.stdout', moves.StringIO()))
+        self.useFixture(fixtures.MonkeyPatch('sys.stdout', io.StringIO()))
         self.assertRaises(SystemExit, self.conf, ['--help'])
         self.assertIn(' [foo]\n', sys.stdout.getvalue())
 
@@ -974,7 +973,7 @@ class PositionalTestCase(BaseTestCase):
         self.conf.register_cli_opt(
             cfg.StrOpt('foo-bar', required=False, positional=True))
 
-        self.useFixture(fixtures.MonkeyPatch('sys.stdout', moves.StringIO()))
+        self.useFixture(fixtures.MonkeyPatch('sys.stdout', io.StringIO()))
         self.assertRaises(SystemExit, self.conf, ['--help'])
         self.assertIn(' [foo_bar]\n', sys.stdout.getvalue())
 
@@ -986,7 +985,7 @@ class PositionalTestCase(BaseTestCase):
         self.conf.register_cli_opt(
             cfg.StrOpt('foo-bar', required=False, positional=True))
 
-        self.useFixture(fixtures.MonkeyPatch('sys.stdout', moves.StringIO()))
+        self.useFixture(fixtures.MonkeyPatch('sys.stdout', io.StringIO()))
         self.assertRaises(SystemExit, self.conf, ['--help'])
         self.assertIn(' [foo_bar]\n', sys.stdout.getvalue())
 
@@ -998,7 +997,7 @@ class PositionalTestCase(BaseTestCase):
         self.conf.register_cli_opt(
             cfg.StrOpt('foo-bar', required=True, positional=True))
 
-        self.useFixture(fixtures.MonkeyPatch('sys.stdout', moves.StringIO()))
+        self.useFixture(fixtures.MonkeyPatch('sys.stdout', io.StringIO()))
         self.assertRaises(SystemExit, self.conf, ['--help'])
         self.assertIn(' foo_bar\n', sys.stdout.getvalue())
 
@@ -1010,7 +1009,7 @@ class PositionalTestCase(BaseTestCase):
         self.conf.register_cli_opt(
             cfg.StrOpt('foo-bar', required=True, positional=True))
 
-        self.useFixture(fixtures.MonkeyPatch('sys.stdout', moves.StringIO()))
+        self.useFixture(fixtures.MonkeyPatch('sys.stdout', io.StringIO()))
         self.assertRaises(SystemExit, self.conf, ['--help'])
         self.assertIn(' foo_bar\n', sys.stdout.getvalue())
 
@@ -3775,7 +3774,7 @@ class SadPathTestCase(BaseTestCase):
     def test_bad_cli_arg(self):
         self.conf.register_opt(cfg.BoolOpt('foo'))
 
-        self.useFixture(fixtures.MonkeyPatch('sys.stderr', moves.StringIO()))
+        self.useFixture(fixtures.MonkeyPatch('sys.stderr', io.StringIO()))
 
         self.assertRaises(SystemExit, self.conf, ['--foo'])
 
@@ -3785,7 +3784,7 @@ class SadPathTestCase(BaseTestCase):
     def _do_test_bad_cli_value(self, opt_class):
         self.conf.register_cli_opt(opt_class('foo'))
 
-        self.useFixture(fixtures.MonkeyPatch('sys.stderr', moves.StringIO()))
+        self.useFixture(fixtures.MonkeyPatch('sys.stderr', io.StringIO()))
 
         self.assertRaises(SystemExit, self.conf, ['--foo', 'bar'])
 
@@ -4071,7 +4070,7 @@ class ConfigParserTestCase(BaseTestCase):
 
     def test_no_section(self):
         with tempfile.NamedTemporaryFile() as tmpfile:
-            tmpfile.write(six.b('foo = bar'))
+            tmpfile.write(b'foo = bar')
             tmpfile.flush()
 
             parser = cfg.ConfigParser(tmpfile.name, {})
@@ -4306,7 +4305,7 @@ class SubCommandTestCase(BaseTestCase):
 
     def test_sub_command_no_handler(self):
         self.conf.register_cli_opt(cfg.SubCommandOpt('cmd'))
-        self.useFixture(fixtures.MonkeyPatch('sys.stderr', moves.StringIO()))
+        self.useFixture(fixtures.MonkeyPatch('sys.stderr', io.StringIO()))
         self.assertRaises(SystemExit, self.conf, [])
         self.assertIn('error', sys.stderr.getvalue())
 
@@ -4319,7 +4318,7 @@ class SubCommandTestCase(BaseTestCase):
                                                      description='bar bar',
                                                      help='blaa blaa',
                                                      handler=add_parsers))
-        self.useFixture(fixtures.MonkeyPatch('sys.stdout', moves.StringIO()))
+        self.useFixture(fixtures.MonkeyPatch('sys.stdout', io.StringIO()))
         self.assertRaises(SystemExit, self.conf, ['--help'])
         self.assertIn('foo foo', sys.stdout.getvalue())
         self.assertIn('bar bar', sys.stdout.getvalue())
@@ -4340,7 +4339,7 @@ class SubCommandTestCase(BaseTestCase):
     def test_sub_command_multiple(self):
         self.conf.register_cli_opt(cfg.SubCommandOpt('cmd1'))
         self.conf.register_cli_opt(cfg.SubCommandOpt('cmd2'))
-        self.useFixture(fixtures.MonkeyPatch('sys.stderr', moves.StringIO()))
+        self.useFixture(fixtures.MonkeyPatch('sys.stderr', io.StringIO()))
         self.assertRaises(SystemExit, self.conf, [])
         self.assertIn('multiple', sys.stderr.getvalue())
 

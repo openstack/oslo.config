@@ -28,12 +28,10 @@ import abc
 from debtcollector import removals
 import netaddr
 import rfc3986
-import six
-from six.moves import range as compat_range
 
 
-@six.add_metaclass(abc.ABCMeta)
-class ConfigType(object):
+class ConfigType(object, metaclass=abc.ABCMeta):
+
     def __init__(self, type_name='unknown type'):
         self.type_name = type_name
 
@@ -44,7 +42,7 @@ class ConfigType(object):
 
         """
         if sample_default is not None:
-            if isinstance(sample_default, six.string_types):
+            if isinstance(sample_default, str):
                 default_str = sample_default
             else:
                 default_str = self._formatter(sample_default)
@@ -55,9 +53,9 @@ class ConfigType(object):
         return [default_str]
 
     def quote_trailing_and_leading_space(self, str_val):
-        if not isinstance(str_val, six.string_types):
+        if not isinstance(str_val, str):
             warnings.warn('converting \'%s\' to a string' % str_val)
-            str_val = six.text_type(str_val)
+            str_val = str(str_val)
         if str_val.strip() != str_val:
             return '"%s"' % str_val
         return str_val
@@ -135,7 +133,7 @@ class String(ConfigType):
             re_flags = re.IGNORECASE if self.ignore_case else 0
 
             # Check if regex is a string or an already compiled regex
-            if isinstance(regex, six.string_types):
+            if isinstance(regex, str):
                 self.regex = re.compile(regex, re_flags)
             else:
                 self.regex = re.compile(regex.pattern, re_flags | regex.flags)
@@ -351,7 +349,7 @@ class Number(ConfigType):
         )
 
     def _formatter(self, value):
-        return six.text_type(value)
+        return str(value)
 
 
 class Integer(Number):
@@ -484,7 +482,7 @@ class List(ConfigType):
 
     def __call__(self, value):
         if isinstance(value, (list, tuple)):
-            return list(six.moves.map(self.item_type, value))
+            return list(map(self.item_type, value))
 
         s = value.strip().rstrip(',')
         if self.bounds:
@@ -531,7 +529,7 @@ class List(ConfigType):
 
     def _formatter(self, value):
         fmtstr = '[{}]' if self.bounds else '{}'
-        if isinstance(value, six.string_types):
+        if isinstance(value, str):
             return fmtstr.format(value)
         if isinstance(value, list):
             value = [
@@ -585,7 +583,7 @@ class Range(ConfigType):
             step = -1
         if self.inclusive:
             right += step
-        return compat_range(left, right, step)
+        return range(left, right, step)
 
     def __eq__(self, other):
         return (

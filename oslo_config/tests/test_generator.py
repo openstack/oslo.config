@@ -12,13 +12,13 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+import io
 import sys
 import textwrap
 
 import fixtures
 import mock
 from oslotest import base
-from six import moves
 import tempfile
 import testscenarios
 
@@ -963,7 +963,7 @@ class GeneratorTestCase(base.BaseTestCase):
 
     def _capture_stream(self, stream_name):
         self.useFixture(fixtures.MonkeyPatch("sys.%s" % stream_name,
-                                             moves.StringIO()))
+                                             io.StringIO()))
         return getattr(sys, stream_name)
 
     def _capture_stdout(self):
@@ -1103,7 +1103,7 @@ class DriverOptionTestCase(base.BaseTestCase):
         # Initialize the generator to produce YAML output to a buffer.
         generator.register_cli_opts(self.conf)
         self.config(namespace=['test_generator'], format_='yaml')
-        stdout = moves.StringIO()
+        stdout = io.StringIO()
 
         # Generate the output and parse it back to a data structure.
         generator.generate(self.conf, output_file=stdout)
@@ -1609,7 +1609,7 @@ class GeneratorAdditionalTestCase(base.BaseTestCase):
 class GeneratorMutableOptionTestCase(base.BaseTestCase):
 
     def test_include_message(self):
-        out = moves.StringIO()
+        out = io.StringIO()
         opt = cfg.StrOpt('foo', help='foo option', mutable=True)
         gen = build_formatter(out)
         gen.format(opt, 'group1')
@@ -1620,7 +1620,7 @@ class GeneratorMutableOptionTestCase(base.BaseTestCase):
         )
 
     def test_do_not_include_message(self):
-        out = moves.StringIO()
+        out = io.StringIO()
         opt = cfg.StrOpt('foo', help='foo option', mutable=False)
         gen = build_formatter(out)
         gen.format(opt, 'group1')
@@ -1854,7 +1854,7 @@ class HostAddressTestCase(base.BaseTestCase):
         config = [("namespace", [("alpha", self.opts)])]
         groups = generator._get_groups(config)
 
-        out = moves.StringIO()
+        out = io.StringIO()
         formatter = build_formatter(out)
         generator._output_opts(formatter, 'alpha', groups.pop('alpha'))
         result = out.getvalue()
@@ -1870,6 +1870,7 @@ class HostAddressTestCase(base.BaseTestCase):
         #foo = 0.0.0.0
         ''').lstrip()
         self.assertEqual(expected, result)
+
 
 GeneratorTestCase.generate_scenarios()
 MachineReadableGeneratorTestCase.generate_scenarios()

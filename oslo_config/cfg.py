@@ -17,15 +17,9 @@
 
 import argparse
 import collections
-
-# TODO(smcginnis) update this once six has support for collections.abc
-# (https://github.com/benjaminp/six/pull/241) or clean up once we drop py2.7.
-try:
-    from collections.abc import Mapping
-except ImportError:
-    from collections import Mapping
-
+from collections import abc
 import copy
+import enum
 import errno
 import functools
 import glob
@@ -36,8 +30,6 @@ import os
 import string
 import sys
 
-import enum
-import six
 # NOTE(bnemec): oslo.log depends on oslo.config, so we can't
 # have a hard dependency on oslo.log.  However, in most cases
 # oslo.log will be installed so we can use it.
@@ -607,7 +599,7 @@ class Opt(object):
 
     def _default_is_ref(self):
         """Check if default is a reference to another var."""
-        if isinstance(self.default, six.string_types):
+        if isinstance(self.default, str):
             tmpl = self.default.replace(r'\$', '').replace('$$', '')
             return '$' in tmpl
         return False
@@ -939,7 +931,7 @@ class StrOpt(Opt):
             return '<None>'
         elif choice == '':
             return "''"
-        return six.text_type(choice)
+        return str(choice)
 
     def _get_argparse_kwargs(self, group, **kwargs):
         """Extends the base argparse keyword dict for the config dir option."""
@@ -1564,7 +1556,7 @@ class ConfigParser(iniparser.BaseParser):
 
     def parse(self):
         with open(self.filename) as f:
-            return super(ConfigParser, self).parse(f)
+            return super(ConfigParser, self).parse(f.readlines())
 
     def new_section(self, section):
         self.section = section
@@ -1930,7 +1922,7 @@ class _CachedArgumentParser(argparse.ArgumentParser):
         super(_CachedArgumentParser, self).print_usage(file)
 
 
-class ConfigOpts(Mapping):
+class ConfigOpts(abc.Mapping):
 
     """Config options which may be set on the command line or in config files.
 
@@ -3121,7 +3113,7 @@ class ConfigOpts(Mapping):
         value, loc = self._do_get(name, opt_group, None)
         return loc
 
-    class GroupAttr(Mapping):
+    class GroupAttr(abc.Mapping):
 
         """Helper class.
 

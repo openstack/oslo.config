@@ -12,16 +12,15 @@
 
 import os
 
+from oslotest import base
 from requests import HTTPError
+import requests_mock
 
 from oslo_config import _list_opts
 from oslo_config import cfg
 from oslo_config import fixture
 from oslo_config import sources
 from oslo_config.sources import _uri
-
-from oslotest import base
-import requests_mock
 
 
 class TestProcessingSources(base.BaseTestCase):
