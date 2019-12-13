@@ -2576,7 +2576,7 @@ class ConfigOpts(Mapping):
             logger.log(lvl, "%-30s = %s", opt_name,
                        _sanitize(opt, getattr(self, opt_name)))
 
-        for group_name in self._groups:
+        for group_name in list(self._groups):
             group_attr = self.GroupAttr(self, self._get_group(group_name))
             for opt_name in sorted(self._groups[group_name]._opts):
                 opt = self._get_opt_info(opt_name, group_name)['opt']
