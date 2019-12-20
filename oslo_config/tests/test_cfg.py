@@ -94,13 +94,13 @@ class BaseTestCase(base.BaseTestCase):
 
     class TestConfigOpts(cfg.ConfigOpts):
         def __call__(self, args=None, default_config_files=[],
-                     default_config_dirs=[]):
+                     default_config_dirs=[], usage=None):
             return cfg.ConfigOpts.__call__(
                 self,
                 args=args,
                 prog='test',
                 version='1.0',
-                usage='%(prog)s FOO BAR',
+                usage=usage,
                 description='somedesc',
                 epilog='tepilog',
                 default_config_files=default_config_files,
@@ -142,6 +142,21 @@ class UsageTestCase(BaseTestCase):
         f = moves.StringIO()
         self.conf([])
         self.conf.print_usage(file=f)
+        self.assertIn(
+            'usage: test [-h] [--config-dir DIR] [--config-file PATH] '
+            '[--version]',
+            f.getvalue())
+        self.assertNotIn('somedesc', f.getvalue())
+        self.assertNotIn('tepilog', f.getvalue())
+        self.assertNotIn('optional:', f.getvalue())
+
+    def test_print_custom_usage(self):
+        conf = self.TestConfigOpts()
+
+        self.tempdirs = []
+        f = moves.StringIO()
+        conf([], usage='%(prog)s FOO BAR')
+        conf.print_usage(file=f)
         self.assertIn('usage: test FOO BAR', f.getvalue())
         self.assertNotIn('somedesc', f.getvalue())
         self.assertNotIn('tepilog', f.getvalue())
@@ -151,7 +166,10 @@ class UsageTestCase(BaseTestCase):
         f = moves.StringIO()
         self.conf([])
         self.conf.print_help(file=f)
-        self.assertIn('usage: test FOO BAR', f.getvalue())
+        self.assertIn(
+            'usage: test [-h] [--config-dir DIR] [--config-file PATH] '
+            '[--version]',
+            f.getvalue())
         self.assertIn('somedesc', f.getvalue())
         self.assertIn('tepilog', f.getvalue())
         self.assertNotIn('optional:', f.getvalue())
@@ -163,7 +181,10 @@ class HelpTestCase(BaseTestCase):
         f = moves.StringIO()
         self.conf([])
         self.conf.print_help(file=f)
-        self.assertIn('usage: test FOO BAR', f.getvalue())
+        self.assertIn(
+            'usage: test [-h] [--config-dir DIR] [--config-file PATH] '
+            '[--version]',
+            f.getvalue())
         self.assertIn('optional', f.getvalue())
         self.assertIn('-h, --help', f.getvalue())
 
@@ -183,7 +204,10 @@ class HelpTestCase(BaseTestCase):
         self.conf.register_cli_opts(cli_opts)
         self.conf([])
         self.conf.print_help(file=f)
-        self.assertIn('usage: test FOO BAR', f.getvalue())
+        self.assertIn(
+            'usage: test [-h] [--aa AA] [--bb BB] [--cc CC] [--config-dir DIR]'
+            '\n            [--config-file PATH] [--version]',
+            f.getvalue())
         self.assertIn('optional', f.getvalue())
         self.assertIn('-h, --help', f.getvalue())
         self.assertIn('StrOpt with choices. Allowed values: xx, yy, zz',
@@ -756,10 +780,12 @@ class CliSpecialOptsTestCase(BaseTestCase):
     def test_help(self):
         self.useFixture(fixtures.MonkeyPatch('sys.stdout', moves.StringIO()))
         self.assertRaises(SystemExit, self.conf, ['--help'])
-        self.assertIn('FOO BAR', sys.stdout.getvalue())
-        self.assertIn('--version', sys.stdout.getvalue())
+        self.assertIn('usage: test', sys.stdout.getvalue())
+        self.assertIn('[--version]', sys.stdout.getvalue())
+        self.assertIn('[-h]', sys.stdout.getvalue())
         self.assertIn('--help', sys.stdout.getvalue())
-        self.assertIn('--config-file', sys.stdout.getvalue())
+        self.assertIn('[--config-dir DIR]', sys.stdout.getvalue())
+        self.assertIn('[--config-file PATH]', sys.stdout.getvalue())
 
     def test_version(self):
         # In Python 3.4+, argparse prints the version on stdout; before 3.4, it
