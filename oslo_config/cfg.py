@@ -540,7 +540,7 @@ class Opt(object):
 
     def __init__(self, name, type=None, dest=None, short=None,
                  default=None, positional=False, metavar=None, help=None,
-                 secret=False, required=False,
+                 secret=False, required=None,
                  deprecated_name=None, deprecated_group=None,
                  deprecated_opts=None, sample_default=None,
                  deprecated_for_removal=False, deprecated_reason=None,
@@ -555,6 +555,11 @@ class Opt(object):
         if not callable(type):
             raise TypeError('type must be callable')
         self.type = type
+
+        # By default, non-positional options are *optional*, and positional
+        # options are *required*.
+        if required is None:
+            required = True if positional else False
 
         if dest is None:
             self.dest = self.name.replace('-', '_')
@@ -751,7 +756,7 @@ class Opt(object):
             if group is not None:
                 dest = group.name + '_' + dest
             kwargs['dest'] = dest
-        else:
+        elif not self.required:
             kwargs['nargs'] = '?'
         kwargs.update({'default': None,
                        'metavar': self.metavar,

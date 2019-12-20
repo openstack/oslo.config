@@ -234,7 +234,8 @@ class HelpTestCase(BaseTestCase):
 
     def test_print_sorted_help_with_positionals(self):
         f = moves.StringIO()
-        self.conf.register_cli_opt(cfg.StrOpt('pst', positional=True))
+        self.conf.register_cli_opt(
+            cfg.StrOpt('pst', positional=True, required=False))
         self.conf.register_cli_opt(cfg.StrOpt('abc'))
         self.conf.register_cli_opt(cfg.StrOpt('zba'))
         self.conf.register_cli_opt(cfg.StrOpt('ghi'))
@@ -813,7 +814,8 @@ class PositionalTestCase(BaseTestCase):
     def _do_pos_test(self, opt_class, default, cli_args, value):
         self.conf.register_cli_opt(opt_class('foo',
                                              default=default,
-                                             positional=True))
+                                             positional=True,
+                                             required=False))
 
         self.conf(cli_args)
 
@@ -940,7 +942,7 @@ class PositionalTestCase(BaseTestCase):
         self.assertRaises(SystemExit, self.conf, ['--help'])
         self.assertIn(' foo\n', sys.stdout.getvalue())
 
-        self.assertRaises(cfg.RequiredOptError, self.conf, [])
+        self.assertRaises(SystemExit, self.conf, [])
 
     def test_optional_positional_opt_defined(self):
         self.conf.register_cli_opt(
@@ -948,11 +950,7 @@ class PositionalTestCase(BaseTestCase):
 
         self.useFixture(fixtures.MonkeyPatch('sys.stdout', moves.StringIO()))
         self.assertRaises(SystemExit, self.conf, ['--help'])
-        # FIXME(dolphm): Due to bug 1676989, this argument appears as a
-        # required argument in the CLI help. Instead, the following
-        # commented-out code should work:
-        # self.assertIn(' [foo]\n', sys.stdout.getvalue())
-        self.assertIn(' foo\n', sys.stdout.getvalue())
+        self.assertIn(' [foo]\n', sys.stdout.getvalue())
 
         self.conf(['bar'])
 
@@ -965,11 +963,7 @@ class PositionalTestCase(BaseTestCase):
 
         self.useFixture(fixtures.MonkeyPatch('sys.stdout', moves.StringIO()))
         self.assertRaises(SystemExit, self.conf, ['--help'])
-        # FIXME(dolphm): Due to bug 1676989, this argument appears as a
-        # required argument in the CLI help. Instead, the following
-        # commented-out code should work:
-        # self.assertIn(' [foo]\n', sys.stdout.getvalue())
-        self.assertIn(' foo\n', sys.stdout.getvalue())
+        self.assertIn(' [foo]\n', sys.stdout.getvalue())
 
         self.conf([])
 
@@ -982,11 +976,7 @@ class PositionalTestCase(BaseTestCase):
 
         self.useFixture(fixtures.MonkeyPatch('sys.stdout', moves.StringIO()))
         self.assertRaises(SystemExit, self.conf, ['--help'])
-        # FIXME(dolphm): Due to bug 1676989, this argument appears as a
-        # required argument in the CLI help. Instead, the following
-        # commented-out code should work:
-        # self.assertIn(' [foo-bar]\n', sys.stdout.getvalue())
-        self.assertIn(' foo-bar\n', sys.stdout.getvalue())
+        self.assertIn(' [foo-bar]\n', sys.stdout.getvalue())
 
         self.conf(['baz'])
         self.assertTrue(hasattr(self.conf, 'foo_bar'))
@@ -1002,11 +992,7 @@ class PositionalTestCase(BaseTestCase):
 
         self.useFixture(fixtures.MonkeyPatch('sys.stdout', moves.StringIO()))
         self.assertRaises(SystemExit, self.conf, ['--help'])
-        # FIXME(dolphm): Due to bug 1676989, this argument appears as a
-        # required argument in the CLI help. Instead, the following
-        # commented-out code should work:
-        # self.assertIn(' [foo-bar]\n', sys.stdout.getvalue())
-        self.assertIn(' foo-bar\n', sys.stdout.getvalue())
+        self.assertIn(' [foo-bar]\n', sys.stdout.getvalue())
 
         self.conf([])
         self.assertTrue(hasattr(self.conf, 'foo_bar'))
@@ -1036,12 +1022,12 @@ class PositionalTestCase(BaseTestCase):
         self.assertRaises(SystemExit, self.conf, ['--help'])
         self.assertIn(' foo-bar\n', sys.stdout.getvalue())
 
-        self.assertRaises(cfg.RequiredOptError, self.conf, [])
+        self.assertRaises(SystemExit, self.conf, [])
 
     def test_missing_required_cli_opt(self):
         self.conf.register_cli_opt(
             cfg.StrOpt('foo', required=True, positional=True))
-        self.assertRaises(cfg.RequiredOptError, self.conf, [])
+        self.assertRaises(SystemExit, self.conf, [])
 
     def test_positional_opts_order(self):
         self.conf.register_cli_opts((

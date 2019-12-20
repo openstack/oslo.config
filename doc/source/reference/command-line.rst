@@ -17,6 +17,10 @@ constructor argument:
     >>> conf.bar
     ['a', 'b']
 
+By default, positional arguments are also required. You may opt-out of this
+behavior by setting ``required=False``, to have an optional positional
+argument.
+
 Sub-Parsers
 -----------
 
