@@ -2893,7 +2893,7 @@ class TemplateSubstitutionTestCase(BaseTestCase):
 
         paths = self.create_tempfiles([('test',
                                         '[DEFAULT]\n'
-                                        'bar=foo-somethin\$k2\n')])
+                                        'bar=foo-somethin\\$k2\n')])
 
         self.conf(['--config-file', paths[0]])
 
