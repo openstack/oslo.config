@@ -42,7 +42,6 @@ The Configuration Source Class
 """
 
 import abc
-import six
 
 
 # We cannot use None as a sentinel indicating a missing value because it
@@ -50,8 +49,7 @@ import six
 _NoValue = object()
 
 
-@six.add_metaclass(abc.ABCMeta)
-class ConfigurationSourceDriver(object):
+class ConfigurationSourceDriver(object, metaclass=abc.ABCMeta):
     """A backend driver option for oslo.config.
 
     For each group name listed in **config_source** on the **DEFAULT** group,
@@ -114,8 +112,7 @@ class ConfigurationSourceDriver(object):
         """
 
 
-@six.add_metaclass(abc.ABCMeta)
-class ConfigurationSource(object):
+class ConfigurationSource(object, metaclass=abc.ABCMeta):
     """A configuration source option for oslo.config.
 
     A configuration source is able to fetch configuration values based on

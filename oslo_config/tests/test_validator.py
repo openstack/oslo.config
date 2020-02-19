@@ -14,7 +14,6 @@
 
 import mock
 from oslotest import base
-import six
 
 from oslo_config import cfg
 from oslo_config import fixture
@@ -49,10 +48,6 @@ class TestValidator(base.BaseTestCase):
         self.conf = cfg.ConfigOpts()
         self.conf_fixture = self.useFixture(fixture.Config(self.conf))
         validator._register_cli_opts(self.conf)
-        if six.PY2:
-            self.open_name = '__builtin__.open'
-        else:
-            self.open_name = 'builtins.open'
 
     @mock.patch('oslo_config.validator.load_opt_data')
     def test_passing(self, mock_lod):
@@ -60,7 +55,7 @@ class TestValidator(base.BaseTestCase):
         self.conf_fixture.config(opt_data='mocked.yaml',
                                  input_file='mocked.conf')
         m = mock.mock_open(read_data=VALID_CONF)
-        with mock.patch(self.open_name, m):
+        with mock.patch('builtins.open', m):
             self.assertEqual(0, validator._validate(self.conf))
 
     @mock.patch('oslo_config.validator.load_opt_data')
@@ -69,7 +64,7 @@ class TestValidator(base.BaseTestCase):
         self.conf_fixture.config(opt_data='mocked.yaml',
                                  input_file='mocked.conf')
         m = mock.mock_open(read_data=DEPRECATED_CONF)
-        with mock.patch(self.open_name, m):
+        with mock.patch('builtins.open', m):
             self.assertEqual(0, validator._validate(self.conf))
 
     @mock.patch('oslo_config.validator.load_opt_data')
@@ -79,7 +74,7 @@ class TestValidator(base.BaseTestCase):
                                  input_file='mocked.conf',
                                  fatal_warnings=True)
         m = mock.mock_open(read_data=DEPRECATED_CONF)
-        with mock.patch(self.open_name, m):
+        with mock.patch('builtins.open', m):
             self.assertEqual(1, validator._validate(self.conf))
 
     @mock.patch('oslo_config.validator.load_opt_data')
@@ -88,7 +83,7 @@ class TestValidator(base.BaseTestCase):
         self.conf_fixture.config(opt_data='mocked.yaml',
                                  input_file='mocked.conf')
         m = mock.mock_open(read_data=INVALID_CONF)
-        with mock.patch(self.open_name, m):
+        with mock.patch('builtins.open', m):
             self.assertEqual(1, validator._validate(self.conf))
 
     @mock.patch('oslo_config.validator.load_opt_data')
@@ -97,7 +92,7 @@ class TestValidator(base.BaseTestCase):
         self.conf_fixture.config(opt_data='mocked.yaml',
                                  input_file='mocked.conf')
         m = mock.mock_open(read_data=MISSING_GROUP_CONF)
-        with mock.patch(self.open_name, m):
+        with mock.patch('builtins.open', m):
             self.assertEqual(1, validator._validate(self.conf))
 
     @mock.patch('oslo_config.validator.load_opt_data')
@@ -107,7 +102,7 @@ class TestValidator(base.BaseTestCase):
                                  input_file='mocked.conf',
                                  exclude_group=['oo'])
         m = mock.mock_open(read_data=MISSING_GROUP_CONF)
-        with mock.patch(self.open_name, m):
+        with mock.patch('builtins.open', m):
             self.assertEqual(0, validator._validate(self.conf))
 
     def test_invalid_options(self):

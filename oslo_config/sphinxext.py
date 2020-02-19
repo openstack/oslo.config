@@ -15,7 +15,6 @@ from docutils.parsers import rst
 from docutils.parsers.rst import directives
 from docutils.statemachine import ViewList
 import oslo_i18n
-import six
 from sphinx import addnodes
 from sphinx.directives import ObjectDescription
 from sphinx.domains import Domain
@@ -89,7 +88,7 @@ def _get_choice_text(choice):
         return '<None>'
     elif choice == '':
         return "''"
-    return six.text_type(choice)
+    return str(choice)
 
 
 def _format_opt(opt, group_name):

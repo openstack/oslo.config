@@ -32,7 +32,6 @@ import textwrap
 
 import json
 import pkg_resources
-import six
 import yaml
 
 
@@ -119,7 +118,7 @@ def _format_defaults(opt):
             default_str = str(opt.default)
         elif isinstance(opt, (cfg.ListOpt, cfg._ConfigFileOpt,
                               cfg._ConfigDirOpt)):
-            default_str = ','.join(six.text_type(d) for d in opt.default)
+            default_str = ','.join(str(d) for d in opt.default)
         elif isinstance(opt, cfg.DictOpt):
             sorted_items = sorted(opt.default.items(),
                                   key=operator.itemgetter(0))
@@ -131,8 +130,8 @@ def _format_defaults(opt):
 
     results = []
     for default_str in defaults:
-        if not isinstance(default_str, six.text_type):
-            default_str = six.text_type(default_str)
+        if not isinstance(default_str, str):
+            default_str = str(default_str)
         if default_str.strip() != default_str:
             default_str = '"%s"' % default_str
         results.append(default_str)
@@ -201,7 +200,7 @@ class _OptFormatter(object):
             return '<None>'
         elif choice == '':
             return "''"
-        return six.text_type(choice)
+        return str(choice)
 
     def format_group(self, group_or_groupname):
         """Format the description of a group header to the output file
