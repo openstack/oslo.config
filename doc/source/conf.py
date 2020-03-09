@@ -14,6 +14,7 @@ extensions = [
     'oslo_config.sphinxconfiggen',
     'oslo_config.sphinxext',
     'sphinxcontrib.apidoc',
+    'stevedore.sphinxext',
 ]
 
 # openstackdocstheme options
