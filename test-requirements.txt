@@ -21,9 +21,6 @@ oslo.log>=3.36.0  # Apache-2.0
 #  deps = {[testenv]deps} coverage
 coverage!=4.4,>=4.0 # Apache-2.0
 
-# we can switch to unittest.mock once we drop support for Python 3.6 as that
-# includes https://bugs.python.org/issue32933
-mock>=3.0.0 # BSD
 requests_mock>=1.5.0 # Apache-2.0
 
 # Bandit security code scanner

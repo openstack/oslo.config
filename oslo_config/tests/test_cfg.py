@@ -21,9 +21,9 @@ import os
 import shutil
 import sys
 import tempfile
+from unittest import mock
 
 import fixtures
-import mock
 from oslotest import base
 import testscenarios
 
