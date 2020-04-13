@@ -508,3 +508,7 @@ def setup(app):
     oslo_i18n.enable_lazy(False)
     app.add_directive('show-options', ShowOptionsDirective)
     app.add_domain(ConfigDomain)
+    return {
+        'parallel_read_safe': True,
+        'parallel_write_safe': True,
+    }
