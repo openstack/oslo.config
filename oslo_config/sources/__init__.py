@@ -23,22 +23,6 @@ class of type :class:`ConfigurationSource`.
 **IMPORTANT:** At this point, all backend drivers are only able to provide
 immutable values. This protects applications and services from having options
 in external sources mutated when they reload configuration files.
-
-Abstract Classes
-----------------
-
-The Driver Class
-================
-
-.. autoclass:: ConfigurationSourceDriver
-   :members:
-
-The Configuration Source Class
-==============================
-
-.. autoclass:: ConfigurationSource
-   :members:
-
 """
 
 import abc
