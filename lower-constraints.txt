@@ -19,7 +19,6 @@ keystoneauth1==3.4.0
 linecache2==1.0.0
 MarkupSafe==1.0
 mccabe==0.2.1
-mock==3.0.0
 mox3==0.20.0
 mypy==0.720
 netaddr==0.7.18

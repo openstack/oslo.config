@@ -11,8 +11,8 @@
 #    under the License.
 
 import textwrap
+from unittest import mock
 
-import mock
 from oslotest import base
 
 from oslo_config import cfg

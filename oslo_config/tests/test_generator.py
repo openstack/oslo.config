@@ -15,9 +15,9 @@
 import io
 import sys
 import textwrap
+from unittest import mock
 
 import fixtures
-import mock
 from oslotest import base
 import tempfile
 import testscenarios
