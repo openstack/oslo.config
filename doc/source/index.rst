@@ -16,6 +16,13 @@ Contents
    cli/index
    contributor/index
 
+
+Release Notes
+=============
+
+Read also the `oslo.config Release Notes
+<https://docs.openstack.org/releasenotes/oslo.config/>`_.
+
 Indices and tables
 ==================
 
