@@ -2678,6 +2678,7 @@ class ConfigOpts(abc.Mapping):
             namespace = self._namespace
         if namespace is not None:
             try:
+                alt_loc = None
                 try:
                     val, alt_loc = opt._get_from_namespace(namespace,
                                                            group_name)
@@ -2692,6 +2693,10 @@ class ConfigOpts(abc.Mapping):
                     if val != sources._NoValue:
                         return (convert(val), alt_loc)
                 except KeyError:  # nosec: Valid control flow instruction
+                    alt_loc = LocationInfo(
+                        Locations.environment,
+                        self._env_driver.get_name(group_name, name),
+                    )
                     # If there was a KeyError looking at config files or
                     # command line, retry the env_val.
                     if env_val[0] != sources._NoValue:
