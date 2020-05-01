@@ -155,7 +155,7 @@ option, in this case as ``controller:5672``.
    # RabbitMQ HA cluster host:port pairs. (list value)
    rabbit_hosts = $rabbit_host:$rabbit_port
 
-To avoid substitution, use ``$$``, it is replaced by a single ``$``.
+To avoid substitution, escape the ``$`` with ``$$`` or ``\$``.
 For example, if your LDAP DNS password is ``$xkj432``, specify it, as follows:
 
 .. code-block:: ini
