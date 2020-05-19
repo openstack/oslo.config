@@ -15,6 +15,7 @@ import os
 from oslotest import base
 from requests import HTTPError
 import requests_mock
+import testtools
 
 from oslo_config import _list_opts
 from oslo_config import cfg
@@ -120,10 +121,13 @@ class TestEnvironmentConfigurationSource(base.BaseTestCase):
         self.conf = cfg.ConfigOpts()
         self.conf_fixture = self.useFixture(fixture.Config(self.conf))
         self.conf.register_opt(cfg.StrOpt('bar'), 'foo')
+        self.conf.register_opt(cfg.StrOpt('baz', regex='^[a-z].*$'), 'foo')
 
         def cleanup():
-            if 'OS_FOO__BAR' in os.environ:
-                del os.environ['OS_FOO__BAR']
+            for env in ('OS_FOO__BAR', 'OS_FOO__BAZ'):
+                if env in os.environ:
+                    del os.environ[env]
+
         self.addCleanup(cleanup)
 
     def test_simple_environment_get(self):
@@ -170,6 +174,14 @@ class TestEnvironmentConfigurationSource(base.BaseTestCase):
         self.conf.reset()
         self.conf(args=[], use_env=True)
         self.assertEqual(env_value, self.conf['foo']['bar'])
+
+    def test_invalid_env(self):
+        self.conf(args=[])
+        env_value = 'ABC'
+        os.environ['OS_FOO__BAZ'] = env_value
+
+        with testtools.ExpectedException(cfg.ConfigSourceValueError):
+            self.conf['foo']['baz']
 
 
 def make_uri(name):
