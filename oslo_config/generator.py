@@ -356,12 +356,12 @@ class _OptFormatter(object):
         """
         self.output_file.write(s)
 
-    def writelines(self, l):
+    def writelines(self, lines):
         """Write an arbitrary sequence of strings to the output file.
 
-        :param l: a list of arbitrary strings
+        :param lines: a list of arbitrary strings
         """
-        self.output_file.writelines(l)
+        self.output_file.writelines(lines)
 
 
 def _cleanup_opts(read_opts):

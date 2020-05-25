@@ -437,7 +437,7 @@ class GeneratorTestCase(base.BaseTestCase):
 ''')),
         ('choices_opt',
          dict(opts=[('test', [(None, [opts['choices_opt']])])],
-              expected='''[DEFAULT]
+              expected="""[DEFAULT]
 
 #
 # From test
@@ -451,7 +451,7 @@ class GeneratorTestCase(base.BaseTestCase):
 # b - <No description provided>
 # c - <No description provided>
 #choices_opt = a
-''')),
+""")),
         ('deprecated opt without deprecated group',
          dict(opts=[('test',
                      [(groups['foo'],
@@ -852,13 +852,13 @@ class GeneratorTestCase(base.BaseTestCase):
 # string with bad default (string value)
 #string_type_with_bad_default = 4096
 ''')),
-         ('str_opt_str_group',
+        ('str_opt_str_group',
          dict(opts=[('test', [('foo',
                                [opts['str_opt']]),
                               (groups['foo'],
                                [opts['int_opt']])]),
                     ('foo', [('foo',
-                               [opts['bool_opt']])])],
+                              [opts['bool_opt']])])],
               expected='''[DEFAULT]
 
 
@@ -888,7 +888,7 @@ class GeneratorTestCase(base.BaseTestCase):
 # Maximum value: 20
 #int_opt = 10
 ''')),
-         ('opt_str_opt_group',
+        ('opt_str_opt_group',
          dict(opts=[('test', [(groups['foo'],
                                [opts['int_opt']]),
                               ('foo',
@@ -924,7 +924,7 @@ class GeneratorTestCase(base.BaseTestCase):
 # a string (string value)
 #str_opt = foo bar
 ''')),
-         ('opt_with_DeprecatedOpt',
+        ('opt_with_DeprecatedOpt',
          dict(opts=[('test', [(None, [opts['opt_with_DeprecatedOpt']])])],
               expected='''[DEFAULT]
 

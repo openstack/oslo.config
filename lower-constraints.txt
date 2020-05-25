@@ -11,7 +11,6 @@ fixtures==3.0.0
 flake8==2.5.5
 gitdb==0.6.4
 GitPython==1.0.1
-hacking==2.0.0
 imagesize==0.7.1
 iso8601==0.1.11
 Jinja2==2.10
