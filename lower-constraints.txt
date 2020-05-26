@@ -8,7 +8,6 @@ docutils==0.11
 dulwich==0.15.0
 extras==1.0.0
 fixtures==3.0.0
-flake8==2.5.5
 gitdb==0.6.4
 GitPython==1.0.1
 imagesize==0.7.1
@@ -17,7 +16,6 @@ Jinja2==2.10
 keystoneauth1==3.4.0
 linecache2==1.0.0
 MarkupSafe==1.0
-mccabe==0.2.1
 mox3==0.20.0
 mypy==0.720
 netaddr==0.7.18
@@ -27,8 +25,6 @@ oslo.i18n==3.15.3
 oslo.log==3.36.0
 oslotest==3.2.0
 pbr==2.0.0
-pep8==1.5.7
-pyflakes==0.8.1
 Pygments==2.2.0
 python-mimeparse==1.6.0
 python-subunit==1.0.0
