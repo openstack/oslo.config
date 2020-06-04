@@ -18,9 +18,9 @@ extensions = [
 ]
 
 # openstackdocstheme options
-repository_name = 'openstack/oslo.config'
-bug_project = 'oslo.config'
-bug_tag = ''
+openstackdocs_repo_name = 'openstack/oslo.config'
+openstackdocs_bug_project = 'oslo.config'
+openstackdocs_bug_tag = ''
 
 config_generator_config_file = 'config-generator.conf'
 
@@ -48,7 +48,7 @@ add_function_parentheses = True
 add_module_names = True
 
 # The name of the Pygments (syntax highlighting) style to use.
-pygments_style = 'sphinx'
+pygments_style = 'native'
 
 # A list of ignored prefixes for module index sorting.
 modindex_common_prefix = ['oslo_config.']
