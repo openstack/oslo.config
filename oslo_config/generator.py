@@ -107,15 +107,12 @@ def _format_defaults(opt):
             default_str = str(opt.sample_default)
         elif opt.default is None:
             default_str = '<None>'
-        elif (isinstance(opt, (cfg.StrOpt, cfg.IPOpt,
-                               cfg.HostnameOpt, cfg.HostAddressOpt,
-                               cfg.URIOpt))):
-            default_str = opt.default
+        elif isinstance(opt, (cfg.StrOpt, cfg.IntOpt, cfg.FloatOpt, cfg.IPOpt,
+                              cfg.PortOpt, cfg.HostnameOpt, cfg.HostAddressOpt,
+                              cfg.URIOpt, cfg.Opt)):
+            default_str = str(opt.default)
         elif isinstance(opt, cfg.BoolOpt):
             default_str = str(opt.default).lower()
-        elif isinstance(opt, (cfg.IntOpt, cfg.FloatOpt,
-                              cfg.PortOpt)):
-            default_str = str(opt.default)
         elif isinstance(opt, (cfg.ListOpt, cfg._ConfigFileOpt,
                               cfg._ConfigDirOpt)):
             default_str = ','.join(str(d) for d in opt.default)
