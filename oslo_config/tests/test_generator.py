@@ -405,16 +405,16 @@ class GeneratorTestCase(base.BaseTestCase):
 #
 
 '''   # noqa
-'# Lorem ipsum dolor sit amet, consectetur adipisicing elit, sed do eiusmod '
-'tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, '
-'quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo '
-'consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse '
-'cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat '
-'non proident, sunt in culpa qui officia deserunt mollit anim id est laborum. '
-'(string value)'
+'# Lorem ipsum dolor sit amet, consectetur adipisicing elit, sed do eiusmod '  # noqa
+'tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, '  # noqa
+'quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo '  # noqa
+'consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse '  # noqa
+'cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat '  # noqa
+'non proident, sunt in culpa qui officia deserunt mollit anim id est laborum. '  # noqa
+'(string value)'  # noqa
 '''
 #long_help = <None>
-''')),
+''')),  # noqa
         ('long_help_with_preformatting',
          dict(opts=[('test', [(None, [opts['long_help_pre']])])],
               wrap_width=70,
