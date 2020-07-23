@@ -1652,8 +1652,8 @@ class GeneratorRaiseErrorTestCase(base.BaseTestCase):
         self.conf = cfg.ConfigOpts()
         self.conf.register_opts(generator._generator_opts)
         self.conf.set_default('namespace', [fake_ep.name])
-        fake_eps = mock.Mock(return_value=[fake_ep])
-        with mock.patch('pkg_resources.iter_entry_points', fake_eps):
+        with mock.patch('stevedore.named.NamedExtensionManager',
+                        side_effect=FakeException()):
             self.assertRaises(FakeException, generator.generate, self.conf)
 
     def test_generator_call_with_no_arguments_raises_system_exit(self):
