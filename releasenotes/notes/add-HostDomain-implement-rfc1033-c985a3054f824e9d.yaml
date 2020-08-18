@@ -1,0 +1,9 @@
+---
+features:
+  - |
+    Add ``HostDomain`` to handle address with underscore. Underscore are
+    allowed in domain by RFC1033 [1][2][3].
+
+    - [1] https://www.ietf.org/rfc/rfc1912.txt
+    - [2] https://www.ietf.org/rfc/rfc1033.txt
+    - [3] http://domainkeys.sourceforge.net/underscore.html
