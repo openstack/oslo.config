@@ -761,11 +761,12 @@ class Hostname(ConfigType):
     :param type_name: Type name to be used in the sample config file.
 
     """
+    HOSTNAME_REGEX = '(?!-)[A-Z0-9-]{1,63}(?<!-)$'
 
     def __init__(self, type_name='hostname value'):
         super(Hostname, self).__init__(type_name=type_name)
 
-    def __call__(self, value):
+    def __call__(self, value, regex=HOSTNAME_REGEX):
         """Check hostname is valid.
 
         Ensures that each segment
@@ -789,7 +790,7 @@ class Hostname(ConfigType):
                              % value)
         if value.endswith("."):
             value = value[:-1]
-        allowed = re.compile("(?!-)[A-Z0-9-]{1,63}(?<!-)$", re.IGNORECASE)
+        allowed = re.compile(regex, re.IGNORECASE)
         if not re.search('[a-zA-Z-]', value.split(".")[-1]):
             raise ValueError('%s contains no non-numeric characters in the '
                              'top-level domain part of the host name and is '
@@ -844,7 +845,8 @@ class HostAddress(ConfigType):
             try:
                 value = self.hostname(value)
             except ValueError:
-                raise ValueError("%s is not a valid host address" % (value,))
+                raise ValueError(
+                    "%s is not a valid host address" % (value,))
         return value
 
     def __repr__(self):
@@ -855,6 +857,45 @@ class HostAddress(ConfigType):
 
     def _formatter(self, value):
         return value
+
+
+class HostDomain(HostAddress):
+    """Host Domain type.
+
+    Like HostAddress with the support of _ character.
+
+    :param version: defines which version should be explicitly
+                    checked (4 or 6) in case of an IP address
+    :param type_name: Type name to be used in the sample config file.
+    """
+    # DOMAIN_REGEX is HOSTNAME_REGEX with the _ character added
+    DOMAIN_REGEX = '(?!-)[A-Z0-9-_]{1,63}(?<!-)$'
+
+    def __call__(self, value):
+        """Checks if is a valid IP/hostname.
+
+        If not a valid IP, makes sure it is not a mistyped IP before
+        performing checks for it as a hostname.
+
+        """
+
+        try:
+            value = super(HostDomain, self).__call__(value)
+        except ValueError:
+            # Check if domain is valid
+            # Add support of underscore
+            # https://www.ietf.org/rfc/rfc1912,
+            # http://domainkeys.sourceforge.net/underscore.html
+            # https://bugs.launchpad.net/oslo.config/+bug/1892044
+            try:
+                value = self.hostname(value, regex=self.DOMAIN_REGEX)
+            except ValueError:
+                raise ValueError(
+                    "%s is not a valid host address" % (value,))
+        return value
+
+    def __repr__(self):
+        return 'HostDomain'
 
 
 class URI(ConfigType):
