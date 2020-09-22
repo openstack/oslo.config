@@ -495,6 +495,15 @@ class ConfigDomain(Domain):
             )
         return None
 
+    def merge_domaindata(self, docnames, otherdata):
+        for target, docname in otherdata['options'].items():
+            if docname in docnames:
+                self.data['options'][target] = docname
+
+        for target, docname in otherdata['groups'].items():
+            if docname in docnames:
+                self.data['groups'][target] = docname
+
 
 def setup(app):
     # NOTE(dhellmann): Try to turn off lazy translation from oslo_i18n
