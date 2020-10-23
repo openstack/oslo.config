@@ -1,0 +1,7 @@
+---
+features:
+  - |
+    Add a ``--check-defaults`` flag to ``oslo-config-validator``. When set,
+    ``oslo-config-validator`` will compare the ``input-file`` with the sample
+    generated configuration and flag any discrepancies. It also obeys the
+    standard ``--exclude-group`` and ``--fatal-warning`` options.

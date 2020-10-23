@@ -22,6 +22,7 @@ project then it returns those errors.
 """
 
 import logging
+import re
 import sys
 
 try:
@@ -36,6 +37,11 @@ import yaml
 from oslo_config import cfg
 from oslo_config import generator
 
+VALIDATE_DEFAULTS_EXCLUSIONS = [
+    '.*_ur(i|l)', '.*connection', 'password', 'username', 'my_ip',
+    'host(name)?', 'glance_api_servers', 'osapi_volume_listen',
+    'osapi_compute_listen',
+]
 
 _validator_opts = [
     cfg.MultiStrOpt(
@@ -50,6 +56,16 @@ _validator_opts = [
         'opt-data',
         help='Path to a YAML file containing definitions of options, as '
              'output by the config generator.'),
+    cfg.BoolOpt(
+        'check-defaults',
+        default=False,
+        help='Report differences between the sample values and current '
+             'values.'),
+    cfg.ListOpt(
+        'exclude-options',
+        default=VALIDATE_DEFAULTS_EXCLUSIONS,
+        help='Exclude options matching these patterns when comparing '
+             'the current and sample configurations.'),
     cfg.BoolOpt(
         'fatal-warnings',
         default=False,
@@ -86,6 +102,73 @@ def _validate_deprecated_opt(group, option, opt_data):
     return option in name_data
 
 
+def _validate_defaults(sections, opt_data, conf):
+    """Compares the current and sample configuration and reports differences
+
+    :param section: ConfigParser instance
+    :param opt_data: machine readable data from the generator instance
+    :param conf: ConfigOpts instance
+    :returns: boolean wether or not warnings were reported
+    """
+    warnings = False
+    # Generating regex objects from ListOpt
+    exclusion_regexes = []
+    for pattern in conf.exclude_options:
+        exclusion_regexes.append(re.compile(pattern))
+    for group, opts in opt_data['options'].items():
+        if group in conf.exclude_group:
+            continue
+        if group not in sections:
+            logging.warning(
+                'Group %s from the sample config is not defined in '
+                'input-file', group)
+            continue
+        for opt in opts['opts']:
+            # We need to convert the defaults into a list to find
+            # intersections. defaults are only a list if they can
+            # be defined multiple times, but configparser only
+            # returns list
+            if not isinstance(opt['default'], list):
+                defaults = [str(opt['default'])]
+            else:
+                defaults = opt['default']
+
+            # Apparently, there's multiple naming conventions for
+            # options, 'name' is mostly with hyphens, and 'dest'
+            # is represented with underscores.
+            opt_names = set([opt['name'], opt.get('dest')])
+            if not opt_names.intersection(sections[group]):
+                continue
+            try:
+                value = sections[group][opt['name']]
+                keyname = opt['name']
+            except KeyError:
+                value = sections[group][opt.get('dest')]
+                keyname = opt.get('dest')
+
+            if any(rex.fullmatch(keyname) for rex in exclusion_regexes):
+                logging.info(
+                    '%s/%s Ignoring option because it is part of the excluded '
+                    'patterns. This can be changed with the --exclude-options '
+                    'argument', group, keyname)
+                continue
+
+            if len(value) > 1:
+                logging.info(
+                    '%s/%s defined %s times', group, keyname, len(value))
+            if not opt['default']:
+                logging.warning(
+                    '%s/%s sample value is empty but input-file has %s',
+                    group, keyname, ", ".join(value))
+                warnings = True
+            elif not frozenset(defaults).intersection(value):
+                logging.warning(
+                    '%s/%s sample value %s is not in %s',
+                    group, keyname, defaults, value)
+                warnings = True
+    return warnings
+
+
 def _validate_opt(group, option, opt_data):
     if group not in opt_data['options']:
         return False
@@ -114,12 +197,14 @@ def _validate(conf):
     parser.parse()
     warnings = False
     errors = False
+    if conf.check_defaults:
+        warnings = _validate_defaults(sections, opt_data, conf)
     for section, options in sections.items():
         if section in conf.exclude_group:
             continue
         for option in options:
             if _validate_deprecated_opt(section, option, opt_data):
-                logging.warn('Deprecated opt %s/%s found', section, option)
+                logging.warning('Deprecated opt %s/%s found', section, option)
                 warnings = True
             elif not _validate_opt(section, option, opt_data):
                 if section in KNOWN_BAD_GROUPS:
@@ -129,7 +214,8 @@ def _validate(conf):
                                  'cannot be validated properly.',
                                  option, section)
                     continue
-                logging.error('%s/%s not found', section, option)
+                logging.error('%s/%s is not part of the sample config',
+                              section, option)
                 errors = True
     if errors or (warnings and conf.fatal_warnings):
         return 1
