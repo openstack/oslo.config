@@ -21,13 +21,51 @@ from oslo_config import fixture
 from oslo_config import validator
 
 
-OPT_DATA = {'options': {'foo': {'opts': [{'name': 'opt'}]},
-                        'bar': {'opts': [{'name': 'opt'}]},
-                        },
-            'deprecated_options': {'bar': [{'name': 'opt'}]}}
+OPT_DATA = {
+  "options": {
+    "foo": {
+      "opts": [
+        {
+          "name": "opt",
+          "default": 1
+        }
+      ]
+    },
+    "bar": {
+      "opts": [
+        {
+          "name": "opt",
+          "default": 2
+        },
+        {
+          "name": "foo-bar",
+          "dest": "foo_bar",
+          "default": 2
+        },
+        {
+          "name": "bar-foo",
+          "dest": "bar_foo",
+          "default": 2
+        }
+      ]
+    }
+  },
+  "deprecated_options": {
+    "bar": [
+      {
+        "name": "opt",
+        "default": 3
+      }
+    ]
+  }
+}
 VALID_CONF = """
 [foo]
-opt = value
+opt = 1
+[bar]
+opt = 3
+foo-bar = 3
+bar_foo = 3
 """
 DEPRECATED_CONF = """
 [bar]
@@ -103,6 +141,16 @@ class TestValidator(base.BaseTestCase):
                                  input_file='mocked.conf',
                                  exclude_group=['oo'])
         m = mock.mock_open(read_data=MISSING_GROUP_CONF)
+        with mock.patch('builtins.open', m):
+            self.assertEqual(0, validator._validate(self.conf))
+
+    @mock.patch('oslo_config.validator.load_opt_data')
+    def test_check_defaults(self, mock_lod):
+        mock_lod.return_value = OPT_DATA
+        self.conf_fixture.config(opt_data='mocked.yaml',
+                                 input_file='mocked.conf',
+                                 check_defaults=True)
+        m = mock.mock_open(read_data=VALID_CONF)
         with mock.patch('builtins.open', m):
             self.assertEqual(0, validator._validate(self.conf))
 
