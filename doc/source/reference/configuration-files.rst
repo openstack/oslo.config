@@ -7,7 +7,7 @@ and ``--config-dir``:
 
 .. code-block:: python
 
-    class ConfigOpts(object):
+    class ConfigOpts:
 
         def __call__(self, ...):
 

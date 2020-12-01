@@ -81,7 +81,7 @@ the option is referenced:
 
 .. code-block:: python
 
-    class ExtensionManager(object):
+    class ExtensionManager:
 
         enabled_apis_opt = cfg.ListOpt(...)
 

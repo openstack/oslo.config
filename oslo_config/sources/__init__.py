@@ -33,10 +33,10 @@ import abc
 _NoValue = object()
 
 
-class ConfigurationSourceDriver(object, metaclass=abc.ABCMeta):
+class ConfigurationSourceDriver(metaclass=abc.ABCMeta):
     """A backend driver option for oslo.config.
 
-    For each group name listed in **config_source** on the **DEFAULT** group,
+    For each group name listed in **config_source** in the **DEFAULT** group,
     a :class:`ConfigurationSourceDriver` is responsible for creating one new
     instance of a :class:`ConfigurationSource`. The proper driver class to be
     used is selected based on the **driver** option inside each one of the
@@ -96,7 +96,7 @@ class ConfigurationSourceDriver(object, metaclass=abc.ABCMeta):
         """
 
 
-class ConfigurationSource(object, metaclass=abc.ABCMeta):
+class ConfigurationSource(metaclass=abc.ABCMeta):
     """A configuration source option for oslo.config.
 
     A configuration source is able to fetch configuration values based on

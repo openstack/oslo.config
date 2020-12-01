@@ -174,7 +174,7 @@ def _format_type_name(opt_type):
     return 'unknown value'
 
 
-class _OptFormatter(object):
+class _OptFormatter:
 
     """Format configuration option descriptions to a file."""
 

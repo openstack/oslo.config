@@ -30,7 +30,7 @@ import netaddr
 import rfc3986
 
 
-class ConfigType(object, metaclass=abc.ABCMeta):
+class ConfigType(metaclass=abc.ABCMeta):
 
     def __init__(self, type_name='unknown type'):
         self.type_name = type_name

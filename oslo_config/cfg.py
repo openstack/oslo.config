@@ -424,7 +424,7 @@ def _report_deprecation(format_str, format_dict):
 
 
 @functools.total_ordering
-class Opt(object):
+class Opt:
 
     """Base class for all configuration options.
 
@@ -809,7 +809,7 @@ class Opt(object):
         return hash(self) < hash(another)
 
 
-class DeprecatedOpt(object):
+class DeprecatedOpt:
 
     """Represents a Deprecated option.
 
@@ -1416,7 +1416,7 @@ class _ConfigDirOpt(Opt):
         return kwargs
 
 
-class OptGroup(object):
+class OptGroup:
 
     """Represents a group of opts.
 
@@ -3155,7 +3155,7 @@ class ConfigOpts(abc.Mapping):
             """Return the number of options and option groups."""
             return len(self._group._opts)
 
-    class SubCommandAttr(object):
+    class SubCommandAttr:
 
         """Helper class.
 
@@ -3189,7 +3189,7 @@ class ConfigOpts(abc.Mapping):
             except AttributeError:
                 raise NoSuchOptError(name)
 
-    class StrSubWrapper(object):
+    class StrSubWrapper:
 
         """Helper class.
 

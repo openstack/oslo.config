@@ -1638,7 +1638,7 @@ class GeneratorRaiseErrorTestCase(base.BaseTestCase):
         class FakeException(Exception):
             pass
 
-        class FakeEP(object):
+        class FakeEP:
 
             def __init__(self):
                 self.name = 'callback_is_expected'

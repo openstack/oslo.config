@@ -23,7 +23,7 @@ class ParseError(Exception):
         return 'at line %d, %s: %r' % (self.lineno, self.msg, self.line)
 
 
-class BaseParser(object):
+class BaseParser:
     lineno = 0
     parse_exc = ParseError
 
