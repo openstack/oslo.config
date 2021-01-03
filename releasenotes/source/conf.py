@@ -60,7 +60,7 @@ source_suffix = '.rst'
 master_doc = 'index'
 
 # General information about the project.
-copyright = u'2016, oslo.config Developers'
+copyright = '2016, oslo.config Developers'
 
 # Release notes do not need a version in the title, they span
 # multiple versions.
@@ -196,8 +196,8 @@ html_static_path = ['_static']
 # (source start file, name, description, authors, manual section).
 man_pages = [
     ('index', 'oslo.configreleasenotes',
-     u'oslo.config Release Notes Documentation',
-     [u'oslo.config Developers'], 1)
+     'oslo.config Release Notes Documentation',
+     ['oslo.config Developers'], 1)
 ]
 
 # If true, show URL addresses after external links.
@@ -211,8 +211,8 @@ man_pages = [
 #  dir menu entry, description, category)
 texinfo_documents = [
     ('index', 'oslo.configReleaseNotes',
-     u'oslo.config Release Notes Documentation',
-     u'oslo.config Developers', 'oslo.configReleaseNotes',
+     'oslo.config Release Notes Documentation',
+     'oslo.config Developers', 'oslo.configReleaseNotes',
      'An OpenStack library for parsing configuration options from the command'
      ' line and configuration files.',
      'Miscellaneous'),

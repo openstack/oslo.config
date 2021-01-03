@@ -288,11 +288,9 @@ class _OptFormatter:
             else:
                 opt_help = opt.help
 
-            help_text = u'%s%s (%s)' % (opt_prefix,
-                                        opt_help,
-                                        opt_type)
+            help_text = '%s%s (%s)' % (opt_prefix, opt_help, opt_type)
         else:
-            help_text = u'(%s)' % opt_type
+            help_text = '(%s)' % opt_type
         lines = self._format_help(help_text)
 
         if getattr(opt.type, 'min', None) is not None:
