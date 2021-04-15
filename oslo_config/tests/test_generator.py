@@ -1872,5 +1872,32 @@ class HostAddressTestCase(base.BaseTestCase):
         self.assertEqual(expected, result)
 
 
+class HostDomainTestCase(base.BaseTestCase):
+
+    opts = [cfg.HostDomainOpt('foo', help='foo option', default='0.0.0.0')]
+
+    def test_host_domain(self):
+
+        config = [("namespace", [("alpha", self.opts)])]
+        groups = generator._get_groups(config)
+
+        out = io.StringIO()
+        formatter = build_formatter(out)
+        generator._output_opts(formatter, 'alpha', groups.pop('alpha'))
+        result = out.getvalue()
+
+        expected = textwrap.dedent('''
+        [alpha]
+
+        #
+        # From namespace
+        #
+
+        # foo option (host domain value)
+        #foo = 0.0.0.0
+        ''').lstrip()
+        self.assertEqual(expected, result)
+
+
 GeneratorTestCase.generate_scenarios()
 MachineReadableGeneratorTestCase.generate_scenarios()
