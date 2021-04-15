@@ -871,6 +871,13 @@ class HostDomain(HostAddress):
     # DOMAIN_REGEX is HOSTNAME_REGEX with the _ character added
     DOMAIN_REGEX = '(?!-)[A-Z0-9-_]{1,63}(?<!-)$'
 
+    def __init__(self, version=None, type_name='host domain value'):
+        """Check for valid version in case an IP address is provided
+
+        """
+
+        super(HostDomain, self).__init__(version=version, type_name=type_name)
+
     def __call__(self, value):
         """Checks if is a valid IP/hostname.
 
