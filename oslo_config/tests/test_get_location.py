@@ -137,7 +137,7 @@ class GetLocationTestCase(base.BaseTestCase):
     def _write_opt_to_tmp_file(self, group, option, value):
         filename = tempfile.mktemp()
         with io.open(filename, 'w', encoding='utf-8') as f:
-            f.write(textwrap.dedent(u'''
+            f.write(textwrap.dedent('''
             [{group}]
             {option} = {value}
             ''').format(
