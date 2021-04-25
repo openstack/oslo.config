@@ -821,12 +821,7 @@ class CliSpecialOptsTestCase(BaseTestCase):
         self.assertIn('[--config-file PATH]', sys.stdout.getvalue())
 
     def test_version(self):
-        # In Python 3.4+, argparse prints the version on stdout; before 3.4, it
-        # printed it on stderr.
-        if sys.version_info >= (3, 4):
-            stream_name = 'stdout'
-        else:
-            stream_name = 'stderr'
+        stream_name = 'stdout'
         self.useFixture(fixtures.MonkeyPatch("sys.%s" % stream_name,
                                              io.StringIO()))
         self.assertRaises(SystemExit, self.conf, ['--version'])
