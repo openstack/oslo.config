@@ -1,0 +1,5 @@
+---
+fixes:
+  - |
+    Adding the missing ``HostDomain`` config option. Previously this available
+    type couldn't been imported because no related config option was defined.
