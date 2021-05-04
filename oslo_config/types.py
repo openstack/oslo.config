@@ -876,7 +876,7 @@ class HostDomain(HostAddress):
 
         """
 
-        super(HostDomain, self).__init__(type_name=type_name)
+        super(HostDomain, self).__init__(version=version, type_name=type_name)
 
     def __call__(self, value):
         """Checks if is a valid IP/hostname.
