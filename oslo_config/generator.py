@@ -41,6 +41,7 @@ except ImportError:
 import yaml
 
 from oslo_config import cfg
+from oslo_i18n import _message
 import stevedore.named  # noqa
 
 LOG = logging.getLogger(__name__)
@@ -685,6 +686,18 @@ def _generate_machine_readable_data(groups, conf):
     return output_data
 
 
+def i18n_representer(dumper, data):
+    """oslo_i18n yaml representer
+
+    Returns a translated to the default locale string for yaml.safe_dump
+
+    :param dumper: a SafeDumper instance passed by yaml.safe_dump
+    :param data: a oslo_i18n._message.Message instance
+    """
+    serializedData = str(data.translation())
+    return dumper.represent_str(serializedData)
+
+
 def _output_machine_readable(groups, output_file, conf):
     """Write a machine readable sample config file
 
@@ -698,6 +711,7 @@ def _output_machine_readable(groups, output_file, conf):
     """
     output_data = _generate_machine_readable_data(groups, conf)
     if conf.format_ == 'yaml':
+        yaml.SafeDumper.add_representer(_message.Message, i18n_representer)
         output_file.write(yaml.safe_dump(output_data,
                                          default_flow_style=False))
     else:
