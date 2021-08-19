@@ -184,7 +184,10 @@ class HelpTestCase(BaseTestCase):
             'usage: test [-h] [--config-dir DIR] [--config-file PATH] '
             '[--version]',
             f.getvalue())
-        self.assertIn('optional', f.getvalue())
+        # argparse may generate two different help messages:
+        # - In Python >=3.10: "options:\n  --version"
+        # - In Python <3.10: "optional arguments:"
+        self.assertRegex(f.getvalue(), 'option(s|al arguments):')
         self.assertIn('-h, --help', f.getvalue())
 
     def test_print_strOpt_with_choices_help(self):
@@ -207,7 +210,10 @@ class HelpTestCase(BaseTestCase):
             'usage: test [-h] [--aa AA] [--bb BB] [--cc CC] [--config-dir DIR]'
             '\n            [--config-file PATH] [--version]',
             f.getvalue())
-        self.assertIn('optional', f.getvalue())
+        # argparse may generate two different help messages:
+        # - In Python >=3.10: "options:\n  --version"
+        # - In Python <3.10: "optional arguments:"
+        self.assertRegex(f.getvalue(), 'option(s|al arguments):')
         self.assertIn('-h, --help', f.getvalue())
         self.assertIn('StrOpt with choices. Allowed values: xx, yy, zz',
                       f.getvalue())
