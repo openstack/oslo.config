@@ -21,6 +21,7 @@ import os
 import shutil
 import sys
 import tempfile
+import unittest
 from unittest import mock
 
 import fixtures
@@ -3839,6 +3840,8 @@ class SadPathTestCase(BaseTestCase):
         self.assertRaises(cfg.ConfigFilesNotFoundError,
                           self.conf, ['--config-file', path])
 
+    @unittest.skipIf(os.getuid() == 0,
+                     "Not supported with the root privileges")
     def test_conf_file_permission_denied(self):
         (fd, path) = tempfile.mkstemp()
 
