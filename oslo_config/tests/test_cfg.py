@@ -5077,13 +5077,13 @@ class DeprecationWarningTests(DeprecationWarningTestBase):
 
     def assert_message_logged(self, deprecated_name, deprecated_group,
                               current_name, current_group):
-        expected = ('Deprecated: ' + cfg._Namespace._deprecated_opt_message %
+        expected = (cfg._Namespace._deprecated_opt_message %
                     {'dep_option': deprecated_name,
                      'dep_group': deprecated_group,
                      'option': current_name,
                      'group': current_group}
                     )
-        self.assertEqual(expected + '\n', self.log_fixture.output)
+        self.assertIn(expected + '\n', self.log_fixture.output)
 
     def test_deprecated_for_removal(self):
         self.conf.register_opt(cfg.StrOpt('foo',
@@ -5099,10 +5099,10 @@ class DeprecationWarningTests(DeprecationWarningTestBase):
         self.assertEqual('bar', self.conf.foo)
         # Options not set in the config should not be logged.
         self.assertIsNone(self.conf.bar)
-        expected = ('Deprecated: Option "foo" from group "DEFAULT" is '
+        expected = ('Option "foo" from group "DEFAULT" is '
                     'deprecated for removal.  Its value may be silently '
                     'ignored in the future.\n')
-        self.assertEqual(expected, self.log_fixture.output)
+        self.assertIn(expected, self.log_fixture.output)
 
     def test_deprecated_for_removal_with_group(self):
         self.conf.register_group(cfg.OptGroup('other'))
@@ -5121,10 +5121,10 @@ class DeprecationWarningTests(DeprecationWarningTestBase):
         self.assertEqual('bar', self.conf.other.foo)
         # Options not set in the config should not be logged.
         self.assertIsNone(self.conf.other.bar)
-        expected = ('Deprecated: Option "foo" from group "other" is '
+        expected = ('Option "foo" from group "other" is '
                     'deprecated for removal.  Its value may be silently '
                     'ignored in the future.\n')
-        self.assertEqual(expected, self.log_fixture.output)
+        self.assertIn(expected, self.log_fixture.output)
 
     def test_deprecated_with_dest(self):
         self.conf.register_group(cfg.OptGroup('other'))
@@ -5138,12 +5138,12 @@ class DeprecationWarningTests(DeprecationWarningTestBase):
 
         self.conf(['--config-file', paths[0]])
         self.assertEqual('baz', self.conf.other.foo)
-        expected = ('Deprecated: ' + cfg._Namespace._deprecated_opt_message %
+        expected = (cfg._Namespace._deprecated_opt_message %
                     {'dep_option': 'bar',
                      'dep_group': 'other',
                      'option': 'foo-bar',
                      'group': 'other'} + '\n')
-        self.assertEqual(expected, self.log_fixture.output)
+        self.assertIn(expected, self.log_fixture.output)
 
 
 class DeprecationWarningTestsNoOsloLog(DeprecationWarningTests):
