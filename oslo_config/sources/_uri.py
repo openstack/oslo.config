@@ -107,6 +107,13 @@ class URIConfigurationSourceDriver(sources.ConfigurationSourceDriver):
             help=('Client side private key, in case client_cert is '
                   'specified but does not includes the private key.'),
         ),
+        cfg.StrOpt(
+            'timeout',
+            default=60,
+            help=('Timeout is the number of seconds the request will wait '
+                  'for your client to establish a connection to a remote '
+                  'machine call on the socket.'),
+        ),
     ]
 
     def list_options_for_discovery(self):
@@ -119,7 +126,8 @@ class URIConfigurationSourceDriver(sources.ConfigurationSourceDriver):
             conf[group_name].uri,
             conf[group_name].ca_path,
             conf[group_name].client_cert,
-            conf[group_name].client_key)
+            conf[group_name].client_key,
+            conf[group_name].timeout)
 
 
 class URIConfigurationSource(sources.ConfigurationSource):
@@ -139,11 +147,12 @@ class URIConfigurationSource(sources.ConfigurationSource):
                  specified but does not includes the private key.
     """
 
-    def __init__(self, uri, ca_path=None, client_cert=None, client_key=None):
+    def __init__(self, uri, ca_path=None, client_cert=None, client_key=None,
+                 timeout=60):
         self._uri = uri
         self._namespace = cfg._Namespace(cfg.ConfigOpts())
 
-        data = self._fetch_uri(uri, ca_path, client_cert, client_key)
+        data = self._fetch_uri(uri, ca_path, client_cert, client_key, timeout)
 
         with tempfile.NamedTemporaryFile() as tmpfile:
             tmpfile.write(data.encode("utf-8"))
@@ -151,12 +160,14 @@ class URIConfigurationSource(sources.ConfigurationSource):
 
             cfg.ConfigParser._parse_file(tmpfile.name, self._namespace)
 
-    def _fetch_uri(self, uri, ca_path, client_cert, client_key):
+    def _fetch_uri(self, uri, ca_path, client_cert, client_key,
+                   timeout):
         verify = ca_path if ca_path else True
         cert = (client_cert, client_key) if client_cert and client_key else \
             client_cert
 
-        with requests.get(uri, verify=verify, cert=cert) as response:
+        with requests.get(uri, verify=verify, cert=cert,
+                          timeout=timeout) as response:
             response.raise_for_status()  # raises only in case of HTTPError
 
             return response.text
