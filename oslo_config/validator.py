@@ -21,16 +21,10 @@ the provided file.  If there are any options set that are not defined in the
 project then it returns those errors.
 """
 
+import importlib.metadata
 import logging
 import re
 import sys
-
-try:
-    # For Python 3.8 and later
-    import importlib.metadata as importlib_metadata
-except ImportError:
-    # For everyone else
-    import importlib_metadata
 
 import yaml
 
@@ -224,7 +218,7 @@ def _validate(conf):
 
 def main():
     """The main function of oslo-config-validator."""
-    version = importlib_metadata.version('oslo.config')
+    version = importlib.metadata.version('oslo.config')
     logging.basicConfig(level=logging.INFO)
     conf = cfg.ConfigOpts()
     _register_cli_opts(conf)

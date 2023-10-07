@@ -25,6 +25,7 @@ Tool for generating a sample configuration file. See
 
 import collections
 import copy
+import importlib.metadata
 import json
 import logging
 import operator
@@ -42,12 +43,6 @@ except ImportError:
 
     rst2txt = None
 
-try:
-    # For Python 3.8 and later
-    import importlib.metadata as importlib_metadata
-except ImportError:
-    # For everyone else
-    import importlib_metadata
 
 import yaml
 
@@ -822,7 +817,7 @@ def generate(conf, output_file=None):
 
 def main(args=None):
     """The main function of oslo-config-generator."""
-    version = importlib_metadata.version('oslo.config')
+    version = importlib.metadata.version('oslo.config')
     logging.basicConfig(level=logging.WARN)
     conf = cfg.ConfigOpts()
     register_cli_opts(conf)
