@@ -1015,15 +1015,26 @@ class IntOpt(Opt):
     :param name: the option's name
     :param min: minimum value the integer can take
     :param max: maximum value the integer can take
+    :param choices: Optional sequence of either valid values or tuples of valid
+        values with descriptions.
     :param \*\*kwargs: arbitrary keyword arguments passed to :class:`Opt`
 
     .. versionchanged:: 1.15
 
        Added *min* and *max* parameters.
+
+
+    .. versionchanged:: 9.3.0
+
+       Added *choices* parameter.
     """
 
-    def __init__(self, name, min=None, max=None, **kwargs):
-        super(IntOpt, self).__init__(name, type=types.Integer(min, max),
+    def __init__(self, name, min=None, max=None, choices=None, **kwargs):
+        super(IntOpt, self).__init__(name,
+                                     type=types.Integer(
+                                         min=min,
+                                         max=max,
+                                         choices=choices),
                                      **kwargs)
 
 
