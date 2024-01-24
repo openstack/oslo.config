@@ -1,0 +1,4 @@
+---
+features:
+  - |
+    Add choice parameter for IntOpt class for conformity with types.Integer.
