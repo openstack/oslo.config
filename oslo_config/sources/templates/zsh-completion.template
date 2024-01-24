@@ -1,0 +1,27 @@
+#compdef _{scriptname} {scriptname}
+
+_{scriptname}_commands(){{
+#Script used only if subcommand
+  local -a _{scriptname}_cmds
+
+  # Add subcommands list
+  _{scriptname}_cmds=(
+{commands_list}
+  )
+
+  if (( CURRENT == 1 )); then
+    _describe -t commands '{scriptname} command' _{scriptname}_cmds || compadd "$@"
+  else
+    local curcontext="$curcontext"
+    #Check if subcommand and redefine completion
+    case "$words[1]" in
+{commands_opts}
+    esac
+  fi
+}}
+
+_{scriptname}(){{
+  local curcontext="$curcontext" state line
+  _arguments -s \
+{opts}
+}}

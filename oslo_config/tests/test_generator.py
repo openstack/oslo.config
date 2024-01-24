@@ -1132,6 +1132,7 @@ GENERATOR_OPTS = {'format_': 'yaml',
                   'namespace': ['test'],
                   'output_file': None,
                   'summarize': False,
+                  'shell_completion': None,
                   'wrap_width': 70,
                   'config_source': []}
 

@@ -143,8 +143,8 @@ class UsageTestCase(BaseTestCase):
         self.conf([])
         self.conf.print_usage(file=f)
         self.assertIn(
-            'usage: test [-h] [--config-dir DIR] [--config-file PATH] '
-            '[--version]',
+            'usage: test [-h] [--config-dir DIR] [--config-file PATH]\n\
+            [--shell_completion SHELL_COMPLETION] [--version]',
             f.getvalue())
         self.assertNotIn('somedesc', f.getvalue())
         self.assertNotIn('tepilog', f.getvalue())
@@ -167,8 +167,8 @@ class UsageTestCase(BaseTestCase):
         self.conf([])
         self.conf.print_help(file=f)
         self.assertIn(
-            'usage: test [-h] [--config-dir DIR] [--config-file PATH] '
-            '[--version]',
+            'usage: test [-h] [--config-dir DIR] [--config-file PATH]\n\
+            [--shell_completion SHELL_COMPLETION] [--version]',
             f.getvalue())
         self.assertIn('somedesc', f.getvalue())
         self.assertIn('tepilog', f.getvalue())
@@ -182,8 +182,8 @@ class HelpTestCase(BaseTestCase):
         self.conf([])
         self.conf.print_help(file=f)
         self.assertIn(
-            'usage: test [-h] [--config-dir DIR] [--config-file PATH] '
-            '[--version]',
+            'usage: test [-h] [--config-dir DIR] [--config-file PATH]\n\
+            [--shell_completion SHELL_COMPLETION] [--version]',
             f.getvalue())
         # argparse may generate two different help messages:
         # - In Python >=3.10: "options:\n  --version"
@@ -2629,7 +2629,7 @@ class MappingInterfaceTestCase(BaseTestCase):
 
         self.assertIn('foo', self.conf)
         self.assertIn('config_file', self.conf)
-        self.assertEqual(len(self.conf), 4)
+        self.assertEqual(len(self.conf), 5)
         self.assertEqual('bar', self.conf['foo'])
         self.assertEqual('bar', self.conf.get('foo'))
         self.assertIn('bar', list(self.conf.values()))
@@ -4036,6 +4036,7 @@ class OptDumpingTestCase(BaseTestCase):
                          "config_source                  = []",
                          "foo                            = this",
                          "passwd                         = ****",
+                         "shell_completion               = None",
                          "blaa.bar                       = that",
                          "blaa.key                       = ****",
                          "*" * 80,
@@ -4061,6 +4062,7 @@ class OptDumpingTestCase(BaseTestCase):
                          "config files: []",
                          "=" * 80,
                          "config_source                  = []",
+                         "shell_completion               = None",
                          "*" * 80,
                          ], logger.logged)
 

@@ -1,0 +1,51 @@
+#!/bin/bash completion for {scriptname}
+
+_{scriptname}(){{
+    local cur prev
+    local -A ARGS MAP FORCE OPTS OPTS_SUB MULTI
+
+    COMPREPLY=()
+    cur="${{COMP_WORDS[COMP_CWORD]}}"
+    prev="${{COMP_WORDS[COMP_CWORD-1]}}"
+
+    OPTS=({opts})
+    OPTS_SUB=({opts_sub})
+    ARGS=({args})
+    MAP=({map})
+    MULTI=({multi})
+
+    if [ ! -z "$prev" ]; then
+        # if is an argument complete with list of choice if define
+        prev_key=${{MAP[$prev]}}
+        if [ ! -z $prev_key ] && [ ! -z "${{ARGS[$prev_key]}}" ]; then
+            COMPREPLY=($(compgen -W "${{ARGS[$prev_key]}}" -- "${{cur}}"))
+            return 0
+        fi
+    fi
+    for in_use in ${{COMP_WORDS[@]:1}}; do
+        key=${{MAP[$in_use]}}
+        IFS='|'
+        if [[ -v OPTS_SUB[$key] ]];then
+        # If is a subcommand redefine completion
+            unset OPTS
+            local -A OPTS
+            for el in ${{OPTS_SUB[$key]}}; do
+                IFS='='
+                read k v <<< ${{el}}
+                IFS='|'
+                OPTS+=( [${{k}}]="${{v}}" )
+            done
+        fi
+        unset IFS
+        # Unset option that is already use
+        if [[ -z "MULTI[$key]" ]]; then
+            unset OPTS[$key]
+            unset ARGS[$key]
+        fi
+    done
+    compl="${{OPTS[@]}}"
+    COMPREPLY=($(compgen -W "${{compl}}" -- "${{cur}}"))
+    return 0
+}}
+
+complete -F _{scriptname} {scriptname}

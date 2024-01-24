@@ -1955,10 +1955,13 @@ class ConfigOpts(abc.Mapping):
     It has built-in support for :oslo.config:option:`config_file` and
     :oslo.config:option:`config_dir` options.
 
+    .. versionchanged:: 9.5.0
+      Added shell-completion option for generate a shell completion script.
     """
     disallow_names = ('project', 'prog', 'version',
                       'usage', 'default_config_files', 'default_config_dirs')
 
+    supported_shell_completion = ['bash', 'zsh']
     # NOTE(dhellmann): This instance is reused by list_opts().
     _config_source_opt = ListOpt(
         'config_source',
@@ -1967,6 +1970,12 @@ class ConfigOpts(abc.Mapping):
         help=('Lists configuration groups that provide more '
               'details for accessing configuration settings '
               'from locations other than local files.'),
+    )
+    # Add option for generate a shell completion script
+    _shell_completion_opt = StrOpt(
+        'shell_completion',
+        choices=supported_shell_completion,
+        help='Display a shell completion script'
     )
 
     def __init__(self):
@@ -1993,6 +2002,7 @@ class ConfigOpts(abc.Mapping):
         self._env_driver = _environment.EnvironmentConfigurationSource()
 
         self.register_opt(self._config_source_opt)
+        self.register_cli_opt(self._shell_completion_opt)
 
     def _pre_setup(self, project, prog, version, usage, description, epilog,
                    default_config_files, default_config_dirs):
@@ -2138,6 +2148,8 @@ class ConfigOpts(abc.Mapping):
         :raises: SystemExit, ConfigFilesNotFoundError, ConfigFileParseError,
                  ConfigFilesPermissionDeniedError,
                  RequiredOptError, DuplicateOptError
+        .. versionchanged:: 9.5.0
+        Added shell-completion option for generate a shell completion script.
         """
         self.clear()
 
@@ -2150,8 +2162,18 @@ class ConfigOpts(abc.Mapping):
         self._setup(project, prog, version, usage, default_config_files,
                     default_config_dirs, use_env)
 
-        self._namespace = self._parse_cli_opts(args if args is not None
-                                               else sys.argv[1:])
+        # This is necessary to analyse first args now,
+        # because if there are subcommands,
+        # these are mandatory even if you only want to use
+        # the --shell_completion option
+        argv = args if args is not None else sys.argv[1:]
+        if len(argv) > 1 and argv[0] == '--shell_completion' \
+                and args[1] in self.supported_shell_completion:
+            shell = argv[1]
+            self._print_shell_completion(shell)
+            sys.exit(0)
+
+        self._namespace = self._parse_cli_opts(argv)
         if self._namespace._files_not_found:
             raise ConfigFilesNotFoundError(self._namespace._files_not_found)
         if self._namespace._files_permission_denied:
@@ -2161,6 +2183,190 @@ class ConfigOpts(abc.Mapping):
         self._load_alternative_sources()
 
         self._check_required_opts()
+
+    def _print_shell_completion(self, shell):
+        """Print shell completion Script
+
+        :param shell: name of shell to generate script, actually bash or zsh
+        """
+        maps, descr, opts, opts_sub, args = {}, {}, {}, {}, {}
+        multi = []
+
+        template = os.path.join(os.path.dirname(os.path.abspath(__file__)),
+                                "templates",
+                                f"{shell}-completion.template")
+
+        for opt, group in self._all_cli_opts():
+            if isinstance(opt, SubCommandOpt):
+                # If a subcommand, call _add_to_cli, for getting the subparser
+                opt._add_to_cli(self._oparser, group)
+            else:
+                name = f"{group}_{opt.dest}" \
+                    if not (group is None and group != '') \
+                    else f"{opt.dest}"
+                if opt.multi:
+                    multi.append(name)
+                opts.setdefault(name, [])
+                opts[name] += [f"--{name}"]
+                descr[name] = opt.help
+                maps[f"--{name}"] = name
+                if opt.short:
+                    opts[name] += [f"-{opt.short}"]
+                    maps[f"-{opt.short}"] = name
+                if hasattr(opt.type, 'choices') and opt.type.choices:
+                    args[name] = ' '.join(opt.type.choices.keys())
+                else:
+                    args[name] = ' '
+        for op in self._oparser._actions:
+            # Analyze parser for find subcommanf options and help option
+            if isinstance(op, argparse._SubParsersAction):
+                for k, v in op._name_parser_map.items():
+                    descr[k] = v.description if v.description else ''
+                    opts_sub.setdefault(k, {})
+                    for opt in v._actions:
+                        op_str = opt.option_strings
+                        descr[f"{k}_{opt.dest}"] = opt.help
+                        opts_sub[k][opt.dest] = op_str
+                        for op in op_str:
+                            maps[op] = opt.dest
+            elif isinstance(op, argparse._HelpAction):
+                opts.setdefault(op.dest, [])
+                opts[op.dest] += [f"--{op.dest}", '-h']
+                descr[op.dest] = op.help
+        if shell == 'bash':
+            output = self._generate_bash_completion(template,
+                                                    maps=maps,
+                                                    opts=opts,
+                                                    descr=descr,
+                                                    opts_sub=opts_sub,
+                                                    multi=multi,
+                                                    args=args)
+        elif shell == 'zsh':
+            output = self._generate_zsh_completion(template,
+                                                   maps=maps,
+                                                   opts=opts,
+                                                   descr=descr,
+                                                   opts_sub=opts_sub,
+                                                   multi=multi,
+                                                   args=args)
+        print(output)
+
+    def _generate_bash_completion(self,
+                                  template,
+                                  maps=None,
+                                  opts=None,
+                                  descr=None,
+                                  opts_sub=None,
+                                  multi=None,
+                                  args=None):
+        """Generate a bash completaion script
+
+        :param template: tamplate for generate script
+        :param maps: a dict mapping short and long option name with destination
+                        variable
+        :param opts: a dict of option (destination is key, short and long name
+                        is in a list in value)
+        :param descr: dict of help message for option
+        :param opts_sub: dict of subcommand
+        :param multi: list of MultiOPt
+        :param args: dict of options with arguments
+        """
+        if maps is None:
+            maps = {}
+        if opts is None:
+            opts = {}
+        if descr is None:
+            descr = {}
+        if opts_sub is None:
+            opts_sub = {}
+        if multi is None:
+            multi = []
+        if args is None:
+            args = {}
+        b_opts_sub = ''
+        b_opts = ' '.join([f"[{k}]='{' '.join(v)}'"
+                          for k, v in opts.items()])
+        b_args = ' '.join([f"[{k}]='{v}'" for k, v in args.items()])
+        for k, v in opts_sub.items():
+            b_opts += f" [{k}]='{k}'"
+            sub = '|'.join([f"{ik}=\"{' '.join(iv)}\""
+                            for ik, iv in v.items() if len(iv) > 0])
+            b_opts_sub += f"[{k}]='{sub}' "
+        b_map = ' '.join([f"[{k}]={v}" for k, v in maps.items()])
+        b_multi = ' '.join([f"[{k}]=true" for k in multi])
+        with open(template, "r") as input:
+            output = input.read().format(scriptname=self.prog,
+                                         opts=b_opts,
+                                         opts_sub=b_opts_sub,
+                                         args=b_args,
+                                         multi=b_multi,
+                                         map=b_map)
+        return output
+
+    def _generate_zsh_completion(self,
+                                 template,
+                                 maps=None,
+                                 opts=None,
+                                 descr=None,
+                                 opts_sub=None,
+                                 multi=None,
+                                 args=None):
+        """Generate a zsh completaion script
+
+        :param template: tamplate for generate script
+        :param maps: a dict mapping short and long option name with destination
+                        variable
+        :param opts: a dict of option (destination is key, short and long name
+                        is in a list in value)
+        :param descr: dict of help message for option
+        :param opts_sub: dict of subcommand
+        :param multi: list of MultiOPt
+        :param args: dict of options with arguments
+        """
+        if maps is None:
+            maps = {}
+        if opts is None:
+            opts = {}
+        if descr is None:
+            descr = {}
+        if opts_sub is None:
+            opts_sub = {}
+        if multi is None:
+            multi = []
+        if args is None:
+            args = {}
+        p = self.prog
+        t = '  '
+        z_opts = ''
+        for k, v in opts.items():
+            repeat = '*' if k in multi else f"({' '.join(v)})"
+            o = f"{{{','.join(v)}}}" if len(v) > 1 else v[0]
+            d = descr[k]
+            c = f":choice:({args[k]})" if k in args else ''
+            z_opts += f"{t*2}'{repeat}'{o}'[{d}]{c}' \\\n"
+        if opts_sub:
+            z_opts += f"{t*2}'*::{p} command:_{p}_commands'\n"
+            c_list = ''
+            c_opts = ''
+            for k, v in opts_sub.items():
+                desc = descr[k] if descr[k] else ''
+                c_list += f"{t*2}'{k}:{desc}'\n"
+                c_opts += f"{t*3}{k})\n"
+                c_opts += f"{t*4}_arguments -s \\\n"
+                for ik, iv in v.items():
+                    if len(iv) > 1:
+                        c_opts += f"{t*4}'({' '.join(iv)})'{{{','.join(iv)}}}"
+                    elif len(iv) == 1:
+                        c_opts += f"{t*4}{iv[0]}"
+                    desc = descr[k+'_'+ik] if descr[k+'_'+ik] else ''
+                    c_opts += f"'[{desc}]' \\\n"
+                c_opts += f"\n{t*4};;\n"
+        with open(template, "r") as input:
+            output = input.read().format(scriptname=p,
+                                         opts=z_opts,
+                                         commands_list=c_list,
+                                         commands_opts=c_opts)
+        return output
 
     def _load_alternative_sources(self):
         # Look for other sources of option data.

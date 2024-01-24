@@ -1,0 +1,5 @@
+---
+features:
+  - |
+    Add ``--shell_completion`` argument to generate shell completion file
+    content. Currently bash and zsh are supported
