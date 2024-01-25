@@ -308,8 +308,8 @@ class URISourceTestCase(base.BaseTestCase):
         # testing driver loading
         self.assertEqual(self.conf._sources, [])
         self.conf._load_alternative_sources()
-        self.assertEqual(type(self.conf._sources[0]),
-                         _uri.URIConfigurationSource)
+        self.assertIsInstance(self.conf._sources[0],
+                              _uri.URIConfigurationSource)
 
         source = self.conf._open_source_from_opt_group(group)
 
