@@ -94,7 +94,6 @@ Here's an example of using the validator on Nova::
                             --namespace oslo.service.periodic_task \
                             --namespace oslo.service.service \
                             --namespace oslo.db \
-                            --namespace oslo.db.concurrency \
                             --namespace oslo.middleware \
                             --namespace oslo.concurrency \
                             --namespace keystonemiddleware.auth_token \
