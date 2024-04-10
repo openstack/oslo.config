@@ -612,9 +612,14 @@ class Dict(ConfigType):
     .. versionchanged:: 2.7
 
        Added *type_name* parameter.
+
+    .. versionchanged:: 9.5
+
+        Added *key_value_separator* parameter.
     """
 
-    def __init__(self, value_type=None, bounds=False, type_name='dict value'):
+    def __init__(self, value_type=None, bounds=False, type_name='dict value',
+                 key_value_separator=':'):
         super(Dict, self).__init__(type_name=type_name)
 
         if value_type is None:
@@ -622,8 +627,13 @@ class Dict(ConfigType):
 
         if not callable(value_type):
             raise TypeError('value_type must be callable')
+
+        if key_value_separator == ',':
+            raise TypeError('key_value_separator should not be \',\'')
+
         self.value_type = value_type
         self.bounds = bounds
+        self.key_value_separator = key_value_separator
 
     def __call__(self, value):
         if isinstance(value, dict):
@@ -649,11 +659,12 @@ class Dict(ConfigType):
             while True:
                 first_error = None
                 try:
-                    key_value = pair.split(':', 1)
+                    key_value = pair.split(self.key_value_separator, 1)
 
                     if len(key_value) < 2:
-                        raise ValueError('Value should be NAME:VALUE pairs '
-                                         'separated by ","')
+                        raise ValueError(
+                            'Value should be NAME%sVALUE pairs '
+                            'separated by ","' % self.key_value_separator)
 
                     key, value = key_value
                     key = key.strip()
