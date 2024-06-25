@@ -1,0 +1,5 @@
+---
+features:
+  - |
+    ``Dict`` type now supports the ``key_value_separator`` parameter. This
+    parameter allows using a customized separator between key and value.

@@ -662,6 +662,12 @@ class DictTypeTests(TypeTestHelper, unittest.TestCase):
                                   {'foo': 'bar, baz',
                                    'bam': 'quux'})
 
+    def test_custom_separator(self):
+        self.type_instance = types.Dict(key_value_separator='=')
+        self.assertConvertedValue(' foo=bar, baz= 123 ',
+                                  {'foo': 'bar',
+                                   'baz': '123'})
+
     def test_dict_of_dicts(self):
         self.type_instance = types.Dict(
             types.Dict(types.String(), bounds=True)
