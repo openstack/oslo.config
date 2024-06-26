@@ -264,8 +264,14 @@ class HelpTestCase(BaseTestCase):
         self.conf.register_cli_opt(uvw)
         self.conf([])
         self.conf.print_help(file=f)
-        self.assertIn('--a-bc A_BC, --d-ef A_BC, --d_ef A_BC', f.getvalue())
-        self.assertIn('--u-vw U_VW, --x-yz U_VW, --x_yz U_VW', f.getvalue())
+        if sys.version_info >= (3, 13):
+            self.assertIn('--a-bc, --d-ef, --d_ef A_BC', f.getvalue())
+            self.assertIn('--u-vw, --x-yz, --x_yz U_VW', f.getvalue())
+        else:
+            self.assertIn('--a-bc A_BC, --d-ef A_BC, --d_ef A_BC',
+                          f.getvalue())
+            self.assertIn('--u-vw U_VW, --x-yz U_VW, --x_yz U_VW',
+                          f.getvalue())
 
 
 class FindConfigFilesTestCase(BaseTestCase):
