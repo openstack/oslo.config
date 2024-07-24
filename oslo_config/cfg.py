@@ -2990,7 +2990,7 @@ class ConfigOpts(abc.Mapping):
             except ValueError:
                 sys.stderr.write("argument --%s: Invalid %s value: %s\n" % (
                     opt.dest, repr(opt.type), value))
-                raise SystemExit
+                raise SystemExit(1)
 
     def _reload_config_files(self):
         namespace = self._parse_config_files()
