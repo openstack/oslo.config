@@ -227,7 +227,7 @@ def main():
     except cfg.RequiredOptError:
         conf.print_help()
         if not sys.argv[1:]:
-            raise SystemExit
+            raise SystemExit(1)
         raise
     return _validate(conf)
 

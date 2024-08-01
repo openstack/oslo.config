@@ -826,7 +826,7 @@ def main(args=None):
     except cfg.RequiredOptError:
         conf.print_help()
         if not sys.argv[1:]:
-            raise SystemExit
+            raise SystemExit(1)
         raise
     generate(conf)
 
