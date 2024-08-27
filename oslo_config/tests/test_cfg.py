@@ -4385,8 +4385,12 @@ class SubCommandTestCase(BaseTestCase):
         self.conf.register_cli_opt(cfg.SubCommandOpt('cmd1'))
         self.conf.register_cli_opt(cfg.SubCommandOpt('cmd2'))
         self.useFixture(fixtures.MonkeyPatch('sys.stderr', io.StringIO()))
-        self.assertRaises(SystemExit, self.conf, [])
-        self.assertIn('multiple', sys.stderr.getvalue())
+        if sys.version_info >= (3, 12, 5):
+            self.assertRaisesRegex(argparse.ArgumentError, 'multiple',
+                                   self.conf, [])
+        else:
+            self.assertRaises(SystemExit, self.conf, [])
+            self.assertIn('multiple', sys.stderr.getvalue())
 
 
 class SetDefaultsTestCase(BaseTestCase):
