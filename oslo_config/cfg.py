@@ -2179,7 +2179,7 @@ class ConfigOpts(abc.Mapping):
         # the --shell_completion option
         argv = args if args is not None else sys.argv[1:]
         if len(argv) > 1 and argv[0] == '--shell_completion' \
-                and args[1] in self.supported_shell_completion:
+                and argv[1] in self.supported_shell_completion:
             shell = argv[1]
             self._print_shell_completion(shell)
             sys.exit(0)
