@@ -2212,9 +2212,9 @@ class ConfigOpts(abc.Mapping):
                 # If a subcommand, call _add_to_cli, for getting the subparser
                 opt._add_to_cli(self._oparser, group)
             else:
-                name = f"{group}_{opt.dest}" \
+                name = f"{group}_{opt.name}" \
                     if not (group is None and group != '') \
-                    else f"{opt.dest}"
+                    else f"{opt.name}"
                 if opt.multi:
                     multi.append(name)
                 opts.setdefault(name, [])
