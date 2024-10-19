@@ -106,7 +106,8 @@ class NoSuchOptError(Error, AttributeError):
 
     def __str__(self):
         group_name = 'DEFAULT' if self.group is None else self.group.name
-        return "no such option %s in group [%s]" % (self.opt_name, group_name)
+        return "no such option {} in group [{}]".format(
+            self.opt_name, group_name)
 
 
 class NoSuchGroupError(Error):
@@ -138,8 +139,8 @@ class RequiredOptError(Error):
 
     def __str__(self):
         group_name = 'DEFAULT' if self.group is None else self.group.name
-        return "value required for option %s in group [%s]" % (self.opt_name,
-                                                               group_name)
+        return "value required for option {} in group [{}]".format(
+            self.opt_name, group_name)
 
 
 class TemplateSubstitutionError(Error):
@@ -189,7 +190,7 @@ class ConfigFileParseError(Error):
         self.msg = msg
 
     def __str__(self):
-        return 'Failed to parse %s: %s' % (self.config_file, self.msg)
+        return 'Failed to parse {}: {}'.format(self.config_file, self.msg)
 
 
 class ConfigSourceValueError(Error, ValueError):
@@ -260,7 +261,7 @@ def _search_dirs(dirs, basename, extension=""):
     :returns: the path to a matching file or directory, or None
     """
     for d in dirs:
-        path = os.path.join(d, '%s%s' % (basename, extension))
+        path = os.path.join(d, '{}{}'.format(basename, extension))
         if os.path.exists(path):
             return path
 
@@ -538,7 +539,7 @@ class Opt:
                  deprecated_for_removal=False, deprecated_reason=None,
                  deprecated_since=None, mutable=False, advanced=False):
         if name.startswith('_'):
-            raise ValueError('illegal name %s with prefix _' % (name,))
+            raise ValueError('illegal name {} with prefix _'.format(name))
         self.name = name
 
         if type is None:
@@ -917,14 +918,14 @@ class StrOpt(Opt):
 
     def __init__(self, name, choices=None, quotes=None,
                  regex=None, ignore_case=False, max_length=None, **kwargs):
-        super(StrOpt, self).__init__(name,
-                                     type=types.String(
-                                         choices=choices,
-                                         quotes=quotes,
-                                         regex=regex,
-                                         ignore_case=ignore_case,
-                                         max_length=max_length),
-                                     **kwargs)
+        super().__init__(name,
+                         type=types.String(
+                             choices=choices,
+                             quotes=quotes,
+                             regex=regex,
+                             ignore_case=ignore_case,
+                             max_length=max_length),
+                         **kwargs)
 
     def _get_choice_text(self, choice):
         if choice is None:
@@ -935,7 +936,7 @@ class StrOpt(Opt):
 
     def _get_argparse_kwargs(self, group, **kwargs):
         """Extends the base argparse keyword dict for the config dir option."""
-        kwargs = super(StrOpt, self)._get_argparse_kwargs(group)
+        kwargs = super()._get_argparse_kwargs(group)
 
         if getattr(self.type, 'choices', None):
             choices_text = ', '.join([self._get_choice_text(choice)
@@ -965,11 +966,11 @@ class BoolOpt(Opt):
     def __init__(self, name, **kwargs):
         if 'positional' in kwargs:
             raise ValueError('positional boolean args not supported')
-        super(BoolOpt, self).__init__(name, type=types.Boolean(), **kwargs)
+        super().__init__(name, type=types.Boolean(), **kwargs)
 
     def _add_to_cli(self, parser, group=None):
         """Extends the base class method to add the --nooptname option."""
-        super(BoolOpt, self)._add_to_cli(parser, group)
+        super()._add_to_cli(parser, group)
         self._add_inverse_to_argparse(parser, group)
 
     def _add_inverse_to_argparse(self, parser, group):
@@ -991,7 +992,7 @@ class BoolOpt(Opt):
     def _get_argparse_kwargs(self, group, action='store_true', **kwargs):
         """Extends the base argparse keyword dict for boolean options."""
 
-        kwargs = super(BoolOpt, self)._get_argparse_kwargs(group, **kwargs)
+        kwargs = super()._get_argparse_kwargs(group, **kwargs)
         # type has no effect for BoolOpt, it only matters for
         # values that came from config files
         if 'type' in kwargs:
@@ -1030,12 +1031,12 @@ class IntOpt(Opt):
     """
 
     def __init__(self, name, min=None, max=None, choices=None, **kwargs):
-        super(IntOpt, self).__init__(name,
-                                     type=types.Integer(
-                                         min=min,
-                                         max=max,
-                                         choices=choices),
-                                     **kwargs)
+        super().__init__(name,
+                         type=types.Integer(
+                             min=min,
+                             max=max,
+                             choices=choices),
+                         **kwargs)
 
 
 class FloatOpt(Opt):
@@ -1055,8 +1056,7 @@ class FloatOpt(Opt):
     """
 
     def __init__(self, name, min=None, max=None, **kwargs):
-        super(FloatOpt, self).__init__(name, type=types.Float(min, max),
-                                       **kwargs)
+        super().__init__(name, type=types.Float(min, max), **kwargs)
 
 
 class ListOpt(Opt):
@@ -1075,10 +1075,10 @@ class ListOpt(Opt):
     """
 
     def __init__(self, name, item_type=None, bounds=None, **kwargs):
-        super(ListOpt, self).__init__(name,
-                                      type=types.List(item_type=item_type,
-                                                      bounds=bounds),
-                                      **kwargs)
+        super().__init__(name,
+                         type=types.List(item_type=item_type,
+                                         bounds=bounds),
+                         **kwargs)
 
 
 class DictOpt(Opt):
@@ -1094,7 +1094,7 @@ class DictOpt(Opt):
     """
 
     def __init__(self, name, **kwargs):
-        super(DictOpt, self).__init__(name, type=types.Dict(), **kwargs)
+        super().__init__(name, type=types.Dict(), **kwargs)
 
 
 class IPOpt(Opt):
@@ -1112,8 +1112,8 @@ class IPOpt(Opt):
     """
 
     def __init__(self, name, version=None, **kwargs):
-        super(IPOpt, self).__init__(name, type=types.IPAddress(version),
-                                    **kwargs)
+        super().__init__(name, type=types.IPAddress(version),
+                         **kwargs)
 
 
 class PortOpt(Opt):
@@ -1144,7 +1144,7 @@ class PortOpt(Opt):
     def __init__(self, name, min=None, max=None, choices=None, **kwargs):
         type = types.Port(min=min, max=max, choices=choices,
                           type_name='port value')
-        super(PortOpt, self).__init__(name, type=type, **kwargs)
+        super().__init__(name, type=type, **kwargs)
 
 
 class HostnameOpt(Opt):
@@ -1160,8 +1160,8 @@ class HostnameOpt(Opt):
     """
 
     def __init__(self, name, **kwargs):
-        super(HostnameOpt, self).__init__(name, type=types.Hostname(),
-                                          **kwargs)
+        super().__init__(name, type=types.Hostname(),
+                         **kwargs)
 
 
 class HostAddressOpt(Opt):
@@ -1181,9 +1181,9 @@ class HostAddressOpt(Opt):
     """
 
     def __init__(self, name, version=None, **kwargs):
-        super(HostAddressOpt, self).__init__(name,
-                                             type=types.HostAddress(version),
-                                             **kwargs)
+        super().__init__(name,
+                         type=types.HostAddress(version),
+                         **kwargs)
 
 
 class HostDomainOpt(Opt):
@@ -1203,9 +1203,9 @@ class HostDomainOpt(Opt):
     """
 
     def __init__(self, name, version=None, **kwargs):
-        super(HostDomainOpt, self).__init__(name,
-                                            type=types.HostDomain(version),
-                                            **kwargs)
+        super().__init__(name,
+                         type=types.HostDomain(version),
+                         **kwargs)
 
 
 class URIOpt(Opt):
@@ -1230,7 +1230,7 @@ class URIOpt(Opt):
 
     def __init__(self, name, max_length=None, schemes=None, **kwargs):
         type = types.URI(max_length=max_length, schemes=schemes)
-        super(URIOpt, self).__init__(name, type=type, **kwargs)
+        super().__init__(name, type=type, **kwargs)
 
 
 class MultiOpt(Opt):
@@ -1259,11 +1259,11 @@ class MultiOpt(Opt):
     multi = True
 
     def __init__(self, name, item_type, **kwargs):
-        super(MultiOpt, self).__init__(name, item_type, **kwargs)
+        super().__init__(name, item_type, **kwargs)
 
     def _get_argparse_kwargs(self, group, **kwargs):
         """Extends the base argparse keyword dict for multi value options."""
-        kwargs = super(MultiOpt, self)._get_argparse_kwargs(group)
+        kwargs = super()._get_argparse_kwargs(group)
         if not self.positional:
             kwargs['action'] = 'append'
         else:
@@ -1283,9 +1283,9 @@ class MultiStrOpt(MultiOpt):
     """
 
     def __init__(self, name, **kwargs):
-        super(MultiStrOpt, self).__init__(name,
-                                          item_type=types.MultiString(),
-                                          **kwargs)
+        super().__init__(name,
+                         item_type=types.MultiString(),
+                         **kwargs)
 
 
 class SubCommandOpt(Opt):
@@ -1321,8 +1321,8 @@ class SubCommandOpt(Opt):
         this subparsers object can be used to register parsers for
         sub-commands.
         """
-        super(SubCommandOpt, self).__init__(name, type=types.String(),
-                                            dest=dest, help=help)
+        super().__init__(name, type=types.String(),
+                         dest=dest, help=help)
         self.handler = handler
         self.title = title
         self.description = description
@@ -1384,11 +1384,11 @@ class _ConfigFileOpt(Opt):
             ConfigParser._parse_file(values, namespace)
 
     def __init__(self, name, **kwargs):
-        super(_ConfigFileOpt, self).__init__(name, lambda x: x, **kwargs)
+        super().__init__(name, lambda x: x, **kwargs)
 
     def _get_argparse_kwargs(self, group, **kwargs):
         """Extends the base argparse keyword dict for the config file opt."""
-        kwargs = super(_ConfigFileOpt, self)._get_argparse_kwargs(group)
+        kwargs = super()._get_argparse_kwargs(group)
         kwargs['action'] = self.ConfigFileAction
         return kwargs
 
@@ -1439,12 +1439,12 @@ class _ConfigDirOpt(Opt):
                 ConfigParser._parse_file(config_file, namespace)
 
     def __init__(self, name, **kwargs):
-        super(_ConfigDirOpt, self).__init__(name, type=types.List(),
-                                            **kwargs)
+        super().__init__(name, type=types.List(),
+                         **kwargs)
 
     def _get_argparse_kwargs(self, group, **kwargs):
         """Extends the base argparse keyword dict for the config dir option."""
-        kwargs = super(_ConfigDirOpt, self)._get_argparse_kwargs(group)
+        kwargs = super()._get_argparse_kwargs(group)
         kwargs['action'] = self.ConfigDirAction
         return kwargs
 
@@ -1559,7 +1559,7 @@ class OptGroup:
 
 class ParseError(iniparser.ParseError):
     def __init__(self, msg, lineno, line, filename):
-        super(ParseError, self).__init__(msg, lineno, line)
+        super().__init__(msg, lineno, line)
         self.filename = filename
 
     def __str__(self):
@@ -1578,7 +1578,7 @@ class ConfigParser(iniparser.BaseParser):
     """
 
     def __init__(self, filename, sections):
-        super(ConfigParser, self).__init__()
+        super().__init__()
         self.filename = filename
         self.sections = sections
         self._normalized = None
@@ -1589,7 +1589,7 @@ class ConfigParser(iniparser.BaseParser):
 
     def parse(self):
         with open(self.filename) as f:
-            return super(ConfigParser, self).parse(f.readlines())
+            return super().parse(f.readlines())
 
     def new_section(self, section):
         self.section = section
@@ -1637,7 +1637,7 @@ class ConfigParser(iniparser.BaseParser):
             parser.parse()
         except iniparser.ParseError as pe:
             raise ConfigFileParseError(pe.filename, str(pe))
-        except IOError as err:
+        except OSError as err:
             if err.errno == errno.ENOENT:
                 namespace._file_not_found(config_file)
                 return
@@ -1892,8 +1892,7 @@ class _Namespace(argparse.Namespace):
 
     def _sections(self):
         for sections in self._parsed:
-            for section in sections:
-                yield section
+            yield from sections
 
 
 class _CachedArgumentParser(argparse.ArgumentParser):
@@ -1908,7 +1907,7 @@ class _CachedArgumentParser(argparse.ArgumentParser):
     """
 
     def __init__(self, prog=None, usage=None, **kwargs):
-        super(_CachedArgumentParser, self).__init__(prog, usage, **kwargs)
+        super().__init__(prog, usage, **kwargs)
         self._args_cache = {}
 
     def add_parser_argument(self, container, *args, **kwargs):
@@ -1944,15 +1943,15 @@ class _CachedArgumentParser(argparse.ArgumentParser):
 
     def parse_args(self, args=None, namespace=None):
         self.initialize_parser_arguments()
-        return super(_CachedArgumentParser, self).parse_args(args, namespace)
+        return super().parse_args(args, namespace)
 
     def print_help(self, file=None):
         self.initialize_parser_arguments()
-        super(_CachedArgumentParser, self).print_help(file)
+        super().print_help(file)
 
     def print_usage(self, file=None):
         self.initialize_parser_arguments()
-        super(_CachedArgumentParser, self).print_usage(file)
+        super().print_usage(file)
 
 
 class ConfigOpts(abc.Mapping):
@@ -2000,7 +1999,7 @@ class ConfigOpts(abc.Mapping):
         self._oparser = None
         self._namespace = None
         self._mutable_ns = None
-        self._mutate_hooks = set([])
+        self._mutate_hooks = set()
         self.__cache = {}
         self.__drivers_cache = {}
         self._config_opts = []
@@ -2305,7 +2304,7 @@ class ConfigOpts(abc.Mapping):
             b_opts_sub += f"[{k}]='{sub}' "
         b_map = ' '.join([f"[{k}]={v}" for k, v in maps.items()])
         b_multi = ' '.join([f"[{k}]=true" for k in multi])
-        with open(template, "r") as input:
+        with open(template) as input:
             output = input.read().format(scriptname=self.prog,
                                          opts=b_opts,
                                          opts_sub=b_opts_sub,
@@ -2372,7 +2371,7 @@ class ConfigOpts(abc.Mapping):
                     desc = descr[k+'_'+ik] if descr[k+'_'+ik] else ''
                     c_opts += f"'[{desc}]' \\\n"
                 c_opts += f"\n{t*4};;\n"
-        with open(template, "r") as input:
+        with open(template) as input:
             output = input.read().format(scriptname=p,
                                          opts=z_opts,
                                          commands_list=c_list,
@@ -2449,9 +2448,8 @@ class ConfigOpts(abc.Mapping):
 
     def __iter__(self):
         """Iterate over all registered opt and group names."""
-        for key in itertools.chain(list(self._opts.keys()),
-                                   list(self._groups.keys())):
-            yield key
+        yield from itertools.chain(list(self._opts.keys()),
+                                   list(self._groups.keys()))
 
     def __len__(self):
         """Return the number of options and option groups."""
@@ -2824,7 +2822,7 @@ class ConfigOpts(abc.Mapping):
             for opt_name in sorted(self._groups[group_name]._opts):
                 opt = self._get_opt_info(opt_name, group_name)['opt']
                 logger.log(lvl, "%-30s = %s",
-                           "%s.%s" % (group_name, opt_name),
+                           "{}.{}".format(group_name, opt_name),
                            _sanitize(opt, getattr(group_attr, opt_name)))
 
         logger.log(lvl, "*" * 80)
@@ -2941,8 +2939,8 @@ class ConfigOpts(abc.Mapping):
                     if env_val[0] != sources._NoValue:
                         return (convert(env_val[0]), env_val[1])
             except ValueError as ve:
-                message = "Value for option %s from %s is not valid: %s" % (
-                    opt.name, alt_loc, str(ve))
+                message = ("Value for option {} from {} is not valid: {}"
+                           .format(opt.name, alt_loc, str(ve)))
                 # Preserve backwards compatibility for file-based value
                 # errors.
                 if alt_loc.location == Locations.user:
@@ -3194,8 +3192,9 @@ class ConfigOpts(abc.Mapping):
             try:
                 self._convert_value(value, opt)
             except ValueError:
-                sys.stderr.write("argument --%s: Invalid %s value: %s\n" % (
-                    opt.dest, repr(opt.type), value))
+                sys.stderr.write(
+                    "argument --{}: Invalid {} value: {}\n".format(
+                        opt.dest, repr(opt.type), value))
                 raise SystemExit(1)
 
     def _reload_config_files(self):
@@ -3330,7 +3329,7 @@ class ConfigOpts(abc.Mapping):
         Returns a sorted list of all section names found in the
         configuration files, whether declared beforehand or not.
         """
-        s = set([])
+        s = set()
         if self._mutable_ns:
             s |= set(self._mutable_ns._sections())
         if self._namespace:
@@ -3387,8 +3386,7 @@ class ConfigOpts(abc.Mapping):
 
         def __iter__(self):
             """Iterate over all registered opt and group names."""
-            for key in self._group._opts.keys():
-                yield key
+            yield from self._group._opts.keys()
 
         def __len__(self):
             """Return the number of options and option groups."""

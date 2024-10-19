@@ -130,7 +130,7 @@ def _validate_defaults(sections, opt_data, conf):
             # Apparently, there's multiple naming conventions for
             # options, 'name' is mostly with hyphens, and 'dest'
             # is represented with underscores.
-            opt_names = set([opt['name'], opt.get('dest')])
+            opt_names = {opt['name'], opt.get('dest')}
             if not opt_names.intersection(sections[group]):
                 continue
             try:

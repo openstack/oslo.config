@@ -83,7 +83,7 @@ opt = value
 
 class TestValidator(base.BaseTestCase):
     def setUp(self):
-        super(TestValidator, self).setUp()
+        super().setUp()
         self.conf = cfg.ConfigOpts()
         self.conf_fixture = self.useFixture(fixture.Config(self.conf))
         validator._register_cli_opts(self.conf)

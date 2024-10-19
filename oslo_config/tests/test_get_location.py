@@ -10,7 +10,6 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
-import io
 import tempfile
 import textwrap
 
@@ -50,7 +49,7 @@ class LocationTestCase(base.BaseTestCase):
 class GetLocationTestCase(base.BaseTestCase):
 
     def setUp(self):
-        super(GetLocationTestCase, self).setUp()
+        super().setUp()
 
         def _clear():
             cfg._show_caller_details = False
@@ -136,7 +135,7 @@ class GetLocationTestCase(base.BaseTestCase):
 
     def _write_opt_to_tmp_file(self, group, option, value):
         filename = tempfile.mktemp()
-        with io.open(filename, 'w', encoding='utf-8') as f:
+        with open(filename, 'w', encoding='utf-8') as f:
             f.write(textwrap.dedent('''
             [{group}]
             {option} = {value}

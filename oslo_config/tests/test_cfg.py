@@ -108,7 +108,7 @@ class BaseTestCase(base.BaseTestCase):
                 validate_default_values=True)
 
     def setUp(self):
-        super(BaseTestCase, self).setUp()
+        super().setUp()
         self.useFixture(fixtures.NestedTempfile())
         self.conf = self.TestConfigOpts()
 
@@ -1130,7 +1130,7 @@ def _fake_deprecated_feature(logger, msg, *args, **kwargs):
 class ConfigFileOptsTestCase(BaseTestCase):
 
     def setUp(self):
-        super(ConfigFileOptsTestCase, self).setUp()
+        super().setUp()
         self.logger = self.useFixture(
             fixtures.FakeLogger(
                 format='%(message)s',
@@ -2284,7 +2284,7 @@ class ConfigFileReloadTestCase(BaseTestCase):
 
 class ConfigFileMutateTestCase(BaseTestCase):
     def setUp(self):
-        super(ConfigFileMutateTestCase, self).setUp()
+        super().setUp()
         self.my_group = cfg.OptGroup('group', 'group options')
         self.conf.register_group(self.my_group)
 
@@ -4013,7 +4013,7 @@ class OptDumpingTestCase(BaseTestCase):
             self.logged.append(fmt % args)
 
     def setUp(self):
-        super(OptDumpingTestCase, self).setUp()
+        super().setUp()
         self._args = ['--foo', 'this', '--blaa-bar', 'that',
                       '--blaa-key', 'admin', '--passwd', 'hush']
 
@@ -4135,7 +4135,7 @@ class ConfigParserTestCase(BaseTestCase):
 
 class NamespaceTestCase(BaseTestCase):
     def setUp(self):
-        super(NamespaceTestCase, self).setUp()
+        super().setUp()
         self.ns = cfg._Namespace(self.conf)
 
     def read(self, *texts):
@@ -5002,7 +5002,7 @@ class SectionsTestCase(BaseTestCase):
 
 class DeprecationWarningTestBase(BaseTestCase):
     def setUp(self):
-        super(DeprecationWarningTestBase, self).setUp()
+        super().setUp()
         self.log_fixture = self.useFixture(fixtures.FakeLogger())
         self._parser_class = cfg.ConfigParser
 
@@ -5162,7 +5162,7 @@ class DeprecationWarningTestsNoOsloLog(DeprecationWarningTests):
     log_prefix = ''
 
     def setUp(self):
-        super(DeprecationWarningTestsNoOsloLog, self).setUp()
+        super().setUp()
         # NOTE(bnemec): For some reason if I apply this as a class decorator
         # it ends up applying to the parent class too and breaks those tests.
         self.useFixture(fixtures.MockPatchObject(cfg, 'oslo_log', None))

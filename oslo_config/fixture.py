@@ -31,7 +31,7 @@ class Config(fixtures.Fixture):
         self.conf = conf
 
     def setUp(self):
-        super(Config, self).setUp()
+        super().setUp()
         # NOTE(morganfainberg): unregister must be added to cleanup before
         # reset is because cleanup works in reverse order of registered items,
         # and a reset must occur before unregistering options can occur.

@@ -284,7 +284,7 @@ class _OptFormatter:
             else:
                 opt_help = opt.help
 
-            help_text = '%s%s (%s)' % (opt_prefix, opt_help, opt_type)
+            help_text = '{}{} ({})'.format(opt_prefix, opt_help, opt_type)
         else:
             help_text = '(%s)' % opt_type
         lines = self._format_help(help_text)
@@ -298,7 +298,7 @@ class _OptFormatter:
         if getattr(opt.type, 'choices', None):
             lines.append('# Possible values:\n')
             for choice in opt.type.choices:
-                help_text = '%s - %s' % (
+                help_text = '{} - {}'.format(
                     self._get_choice_text(choice),
                     opt.type.choices[choice] or '<No description provided>')
                 lines.extend(self._format_help(help_text))
@@ -379,9 +379,9 @@ class _OptFormatter:
             if default_str:
                 default_str = ' ' + default_str.replace('\n', '\n#    ')
             if self.minimal:
-                lines.append('%s =%s\n' % (opt.dest, default_str))
+                lines.append('{} ={}\n'.format(opt.dest, default_str))
             else:
-                lines.append('#%s =%s\n' % (opt.dest, default_str))
+                lines.append('#{} ={}\n'.format(opt.dest, default_str))
 
         self.writelines(lines)
 
@@ -578,7 +578,7 @@ def _output_opts(f, group, group_data):
             except Exception as err:
                 f.write('# Warning: Failed to format sample for %s\n' %
                         (opt.dest,))
-                f.write('# %s\n' % (err,))
+                f.write('# {}\n'.format(err))
 
 
 def _get_groups(conf_ns):

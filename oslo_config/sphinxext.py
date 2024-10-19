@@ -60,8 +60,8 @@ def _indent(text, n=2):
 def _make_anchor_target(group_name, option_name):
     # We need to ensure this is unique across entire documentation
     # http://www.sphinx-doc.org/en/stable/markup/inline.html#ref-role
-    target = '%s.%s' % (cfg._normalize_group_name(group_name),
-                        option_name.lower())
+    target = '{}.{}'.format(cfg._normalize_group_name(group_name),
+                            option_name.lower())
     return target
 
 
@@ -220,12 +220,10 @@ def _format_group_opts(namespace, group_name, group_obj, opt_list):
     group_name = group_name or 'DEFAULT'
     LOG.debug('%s %s', namespace, group_name)
 
-    for line in _format_group(namespace, group_name, group_obj):
-        yield line
+    yield from _format_group(namespace, group_name, group_obj)
 
     for opt in opt_list:
-        for line in _format_opt(opt, group_name):
-            yield line
+        yield from _format_opt(opt, group_name)
 
 
 def _format_option_help(namespaces, split_namespaces):
@@ -252,8 +250,7 @@ def _format_option_help(namespaces, split_namespaces):
                     group_obj=group,
                     opt_list=opts,
                 )
-                for line in lines:
-                    yield line
+                yield from lines
     else:
         # Merge the options from different namespaces that belong to
         # the same group together and format them without the
@@ -278,8 +275,7 @@ def _format_option_help(namespaces, split_namespaces):
                 group_obj=group_objs.get(group_name),
                 opt_list=group_opts,
             )
-            for line in lines:
-                yield line
+            yield from lines
 
 
 class ShowOptionsDirective(rst.Directive):
@@ -337,7 +333,7 @@ class ConfigGroupXRefRole(XRefRole):
     "Handles :oslo.config:group: roles pointing to configuration groups."
 
     def __init__(self):
-        super(ConfigGroupXRefRole, self).__init__(
+        super().__init__(
             warn_dangling=True,
         )
 
@@ -350,7 +346,7 @@ class ConfigOptXRefRole(XRefRole):
     "Handles :oslo.config:option: roles pointing to configuration options."
 
     def __init__(self):
-        super(ConfigOptXRefRole, self).__init__(
+        super().__init__(
             warn_dangling=True,
         )
 
@@ -400,7 +396,7 @@ class ConfigGroup(rst.Directive):
             result.append(text, source_name)
 
         if namespace:
-            title = '%s: %s' % (namespace, group_name)
+            title = '{}: {}'.format(namespace, group_name)
         else:
             title = group_name
 
