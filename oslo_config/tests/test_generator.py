@@ -952,7 +952,7 @@ class GeneratorTestCase(base.BaseTestCase):
             cls.output_file_scenarios)
 
     def setUp(self):
-        super(GeneratorTestCase, self).setUp()
+        super().setUp()
 
         self.conf = cfg.ConfigOpts()
         self.config_fixture = config_fixture.Config(self.conf)
@@ -1007,7 +1007,7 @@ class GeneratorTestCase(base.BaseTestCase):
         if self.stdout:
             self.assertEqual(self.expected, stdout.getvalue())
         else:
-            with open(output_file, 'r') as f:
+            with open(output_file) as f:
                 actual = f.read()
             self.assertEqual(self.expected, actual)
 
@@ -1021,7 +1021,7 @@ class GeneratorTestCase(base.BaseTestCase):
 class GeneratorFileHandlingTestCase(base.BaseTestCase):
 
     def setUp(self):
-        super(GeneratorFileHandlingTestCase, self).setUp()
+        super().setUp()
 
         self.conf = cfg.ConfigOpts()
         self.config_fixture = config_fixture.Config(self.conf)
@@ -1056,7 +1056,7 @@ class GeneratorFileHandlingTestCase(base.BaseTestCase):
 class DriverOptionTestCase(base.BaseTestCase):
 
     def setUp(self):
-        super(DriverOptionTestCase, self).setUp()
+        super().setUp()
 
         self.conf = cfg.ConfigOpts()
         self.config_fixture = config_fixture.Config(self.conf)
@@ -1390,7 +1390,7 @@ class MachineReadableGeneratorTestCase(base.BaseTestCase):
         ]
 
     def setUp(self):
-        super(MachineReadableGeneratorTestCase, self).setUp()
+        super().setUp()
 
         self.conf = cfg.ConfigOpts()
         self.config_fixture = config_fixture.Config(self.conf)
@@ -1550,7 +1550,7 @@ class GeneratorAdditionalTestCase(base.BaseTestCase):
             generator._output_opts(formatter, 'DEFAULT', groups.pop('DEFAULT'))
         expected = '''[DEFAULT]
 '''
-        with open(tmp_file, 'r') as f:
+        with open(tmp_file) as f:
             actual = f.read()
         self.assertEqual(expected, actual)
 
@@ -1573,7 +1573,7 @@ class GeneratorAdditionalTestCase(base.BaseTestCase):
 # foo option (string value)
 #foo = fred
 '''
-        with open(tmp_file, 'r') as f:
+        with open(tmp_file) as f:
             actual = f.read()
         self.assertEqual(expected, actual)
 
@@ -1593,8 +1593,8 @@ class GeneratorAdditionalTestCase(base.BaseTestCase):
 #
 
 # a list (list value)
-#list_opt = %(default)s
-''' % {'default': default}
+#list_opt = {default}
+'''.format(default=default)
         generator._output_opts(formatter, 'alpha', groups.pop('alpha'))
         f.close()
         content = open(tmp_file).read()
@@ -1733,7 +1733,7 @@ bar = <None>
 # bars foo (string value)
 bars = <None>
 '''
-        with open(tmp_file, 'r') as f:
+        with open(tmp_file) as f:
             actual = f.read()
         self.assertEqual(expected, actual)
 
@@ -1795,7 +1795,7 @@ messages!""")]
 # messages! (string value)
 #bar = <None>
 '''
-        with open(tmp_file, 'r') as f:
+        with open(tmp_file) as f:
             actual = f.read()
         self.assertEqual(expected, actual)
 
@@ -1841,7 +1841,7 @@ class AdvancedOptionsTestCase(base.BaseTestCase):
 # effect on stability and/or performance.
 #bars = true
 '''
-        with open(tmp_file, 'r') as f:
+        with open(tmp_file) as f:
             actual = f.read()
         self.assertEqual(expected, actual)
 

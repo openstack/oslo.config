@@ -108,7 +108,7 @@ class String(ConfigType):
     def __init__(self, choices=None, quotes=False, regex=None,
                  ignore_case=False, max_length=None,
                  type_name='string value'):
-        super(String, self).__init__(type_name=type_name)
+        super().__init__(type_name=type_name)
         if choices and regex:
             raise ValueError("'choices' and 'regex' cannot both be specified")
 
@@ -165,7 +165,7 @@ class String(ConfigType):
             return value
 
         raise ValueError(
-            'Valid values are [%s], but found %s' % (
+            'Valid values are [{}], but found {}'.format(
                 ', '.join([str(v) for v in self.choices]),
                 repr(value)))
 
@@ -184,8 +184,8 @@ class String(ConfigType):
             (self.__class__ == other.__class__) and
             (self.quotes == other.quotes) and
             (self.regex == other.regex) and
-            (set([x for x in self.choices or []]) ==
-                set([x for x in other.choices or []]) if
+            ({x for x in self.choices or []} ==
+                {x for x in other.choices or []} if
              self.choices and other.choices else
              self.choices == other.choices)
         )
@@ -198,7 +198,7 @@ class MultiString(String):
     """Multi-valued string."""
 
     def __init__(self, type_name='multi valued'):
-        super(MultiString, self).__init__(type_name=type_name)
+        super().__init__(type_name=type_name)
 
     NONE_DEFAULT = ['']
 
@@ -235,7 +235,7 @@ class Boolean(ConfigType):
     FALSE_VALUES = ['false', '0', 'off', 'no']
 
     def __init__(self, type_name='boolean value'):
-        super(Boolean, self).__init__(type_name=type_name)
+        super().__init__(type_name=type_name)
 
     def __call__(self, value):
         if isinstance(value, bool):
@@ -279,7 +279,7 @@ class Number(ConfigType):
 
     def __init__(self, num_type, type_name,
                  min=None, max=None, choices=None):
-        super(Number, self).__init__(type_name=type_name)
+        super().__init__(type_name=type_name)
 
         if min is not None and max is not None and max < min:
             raise ValueError('Max value is less than min value')
@@ -319,8 +319,9 @@ class Number(ConfigType):
                                  self.max)
         else:
             if value not in self.choices:
-                raise ValueError('Valid values are %r, but found %g' % (
-                                 self.choices, value))
+                raise ValueError(
+                    'Valid values are {!r}, but found {:g}'.format(
+                        self.choices, value))
         return value
 
     def __repr__(self):
@@ -342,8 +343,8 @@ class Number(ConfigType):
             (self.__class__ == other.__class__) and
             (self.min == other.min) and
             (self.max == other.max) and
-            (set([x for x in self.choices or []]) ==
-                set([x for x in other.choices or []]) if
+            ({x for x in self.choices or []} ==
+                {x for x in other.choices or []} if
              self.choices and other.choices else
              self.choices == other.choices)
         )
@@ -385,8 +386,8 @@ class Integer(Number):
 
     def __init__(self, min=None, max=None, type_name='integer value',
                  choices=None):
-        super(Integer, self).__init__(int, type_name, min=min, max=max,
-                                      choices=choices)
+        super().__init__(int, type_name, min=min, max=max,
+                         choices=choices)
 
 
 class Float(Number):
@@ -408,7 +409,7 @@ class Float(Number):
     """
 
     def __init__(self, min=None, max=None, type_name='floating point value'):
-        super(Float, self).__init__(float, type_name, min=min, max=max)
+        super().__init__(float, type_name, min=min, max=max)
 
 
 class Port(Integer):
@@ -443,8 +444,8 @@ class Port(Integer):
             raise ValueError('Max value cannot be more than %(max)d' %
                              {'max': self.PORT_MAX})
 
-        super(Port, self).__init__(min=min, max=max, type_name=type_name,
-                                   choices=choices)
+        super().__init__(min=min, max=max, type_name=type_name,
+                         choices=choices)
 
 
 class List(ConfigType):
@@ -470,7 +471,7 @@ class List(ConfigType):
     """
 
     def __init__(self, item_type=None, bounds=False, type_name='list value'):
-        super(List, self).__init__(type_name=type_name)
+        super().__init__(type_name=type_name)
 
         if item_type is None:
             item_type = String()
@@ -559,7 +560,7 @@ class Range(ConfigType):
 
     def __init__(self, min=None, max=None, inclusive=True,
                  type_name='range value'):
-        super(Range, self).__init__(type_name)
+        super().__init__(type_name)
         self.min = min
         self.max = max
         self.inclusive = inclusive
@@ -567,7 +568,7 @@ class Range(ConfigType):
     def __call__(self, value):
         value = str(value)
         num = "0|-?[1-9][0-9]*"
-        m = re.match("^(%s)(?:-(%s))?$" % (num, num), value)
+        m = re.match("^({})(?:-({}))?$".format(num, num), value)
         if not m:
             raise ValueError('Invalid Range: %s' % value)
         left = int(m.group(1))
@@ -620,7 +621,7 @@ class Dict(ConfigType):
 
     def __init__(self, value_type=None, bounds=False, type_name='dict value',
                  key_value_separator=':'):
-        super(Dict, self).__init__(type_name=type_name)
+        super().__init__(type_name=type_name)
 
         if value_type is None:
             value_type = String()
@@ -721,7 +722,7 @@ class IPAddress(ConfigType):
     """
 
     def __init__(self, version=None, type_name='IP address value'):
-        super(IPAddress, self).__init__(type_name=type_name)
+        super().__init__(type_name=type_name)
         version_checkers = {
             None: self._check_both_versions,
             4: self._check_ipv4,
@@ -775,7 +776,7 @@ class Hostname(ConfigType):
     HOSTNAME_REGEX = '(?!-)[A-Z0-9-]{1,63}(?<!-)$'
 
     def __init__(self, type_name='hostname value'):
-        super(Hostname, self).__init__(type_name=type_name)
+        super().__init__(type_name=type_name)
 
     def __call__(self, value, regex=HOSTNAME_REGEX):
         """Check hostname is valid.
@@ -838,7 +839,7 @@ class HostAddress(ConfigType):
 
         """
 
-        super(HostAddress, self).__init__(type_name=type_name)
+        super().__init__(type_name=type_name)
         self.ip_address = IPAddress(version, type_name)
         self.hostname = Hostname('localhost')
 
@@ -857,7 +858,7 @@ class HostAddress(ConfigType):
                 value = self.hostname(value)
             except ValueError:
                 raise ValueError(
-                    "%s is not a valid host address" % (value,))
+                    "{} is not a valid host address".format(value))
         return value
 
     def __repr__(self):
@@ -887,7 +888,7 @@ class HostDomain(HostAddress):
 
         """
 
-        super(HostDomain, self).__init__(version=version, type_name=type_name)
+        super().__init__(version=version, type_name=type_name)
 
     def __call__(self, value):
         """Checks if is a valid IP/hostname.
@@ -898,7 +899,7 @@ class HostDomain(HostAddress):
         """
 
         try:
-            value = super(HostDomain, self).__call__(value)
+            value = super().__call__(value)
         except ValueError:
             # Check if domain is valid
             # Add support of underscore
@@ -909,7 +910,7 @@ class HostDomain(HostAddress):
                 value = self.hostname(value, regex=self.DOMAIN_REGEX)
             except ValueError:
                 raise ValueError(
-                    "%s is not a valid host address" % (value,))
+                    "{} is not a valid host address".format(value))
         return value
 
     def __repr__(self):
@@ -936,7 +937,7 @@ class URI(ConfigType):
     """
 
     def __init__(self, max_length=None, schemes=None, type_name='uri value'):
-        super(URI, self).__init__(type_name=type_name)
+        super().__init__(type_name=type_name)
         self.max_length = max_length
         self.schemes = schemes
 

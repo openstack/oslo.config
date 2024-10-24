@@ -33,7 +33,7 @@ class TestProcessingSources(base.BaseTestCase):
     # is when the 'config_source' option is processed.
 
     def setUp(self):
-        super(TestProcessingSources, self).setUp()
+        super().setUp()
         self.conf = cfg.ConfigOpts()
         self.conf_fixture = self.useFixture(fixture.Config(self.conf))
 
@@ -85,7 +85,7 @@ class TestLoading(base.BaseTestCase):
     # ConfigOpts setup is done in __call__().
 
     def setUp(self):
-        super(TestLoading, self).setUp()
+        super().setUp()
         self.conf = cfg.ConfigOpts()
         self.conf_fixture = self.useFixture(fixture.Config(self.conf))
 
@@ -117,7 +117,7 @@ class TestLoading(base.BaseTestCase):
 class TestEnvironmentConfigurationSource(base.BaseTestCase):
 
     def setUp(self):
-        super(TestEnvironmentConfigurationSource, self).setUp()
+        super().setUp()
         self.conf = cfg.ConfigOpts()
         self.conf_fixture = self.useFixture(fixture.Config(self.conf))
         self.conf.register_opt(cfg.StrOpt('bar'), 'foo')
@@ -258,7 +258,7 @@ def opts_to_ini(uri, *args, **kwargs):
 class URISourceTestCase(base.BaseTestCase):
 
     def setUp(self):
-        super(URISourceTestCase, self).setUp()
+        super().setUp()
         self.conf = cfg.ConfigOpts()
         self.conf_fixture = self.useFixture(fixture.Config(self.conf))
 
