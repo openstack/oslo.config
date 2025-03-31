@@ -2736,10 +2736,10 @@ class ConfigOpts(abc.Mapping):
 
     def _all_opt_infos(self):
         """A generator function for iteration opt infos."""
-        for info in self._opts.values():
+        for info in list(self._opts.values()):
             yield info, None
-        for group in self._groups.values():
-            for info in group._opts.values():
+        for group in list(self._groups.values()):
+            for info in list(group._opts.values()):
                 yield info, group
 
     def _all_cli_opts(self):
