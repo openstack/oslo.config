@@ -1,0 +1,5 @@
+---
+upgrade:
+  - |
+    The ``value`` property of the ``oslo_config.types.URI`` class has been
+    removed. This was deprecated in oslo.config 6.2.0 .

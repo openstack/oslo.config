@@ -25,7 +25,6 @@ import re
 import warnings
 
 import abc
-from debtcollector import removals
 import netaddr
 import rfc3986
 
@@ -959,23 +958,7 @@ class URI(ConfigType):
             raise ValueError("Value '%s' exceeds maximum length %d" %
                              (value, self.max_length))
 
-        # NOTE(dhellmann): self.value is deprecated, and we don't want
-        # to trigger a deprecation warning ourselves so we modify
-        # self._value directly.
-        self._value = value
         return value
-
-    @removals.removed_property
-    def value(self):
-        return self._value
-
-    @value.setter
-    def value(self, newval):
-        self._value = newval
-
-    @value.deleter
-    def value(self):
-        del self._value
 
     def __repr__(self):
         return 'URI'
