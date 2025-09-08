@@ -319,7 +319,7 @@ def find_config_dirs(project=None, prog=None, extension='.conf.d'):
     :param extension: the type of the config directory. Defaults to '.conf.d'
 
     We default to two config dirs: [${project}.conf.d/, ${prog}.conf.d/].
-    If no project name is supplied, we only look for ${prog.conf.d/}.
+    If no project name is supplied, we only look for ${prog}.conf.d/.
 
     And we look for those config dirs in the following directories::
 
