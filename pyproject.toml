@@ -1,3 +1,68 @@
 [build-system]
 requires = ["pbr>=6.1.1"]
 build-backend = "pbr.build"
+
+[project]
+name = "oslo.config"
+description = "Oslo Configuration API"
+authors = [
+    {name = "OpenStack", email = "openstack-discuss@lists.openstack.org"},
+]
+readme = {file = "README.rst", content-type = "text/x-rst"}
+license = {text = "Apache-2.0"}
+dynamic = ["version", "dependencies"]
+requires-python = ">=3.10"
+classifiers = [
+  "Development Status :: 5 - Production/Stable",
+  "Environment :: OpenStack",
+  "Intended Audience :: Developers",
+  "Intended Audience :: Information Technology",
+  "License :: OSI Approved :: Apache Software License",
+  "Operating System :: OS Independent",
+  "Programming Language :: Python",
+  "Programming Language :: Python :: 3",
+  "Programming Language :: Python :: 3.10",
+  "Programming Language :: Python :: 3.11",
+  "Programming Language :: Python :: 3.12",
+  "Programming Language :: Python :: 3.13",
+  "Programming Language :: Python :: 3 :: Only",
+  "Programming Language :: Python :: Implementation :: CPython",
+]
+
+[project.urls]
+Homepage = "https://docs.openstack.org/oslo.config"
+Repository = "https://opendev.org/openstack/oslo.config"
+
+[project.optional-dependencies]
+rst-generator = [
+    "rst2txt>=1.1.0", # BSD
+    "sphinx>=1.8.0", # BSD
+]
+
+[project.scripts]
+"oslo-config-generator" = "oslo_config.generator:main"
+"oslo-config-validator" = "oslo_config.validator:main"
+
+[project.entry-points."oslo.config.opts"]
+"oslo.config" = "oslo_config._list_opts:list_opts"
+
+[project.entry-points."oslo.config.driver"]
+"remote_file" = "oslo_config.sources._uri:URIConfigurationSourceDriver"
+
+[tool.setuptools]
+packages = [
+    "oslo_config"
+]
+
+[tool.mypy]
+show_column_numbers = true
+show_error_context = true
+ignore_missing_imports = true
+follow_imports = "skip"
+incremental = true
+check_untyped_defs = true
+warn_unused_ignores = true
+
+[[tool.mypy.overrides]]
+module = "oslo_config.tests.*"
+ignore_errors = true
