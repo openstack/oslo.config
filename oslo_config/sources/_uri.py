@@ -107,7 +107,7 @@ class URIConfigurationSourceDriver(sources.ConfigurationSourceDriver):
             help=('Client side private key, in case client_cert is '
                   'specified but does not includes the private key.'),
         ),
-        cfg.StrOpt(
+        cfg.IntOpt(
             'timeout',
             default=60,
             help=('Timeout is the number of seconds the request will wait '
