@@ -86,7 +86,7 @@ class EnvironmentConfigurationSource(sources.ConfigurationSource):
         :returns: Th expected environment variable name.
         """
         group_name = group_name or 'DEFAULT'
-        return 'OS_{}__{}'.format(group_name.upper(), option_name.upper())
+        return f'OS_{group_name.upper()}__{option_name.upper()}'
 
     def get(self, group_name, option_name, opt):
         env_name = self.get_name(group_name, option_name)

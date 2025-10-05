@@ -185,7 +185,7 @@ class TestEnvironmentConfigurationSource(base.BaseTestCase):
 
 
 def make_uri(name):
-    return "https://oslo.config/{}.conf".format(name)
+    return f"https://oslo.config/{name}.conf"
 
 
 _extra_configs = {
@@ -244,13 +244,13 @@ def opts_to_ini(uri, *args, **kwargs):
 
     # 'g': group, 'o': option, 't': type, and 'v': value
     for g in opts.keys():
-        result += "[{}]\n".format(g)
+        result += f"[{g}]\n"
         for o, (t, v) in opts[g].items():
             if t == cfg.MultiStrOpt:
                 for i in v:
-                    result += "{} = {}\n".format(o, i)
+                    result += f"{o} = {i}\n"
             else:
-                result += "{} = {}\n".format(o, v)
+                result += f"{o} = {v}\n"
 
     return result
 

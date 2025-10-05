@@ -53,8 +53,8 @@ def list_opts():
                 help=cfg._SOURCE_DRIVER_OPTION_HELP,
             )
         )
-        group_name = 'sample_{}_source'.format(source_name)
-        group_help = 'Example of using a {} source'.format(source_name)
+        group_name = f'sample_{source_name}_source'
+        group_help = f'Example of using a {source_name} source'
         if source_description:
             group_help = '{}\n\n{}: {}'.format(
                 group_help,

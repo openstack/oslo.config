@@ -171,7 +171,7 @@ class String(ConfigType):
     def __repr__(self):
         details = []
         if self.choices is not None:
-            details.append("choices={!r}".format(list(self.choices.keys())))
+            details.append(f"choices={list(self.choices.keys())!r}")
         if self.regex:
             details.append("regex=%r" % self.regex.pattern)
         if details:
@@ -326,7 +326,7 @@ class Number(ConfigType):
     def __repr__(self):
         props = []
         if self.choices is not None:
-            props.append("choices={!r}".format(list(self.choices.keys())))
+            props.append(f"choices={list(self.choices.keys())!r}")
         else:
             if self.min is not None:
                 props.append('min=%g' % self.min)
@@ -567,7 +567,7 @@ class Range(ConfigType):
     def __call__(self, value):
         value = str(value)
         num = "0|-?[1-9][0-9]*"
-        m = re.match("^({})(?:-({}))?$".format(num, num), value)
+        m = re.match(f"^({num})(?:-({num}))?$", value)
         if not m:
             raise ValueError('Invalid Range: %s' % value)
         left = int(m.group(1))
@@ -857,7 +857,7 @@ class HostAddress(ConfigType):
                 value = self.hostname(value)
             except ValueError:
                 raise ValueError(
-                    "{} is not a valid host address".format(value))
+                    f"{value} is not a valid host address")
         return value
 
     def __repr__(self):
@@ -909,7 +909,7 @@ class HostDomain(HostAddress):
                 value = self.hostname(value, regex=self.DOMAIN_REGEX)
             except ValueError:
                 raise ValueError(
-                    "{} is not a valid host address".format(value))
+                    f"{value} is not a valid host address")
         return value
 
     def __repr__(self):

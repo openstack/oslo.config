@@ -396,7 +396,7 @@ class ConfigGroup(rst.Directive):
             result.append(text, source_name)
 
         if namespace:
-            title = '{}: {}'.format(namespace, group_name)
+            title = f'{namespace}: {group_name}'
         else:
             title = group_name
 
