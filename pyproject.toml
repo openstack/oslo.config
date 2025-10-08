@@ -66,3 +66,6 @@ warn_unused_ignores = true
 [[tool.mypy.overrides]]
 module = "oslo_config.tests.*"
 ignore_errors = true
+
+[tool.bandit]
+exclude_dirs = ["tests"]
