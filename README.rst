@@ -1,15 +1,10 @@
-========================
-Team and repository tags
-========================
-
-.. image:: https://governance.openstack.org/tc/badges/oslo.config.svg
-    :target: https://governance.openstack.org/tc/reference/tags/index.html
-
-.. Change things from this point on
-
 ==========================
 Oslo Configuration Library
 ==========================
+
+.. image:: https://governance.openstack.org/tc/badges/oslo.config.svg
+
+.. Change things from this point on
 
 .. image:: https://img.shields.io/pypi/v/oslo.config.svg
     :target: https://pypi.org/project/oslo.config/
