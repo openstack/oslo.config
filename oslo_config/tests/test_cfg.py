@@ -110,6 +110,10 @@ class BaseTestCase(base.BaseTestCase):
     def setUp(self):
         super().setUp()
         self.useFixture(fixtures.NestedTempfile())
+        # ensure any output width is constant
+        # https://github.com/python/cpython/issues/57250
+        # https://docs.python.org/3/library/shutil.html#shutil.get_terminal_size
+        self.useFixture(fixtures.EnvironmentVariable('COLUMNS', '80'))
         self.conf = self.TestConfigOpts()
 
         self.tempdirs = []
