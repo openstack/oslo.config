@@ -495,7 +495,7 @@ def _get_opt_default_updaters(namespaces):
     mgr = stevedore.named.NamedExtensionManager(
         'oslo.config.opts.defaults',
         names=namespaces,
-        warn_on_missing_entrypoint=False,
+        on_missing_entrypoints_callback=None,
         on_load_failure_callback=on_load_failure_callback,
         invoke_on_load=False)
     return [ep.plugin for ep in mgr]
