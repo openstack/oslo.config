@@ -381,7 +381,7 @@ class ConfigGroup(rst.Directive):
 
         # Store the current group for use later in option directives
         env.temp_data['oslo.config:group'] = group_name
-        LOG.debug('oslo.config group %s' % group_name)
+        LOG.debug('oslo.config group %s', group_name)
 
         # Store the location where this group is being defined
         # for use when resolving cross-references later.
