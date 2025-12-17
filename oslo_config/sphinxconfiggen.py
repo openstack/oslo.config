@@ -22,10 +22,11 @@ LOG = logging.getLogger(__name__)
 
 
 def generate_sample(app):
-
     if not app.config.config_generator_config_file:
-        LOG.warning("No config_generator_config_file is specified, "
-                    "skipping sample config generation")
+        LOG.warning(
+            "No config_generator_config_file is specified, "
+            "skipping sample config generation"
+        )
         return
 
     # Decided to update the existing config option
@@ -44,9 +45,11 @@ def generate_sample(app):
                 base_name = _get_default_basename(config_file)
             _generate_sample(app, config_file, base_name)
     else:
-        _generate_sample(app,
-                         app.config.config_generator_config_file,
-                         app.config.sample_config_basename)
+        _generate_sample(
+            app,
+            app.config.config_generator_config_file,
+            app.config.sample_config_basename,
+        )
 
 
 def _get_default_basename(config_file):
@@ -54,7 +57,6 @@ def _get_default_basename(config_file):
 
 
 def _generate_sample(app, config_file, base_name):
-
     def info(msg):
         LOG.info(f'[{__name__}] {msg}')
 
@@ -62,17 +64,21 @@ def _generate_sample(app, config_file, base_name):
     # in the source directory if it doesn't exist.
     candidates = [
         config_file,
-        os.path.join(app.srcdir, config_file,),
+        os.path.join(
+            app.srcdir,
+            config_file,
+        ),
     ]
     for c in candidates:
         if os.path.isfile(c):
-            info('reading config generator instructions from %s' % c)
+            info(f'reading config generator instructions from {c}')
             config_path = c
             break
     else:
         raise ValueError(
-            "Could not find config_generator_config_file %r" %
-            app.config.config_generator_config_file)
+            f"Could not find config_generator_config_file "
+            f"{app.config.config_generator_config_file!r}"
+        )
 
     if base_name:
         out_file = os.path.join(app.srcdir, base_name) + '.conf.sample'
@@ -82,9 +88,10 @@ def _generate_sample(app, config_file, base_name):
         file_name = 'sample.config'
         out_file = os.path.join(app.srcdir, file_name)
 
-    info('writing sample configuration to %s' % out_file)
-    generator.main(args=['--config-file', config_path,
-                         '--output-file', out_file])
+    info(f'writing sample configuration to {out_file}')
+    generator.main(
+        args=['--config-file', config_path, '--output-file', out_file]
+    )
 
 
 def setup(app):

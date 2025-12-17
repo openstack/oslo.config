@@ -32,8 +32,14 @@ from oslo_config import cfg
 from oslo_config import generator
 
 VALIDATE_DEFAULTS_EXCLUSIONS = [
-    '.*_ur(i|l)', '.*connection', 'password', 'username', 'my_ip',
-    'host(name)?', 'glance_api_servers', 'osapi_volume_listen',
+    '.*_ur(i|l)',
+    '.*connection',
+    'password',
+    'username',
+    'my_ip',
+    'host(name)?',
+    'glance_api_servers',
+    'osapi_volume_listen',
     'osapi_compute_listen',
 ]
 
@@ -41,35 +47,38 @@ _validator_opts = [
     cfg.MultiStrOpt(
         'namespace',
         help='Option namespace under "oslo.config.opts" in which to query '
-             'for options.'),
-    cfg.StrOpt(
-        'input-file',
-        required=True,
-        help='Config file to validate.'),
+        'for options.',
+    ),
+    cfg.StrOpt('input-file', required=True, help='Config file to validate.'),
     cfg.StrOpt(
         'opt-data',
         help='Path to a YAML file containing definitions of options, as '
-             'output by the config generator.'),
+        'output by the config generator.',
+    ),
     cfg.BoolOpt(
         'check-defaults',
         default=False,
         help='Report differences between the sample values and current '
-             'values.'),
+        'values.',
+    ),
     cfg.ListOpt(
         'exclude-options',
         default=VALIDATE_DEFAULTS_EXCLUSIONS,
         help='Exclude options matching these patterns when comparing '
-             'the current and sample configurations.'),
+        'the current and sample configurations.',
+    ),
     cfg.BoolOpt(
         'fatal-warnings',
         default=False,
-        help='Report failure if any warnings are found.'),
+        help='Report failure if any warnings are found.',
+    ),
     cfg.MultiStrOpt(
         'exclude-group',
         default=[],
         help='Groups that should not be validated if they are present in the '
-             'specified input-file. This may be necessary for dynamically '
-             'named groups which do not appear in the sample config data.'),
+        'specified input-file. This may be necessary for dynamically '
+        'named groups which do not appear in the sample config data.',
+    ),
 ]
 
 
@@ -114,8 +123,9 @@ def _validate_defaults(sections, opt_data, conf):
             continue
         if group not in sections:
             logging.warning(
-                'Group %s from the sample config is not defined in '
-                'input-file', group)
+                'Group %s from the sample config is not defined in input-file',
+                group,
+            )
             continue
         for opt in opts['opts']:
             # We need to convert the defaults into a list to find
@@ -144,21 +154,32 @@ def _validate_defaults(sections, opt_data, conf):
                 logging.info(
                     '%s/%s Ignoring option because it is part of the excluded '
                     'patterns. This can be changed with the --exclude-options '
-                    'argument', group, keyname)
+                    'argument',
+                    group,
+                    keyname,
+                )
                 continue
 
             if len(value) > 1:
                 logging.info(
-                    '%s/%s defined %s times', group, keyname, len(value))
+                    '%s/%s defined %s times', group, keyname, len(value)
+                )
             if not opt['default']:
                 logging.warning(
                     '%s/%s sample value is empty but input-file has %s',
-                    group, keyname, ", ".join(value))
+                    group,
+                    keyname,
+                    ", ".join(value),
+                )
                 warnings = True
             elif not frozenset(defaults).intersection(value):
                 logging.warning(
                     '%s/%s sample value %s is not in %s',
-                    group, keyname, defaults, value)
+                    group,
+                    keyname,
+                    defaults,
+                    value,
+                )
                 warnings = True
     return warnings
 
@@ -202,14 +223,18 @@ def _validate(conf):
                 warnings = True
             elif not _validate_opt(section, option, opt_data):
                 if section in KNOWN_BAD_GROUPS:
-                    logging.info('Ignoring missing option "%s" from group '
-                                 '"%s" because the group is known to have '
-                                 'incomplete sample config data and thus '
-                                 'cannot be validated properly.',
-                                 option, section)
+                    logging.info(
+                        'Ignoring missing option "%s" from group '
+                        '"%s" because the group is known to have '
+                        'incomplete sample config data and thus '
+                        'cannot be validated properly.',
+                        option,
+                        section,
+                    )
                     continue
-                logging.error('%s/%s is not part of the sample config',
-                              section, option)
+                logging.error(
+                    '%s/%s is not part of the sample config', section, option
+                )
                 errors = True
     if errors or (warnings and conf.fatal_warnings):
         return 1

@@ -93,7 +93,8 @@ class EnvironmentConfigurationSource(sources.ConfigurationSource):
         try:
             value = os.environ[env_name]
             loc = oslo_config.cfg.LocationInfo(
-                oslo_config.cfg.Locations.environment, env_name)
+                oslo_config.cfg.Locations.environment, env_name
+            )
             return (value, loc)
         except KeyError:
             return (sources._NoValue, None)

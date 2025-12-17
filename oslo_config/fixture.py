@@ -71,8 +71,9 @@ class Config(fixtures.Fixture):
 
     def _unregister_config_opts(self):
         for group in self._registered_config_opts:
-            self.conf.unregister_opts(self._registered_config_opts[group],
-                                      group=group)
+            self.conf.unregister_opts(
+                self._registered_config_opts[group], group=group
+            )
 
     def _reset_default_config_files(self):
         if not hasattr(self.conf, 'default_config_files'):
@@ -175,7 +176,8 @@ class Config(fixtures.Fixture):
             raw_config[group][key] = [str(value)]
 
         self.conf._namespace._add_parsed_config_file(
-            '<memory>', raw_config, raw_config)
+            '<memory>', raw_config, raw_config
+        )
 
     def set_config_files(self, config_files):
         """Specify a list of config files to read.
@@ -224,7 +226,6 @@ class Config(fixtures.Fixture):
         Use it like::
 
             class MyTest(testtools.TestCase):
-
                 def setUp(self):
                     super(MyTest, self).setUp()
                     self.conf = self.useFixture(fixture.Config())

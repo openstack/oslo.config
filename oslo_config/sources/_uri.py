@@ -86,33 +86,43 @@ class URIConfigurationSourceDriver(sources.ConfigurationSourceDriver):
             schemes=['http', 'https'],
             required=True,
             sample_default='https://example.com/my-configuration.ini',
-            help=('Required option with the URI of the '
-                  'extra configuration file\'s location.'),
+            help=(
+                'Required option with the URI of the '
+                'extra configuration file\'s location.'
+            ),
         ),
         cfg.StrOpt(
             'ca_path',
             sample_default='/etc/ca-certificates',
-            help=('The path to a CA_BUNDLE file or directory '
-                  'with certificates of trusted CAs.'),
+            help=(
+                'The path to a CA_BUNDLE file or directory '
+                'with certificates of trusted CAs.'
+            ),
         ),
         cfg.StrOpt(
             'client_cert',
             sample_default='/etc/ca-certificates/service-client-keystore',
-            help=('Client side certificate, as a single file path '
-                  'containing either the certificate only or the '
-                  'private key and the certificate.'),
+            help=(
+                'Client side certificate, as a single file path '
+                'containing either the certificate only or the '
+                'private key and the certificate.'
+            ),
         ),
         cfg.StrOpt(
             'client_key',
-            help=('Client side private key, in case client_cert is '
-                  'specified but does not includes the private key.'),
+            help=(
+                'Client side private key, in case client_cert is '
+                'specified but does not includes the private key.'
+            ),
         ),
         cfg.IntOpt(
             'timeout',
             default=60,
-            help=('Timeout is the number of seconds the request will wait '
-                  'for your client to establish a connection to a remote '
-                  'machine call on the socket.'),
+            help=(
+                'Timeout is the number of seconds the request will wait '
+                'for your client to establish a connection to a remote '
+                'machine call on the socket.'
+            ),
         ),
     ]
 
@@ -127,7 +137,8 @@ class URIConfigurationSourceDriver(sources.ConfigurationSourceDriver):
             conf[group_name].ca_path,
             conf[group_name].client_cert,
             conf[group_name].client_key,
-            conf[group_name].timeout)
+            conf[group_name].timeout,
+        )
 
 
 class URIConfigurationSource(sources.ConfigurationSource):
@@ -147,8 +158,9 @@ class URIConfigurationSource(sources.ConfigurationSource):
                  specified but does not includes the private key.
     """
 
-    def __init__(self, uri, ca_path=None, client_cert=None, client_key=None,
-                 timeout=60):
+    def __init__(
+        self, uri, ca_path=None, client_cert=None, client_key=None, timeout=60
+    ):
         self._uri = uri
         self._namespace = cfg._Namespace(cfg.ConfigOpts())
 
@@ -160,14 +172,17 @@ class URIConfigurationSource(sources.ConfigurationSource):
 
             cfg.ConfigParser._parse_file(tmpfile.name, self._namespace)
 
-    def _fetch_uri(self, uri, ca_path, client_cert, client_key,
-                   timeout):
+    def _fetch_uri(self, uri, ca_path, client_cert, client_key, timeout):
         verify = ca_path if ca_path else True
-        cert = (client_cert, client_key) if client_cert and client_key else \
-            client_cert
+        cert = (
+            (client_cert, client_key)
+            if client_cert and client_key
+            else client_cert
+        )
 
-        with requests.get(uri, verify=verify, cert=cert,
-                          timeout=timeout) as response:
+        with requests.get(
+            uri, verify=verify, cert=cert, timeout=timeout
+        ) as response:
             response.raise_for_status()  # raises only in case of HTTPError
 
             return response.text
@@ -175,7 +190,7 @@ class URIConfigurationSource(sources.ConfigurationSource):
     def get(self, group_name, option_name, opt):
         try:
             return self._namespace._get_value(
-                [(group_name, option_name)],
-                multi=opt.multi)
+                [(group_name, option_name)], multi=opt.multi
+            )
         except KeyError:
             return (sources._NoValue, None)

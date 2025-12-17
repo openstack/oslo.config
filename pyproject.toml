@@ -67,5 +67,18 @@ warn_unused_ignores = true
 module = "oslo_config.tests.*"
 ignore_errors = true
 
-[tool.bandit]
-exclude_dirs = ["tests"]
+[tool.ruff]
+line-length = 79
+
+[tool.ruff.format]
+quote-style = "preserve"
+docstring-code-format = true
+
+[tool.ruff.lint]
+select = ["E4", "E5", "E7", "E9", "F", "S", "UP", "W"]
+ignore = [
+    "S101",  # asserts are only used for type narrowing
+]
+
+[tool.ruff.lint.per-file-ignores]
+"oslo_config/tests/*" = ["S"]

@@ -19,8 +19,9 @@ from oslo_config import cfg
 
 
 class TestConfigOpts(cfg.ConfigOpts):
-    def __call__(self, args=None, default_config_files=[],
-                 default_config_dirs=[]):
+    def __call__(
+        self, args=None, default_config_files=[], default_config_dirs=[]
+    ):
         return cfg.ConfigOpts.__call__(
             self,
             args=args,
@@ -31,11 +32,11 @@ class TestConfigOpts(cfg.ConfigOpts):
             epilog='tepilog',
             default_config_files=default_config_files,
             default_config_dirs=default_config_dirs,
-            validate_default_values=True)
+            validate_default_values=True,
+        )
 
 
 class LocationTestCase(base.BaseTestCase):
-
     def test_user_controlled(self):
         self.assertTrue(cfg.Locations.user.is_user_controlled)
         self.assertTrue(cfg.Locations.command_line.is_user_controlled)
@@ -47,12 +48,12 @@ class LocationTestCase(base.BaseTestCase):
 
 
 class GetLocationTestCase(base.BaseTestCase):
-
     def setUp(self):
         super().setUp()
 
         def _clear():
             cfg._show_caller_details = False
+
         self.addCleanup(_clear)
         cfg._show_caller_details = True
 
@@ -114,9 +115,9 @@ class GetLocationTestCase(base.BaseTestCase):
 
     def test_user_cli(self):
         filename = self._write_opt_to_tmp_file(
-            'DEFAULT', 'unknown_opt', self.id())
-        self.conf(['--config-file', filename,
-                   '--cli_opt', 'blah'])
+            'DEFAULT', 'unknown_opt', self.id()
+        )
+        self.conf(['--config-file', filename, '--cli_opt', 'blah'])
         loc = self.conf.get_location('cli_opt')
         self.assertEqual(
             cfg.Locations.command_line,
@@ -125,7 +126,8 @@ class GetLocationTestCase(base.BaseTestCase):
 
     def test_default_cli(self):
         filename = self._write_opt_to_tmp_file(
-            'DEFAULT', 'unknown_opt', self.id())
+            'DEFAULT', 'unknown_opt', self.id()
+        )
         self.conf(['--config-file', filename])
         loc = self.conf.get_location('cli_opt')
         self.assertEqual(
@@ -136,19 +138,20 @@ class GetLocationTestCase(base.BaseTestCase):
     def _write_opt_to_tmp_file(self, group, option, value):
         filename = tempfile.mktemp()
         with open(filename, 'w', encoding='utf-8') as f:
-            f.write(textwrap.dedent('''
+            f.write(
+                textwrap.dedent('''
             [{group}]
             {option} = {value}
             ''').format(
-                group=group,
-                option=option,
-                value=value,
-            ))
+                    group=group,
+                    option=option,
+                    value=value,
+                )
+            )
         return filename
 
     def test_user_cli_opt_in_file(self):
-        filename = self._write_opt_to_tmp_file(
-            'DEFAULT', 'cli_opt', self.id())
+        filename = self._write_opt_to_tmp_file('DEFAULT', 'cli_opt', self.id())
         self.conf(['--config-file', filename])
         loc = self.conf.get_location('cli_opt')
         self.assertEqual(
@@ -162,7 +165,8 @@ class GetLocationTestCase(base.BaseTestCase):
 
     def test_user_file(self):
         filename = self._write_opt_to_tmp_file(
-            'DEFAULT', 'normal_opt', self.id())
+            'DEFAULT', 'normal_opt', self.id()
+        )
         self.conf(['--config-file', filename])
         loc = self.conf.get_location('normal_opt')
         self.assertEqual(

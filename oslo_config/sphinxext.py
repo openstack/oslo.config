@@ -37,18 +37,18 @@ def _list_table(headers, data, title='', columns=None):
     :param headers: List of header values.
     :param data: Iterable of row data, yielding lists or tuples with rows.
     """
-    yield '.. list-table:: %s' % title
+    yield f'.. list-table:: {title}'
     yield '   :header-rows: 1'
     if columns:
-        yield '   :widths: %s' % (','.join(str(c) for c in columns))
+        yield '   :widths: {}'.format(','.join(str(c) for c in columns))
     yield ''
-    yield '   - * %s' % headers[0]
+    yield f'   - * {headers[0]}'
     for h in headers[1:]:
-        yield '     * %s' % h
+        yield f'     * {h}'
     for row in data:
-        yield '   - * %s' % row[0]
+        yield f'   - * {row[0]}'
         for r in row[1:]:
-            yield '     * %s' % r
+            yield f'     * {r}'
 
 
 def _indent(text, n=2):
@@ -60,8 +60,7 @@ def _indent(text, n=2):
 def _make_anchor_target(group_name, option_name):
     # We need to ensure this is unique across entire documentation
     # http://www.sphinx-doc.org/en/stable/markup/inline.html#ref-role
-    target = '{}.{}'.format(cfg._normalize_group_name(group_name),
-                            option_name.lower())
+    target = f'{cfg._normalize_group_name(group_name)}.{option_name.lower()}'
     return target
 
 
@@ -92,24 +91,24 @@ def _get_choice_text(choice):
 
 
 def _format_opt(opt, group_name):
-    opt_type = _TYPE_DESCRIPTIONS.get(type(opt),
-                                      'unknown type')
-    yield '.. oslo.config:option:: %s' % opt.dest
+    opt_type = _TYPE_DESCRIPTIONS.get(type(opt), 'unknown type')
+    yield f'.. oslo.config:option:: {opt.dest}'
     yield ''
-    yield _indent(':Type: %s' % opt_type)
+    yield _indent(f':Type: {opt_type}')
     for default in generator._format_defaults(opt):
         if default:
-            yield _indent(':Default: ``%s``' % default)
+            yield _indent(f':Default: ``{default}``')
         else:
-            yield _indent(':Default: ``%r``' % default)
+            yield _indent(f':Default: ``{default!r}``')
     if getattr(opt.type, 'min', None) is not None:
-        yield _indent(':Minimum Value: %s' % opt.type.min)
+        yield _indent(f':Minimum Value: {opt.type.min}')
     if getattr(opt.type, 'max', None) is not None:
-        yield _indent(':Maximum Value: %s' % opt.type.max)
+        yield _indent(f':Maximum Value: {opt.type.max}')
     if getattr(opt.type, 'choices', None):
-        choices_text = ', '.join([_get_choice_text(choice)
-                                  for choice in opt.type.choices])
-        yield _indent(':Valid Values: %s' % choices_text)
+        choices_text = ', '.join(
+            [_get_choice_text(choice) for choice in opt.type.choices]
+        )
+        yield _indent(f':Valid Values: {choices_text}')
     try:
         if opt.mutable:
             yield _indent(
@@ -125,31 +124,32 @@ def _format_opt(opt, group_name):
         # https://bugs.launchpad.net/keystoneauth/+bug/1548433 for
         # more details.
         import warnings
+
         if not isinstance(cfg.Opt, opt):
             warnings.warn(
-                'Incompatible option class for %s (%r): %s' %
-                (opt.dest, opt.__class__, err),
+                f'Incompatible option class for {opt.dest} '
+                f'({opt.__class__!r}): {err}',
             )
         else:
-            warnings.warn('Failed to fully format sample for %s: %s' %
-                          (opt.dest, err))
+            warnings.warn(
+                f'Failed to fully format sample for {opt.dest}: {err}'
+            )
     if opt.advanced:
         yield _indent(
-            ':Advanced Option: Intended for advanced users and not used')
+            ':Advanced Option: Intended for advanced users and not used'
+        )
         yield _indent(
-            'by the majority of users, and might have a significant', 6)
-        yield _indent(
-            'effect on stability and/or performance.', 6)
+            'by the majority of users, and might have a significant', 6
+        )
+        yield _indent('effect on stability and/or performance.', 6)
 
     if opt.sample_default:
+        yield _indent('')
+        yield _indent('This option has a sample default set, which means that')
         yield _indent(
-            '')
-        yield _indent(
-            'This option has a sample default set, which means that')
-        yield _indent(
-            'its actual default value may vary from the one documented')
-        yield _indent(
-            'above.')
+            'its actual default value may vary from the one documented'
+        )
+        yield _indent('above.')
 
     try:
         help_text = opt.help % {'default': 'the value above'}
@@ -166,38 +166,47 @@ def _format_opt(opt, group_name):
     # We don't bother outputting this if not using new-style choices with
     # inline descriptions
     if getattr(opt.type, 'choices', None) and not all(
-            x is None for x in opt.type.choices.values()):
+        x is None for x in opt.type.choices.values()
+    ):
         yield ''
         yield _indent('.. rubric:: Possible values')
         for choice in opt.type.choices:
             yield ''
             yield _indent(_get_choice_text(choice))
-            yield _indent(_indent(
-                opt.type.choices[choice] or '<No description provided>'))
+            yield _indent(
+                _indent(
+                    opt.type.choices[choice] or '<No description provided>'
+                )
+            )
 
     if opt.deprecated_opts:
         yield ''
         for line in _list_table(
-                ['Group', 'Name'],
-                ((d.group or group_name,
-                  d.name or opt.dest or 'UNSET')
-                 for d in opt.deprecated_opts),
-                title='Deprecated Variations'):
+            ['Group', 'Name'],
+            (
+                (d.group or group_name, d.name or opt.dest or 'UNSET')
+                for d in opt.deprecated_opts
+            ),
+            title='Deprecated Variations',
+        ):
             yield _indent(line)
 
     if opt.deprecated_for_removal:
         yield ''
         yield _indent('.. warning::')
         if opt.deprecated_since:
-            yield _indent('   This option is deprecated for removal '
-                          'since %s.' % opt.deprecated_since)
+            yield _indent(
+                '   This option is deprecated for removal '
+                f'since {opt.deprecated_since}.'
+            )
         else:
             yield _indent('   This option is deprecated for removal.')
         yield _indent('   Its value may be silently ignored ')
         yield _indent('   in the future.')
         if opt.deprecated_reason:
-            reason = ' '.join([x.strip() for x in
-                               opt.deprecated_reason.splitlines()])
+            reason = ' '.join(
+                [x.strip() for x in opt.deprecated_reason.splitlines()]
+            )
             yield ''
             yield _indent('   :Reason: ' + reason)
 
@@ -205,9 +214,9 @@ def _format_opt(opt, group_name):
 
 
 def _format_group(namespace, group_name, group_obj):
-    yield '.. oslo.config:group:: %s' % group_name
+    yield f'.. oslo.config:group:: {group_name}'
     if namespace:
-        yield '   :namespace: %s' % namespace
+        yield f'   :namespace: {namespace}'
     yield ''
 
     if group_obj and group_obj.help:
@@ -279,7 +288,6 @@ def _format_option_help(namespaces, split_namespaces):
 
 
 class ShowOptionsDirective(rst.Directive):
-
     option_spec = {
         'split-namespaces': directives.flag,
         'config-file': directives.unchanged,
@@ -301,17 +309,14 @@ class ShowOptionsDirective(rst.Directive):
             )
             namespaces = conf.namespace[:]
         else:
-            namespaces = [
-                c.strip()
-                for c in self.content
-                if c.strip()
-            ]
+            namespaces = [c.strip() for c in self.content if c.strip()]
 
         result = ViewList()
         source_name = self.state.document.current_source
 
-        for count, line in enumerate(_format_option_help(
-                namespaces, split_namespaces)):
+        for count, line in enumerate(
+            _format_option_help(namespaces, split_namespaces)
+        ):
             result.append(line, source_name, count)
             LOG.debug('%5d%s%s', count, ' ' if line else '', line)
 
@@ -363,7 +368,6 @@ class ConfigOptXRefRole(XRefRole):
 
 
 class ConfigGroup(rst.Directive):
-
     required_arguments = 1
     optional_arguments = 0
     has_content = True
@@ -449,6 +453,7 @@ class ConfigOption(ObjectDescription):
 
 class ConfigDomain(Domain):
     """oslo.config domain."""
+
     name = 'oslo.config'
     label = 'oslo.config'
     object_types = {
@@ -467,8 +472,9 @@ class ConfigDomain(Domain):
         'groups': {},
     }
 
-    def resolve_xref(self, env, fromdocname, builder,
-                     typ, target, node, contnode):
+    def resolve_xref(
+        self, env, fromdocname, builder, typ, target, node, contnode
+    ):
         """Resolve cross-references"""
         if typ == 'option':
             group_name, option_name = target.split('.', 1)

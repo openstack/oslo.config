@@ -25,7 +25,6 @@ from oslo_config.sources import _uri
 
 
 class TestProcessingSources(base.BaseTestCase):
-
     # NOTE(dhellmann): These tests use the config() method of the
     # fixture because that invokes set_override() on the option. The
     # load_raw_values() method injects data underneath the option, but
@@ -39,8 +38,8 @@ class TestProcessingSources(base.BaseTestCase):
 
     def test_no_sources_default(self):
         with base.mock.patch.object(
-                self.conf,
-                '_open_source_from_opt_group') as open_source:
+            self.conf, '_open_source_from_opt_group'
+        ) as open_source:
             open_source.side_effect = AssertionError('should not be called')
             self.conf([])
 
@@ -49,8 +48,8 @@ class TestProcessingSources(base.BaseTestCase):
             config_source=[],
         )
         with base.mock.patch.object(
-                self.conf,
-                '_open_source_from_opt_group') as open_source:
+            self.conf, '_open_source_from_opt_group'
+        ) as open_source:
             open_source.side_effect = AssertionError('should not be called')
             self.conf([])
 
@@ -59,8 +58,8 @@ class TestProcessingSources(base.BaseTestCase):
             config_source=['missing_source'],
         )
         with base.mock.patch.object(
-                self.conf,
-                '_open_source_from_opt_group') as open_source:
+            self.conf, '_open_source_from_opt_group'
+        ) as open_source:
             self.conf([])
             open_source.assert_called_once_with('missing_source')
 
@@ -69,17 +68,18 @@ class TestProcessingSources(base.BaseTestCase):
             config_source=['source1', 'source2'],
         )
         with base.mock.patch.object(
-                self.conf,
-                '_open_source_from_opt_group') as open_source:
+            self.conf, '_open_source_from_opt_group'
+        ) as open_source:
             self.conf([])
-            open_source.assert_has_calls([
-                base.mock.call('source1'),
-                base.mock.call('source2'),
-            ])
+            open_source.assert_has_calls(
+                [
+                    base.mock.call('source1'),
+                    base.mock.call('source2'),
+                ]
+            )
 
 
 class TestLoading(base.BaseTestCase):
-
     # NOTE(dhellmann): These tests can use load_raw_values() because
     # they explicitly call _open_source_from_opt_group() after the
     # ConfigOpts setup is done in __call__().
@@ -115,7 +115,6 @@ class TestLoading(base.BaseTestCase):
 
 
 class TestEnvironmentConfigurationSource(base.BaseTestCase):
-
     def setUp(self):
         super().setUp()
         self.conf = cfg.ConfigOpts()
@@ -156,7 +155,7 @@ class TestEnvironmentConfigurationSource(base.BaseTestCase):
         cli_value = 'cli'
         os.environ['OS_FOO__BAR'] = env_value
         self.conf.register_cli_opt(cfg.StrOpt('bar'), 'foo')
-        self.conf(args=['--foo=%s' % cli_value])
+        self.conf(args=[f'--foo={cli_value}'])
 
         self.assertEqual(cli_value, self.conf['foo']['bar'])
 
@@ -192,9 +191,7 @@ _extra_configs = {
     make_uri("types"): {
         "name": "types",
         "data": {
-            "DEFAULT": {
-                "foo": (cfg.StrOpt, "bar")
-            },
+            "DEFAULT": {"foo": (cfg.StrOpt, "bar")},
             "test": {
                 "opt_str": (cfg.StrOpt, "a nice string"),
                 "opt_bool": (cfg.BoolOpt, True),
@@ -204,26 +201,19 @@ _extra_configs = {
                 "opt_port": (cfg.PortOpt, 443),
                 "opt_host": (cfg.HostnameOpt, "www.openstack.org"),
                 "opt_uri": (cfg.URIOpt, "https://www.openstack.org"),
-                "opt_multi": (cfg.MultiStrOpt, ["abc", "def", "ghi"])
-            }
-        }
+                "opt_multi": (cfg.MultiStrOpt, ["abc", "def", "ghi"]),
+            },
+        },
     },
     make_uri("ini_1"): {
         "name": "ini_1",
-        "data": {
-            "DEFAULT": {
-                "abc": (cfg.StrOpt, "abc")
-            }
-        }
+        "data": {"DEFAULT": {"abc": (cfg.StrOpt, "abc")}},
     },
     make_uri("ini_2"): {
         "name": "ini_2",
         "data": {
-            "DEFAULT": {
-                "abc": (cfg.StrOpt, "foo"),
-                "def": (cfg.StrOpt, "def")
-            }
-        }
+            "DEFAULT": {"abc": (cfg.StrOpt, "foo"), "def": (cfg.StrOpt, "def")}
+        },
     },
     make_uri("ini_3"): {
         "name": "ini_3",
@@ -231,10 +221,10 @@ _extra_configs = {
             "DEFAULT": {
                 "abc": (cfg.StrOpt, "bar"),
                 "def": (cfg.StrOpt, "bar"),
-                "ghi": (cfg.StrOpt, "ghi")
+                "ghi": (cfg.StrOpt, "ghi"),
             }
-        }
-    }
+        },
+    },
 }
 
 
@@ -256,7 +246,6 @@ def opts_to_ini(uri, *args, **kwargs):
 
 
 class URISourceTestCase(base.BaseTestCase):
-
     def setUp(self):
         super().setUp()
         self.conf = cfg.ConfigOpts()
@@ -283,62 +272,65 @@ class URISourceTestCase(base.BaseTestCase):
         m.get("https://bad.uri", status_code=404)
 
         self.assertRaises(
-            HTTPError, _uri.URIConfigurationSource, "https://bad.uri")
+            HTTPError, _uri.URIConfigurationSource, "https://bad.uri"
+        )
 
         m.get("https://good.uri", text="[DEFAULT]\nfoo=bar\n")
         source = _uri.URIConfigurationSource("https://good.uri")
 
         self.assertEqual(
-            "bar", source.get("DEFAULT", "foo", cfg.StrOpt("foo"))[0])
+            "bar", source.get("DEFAULT", "foo", cfg.StrOpt("foo"))[0]
+        )
 
     @base.mock.patch(
         "oslo_config.sources._uri.URIConfigurationSource._fetch_uri",
-        side_effect=opts_to_ini)
+        side_effect=opts_to_ini,
+    )
     def test_configuration_source(self, mock_fetch_uri):
         group = "types"
         uri = make_uri(group)
 
         self.conf_fixture.load_raw_values(
-            group=group,
-            driver='remote_file',
-            uri=uri
+            group=group, driver='remote_file', uri=uri
         )
         self.conf_fixture.config(config_source=[group])
 
         # testing driver loading
         self.assertEqual(self.conf._sources, [])
         self.conf._load_alternative_sources()
-        self.assertIsInstance(self.conf._sources[0],
-                              _uri.URIConfigurationSource)
+        self.assertIsInstance(
+            self.conf._sources[0], _uri.URIConfigurationSource
+        )
 
         source = self.conf._open_source_from_opt_group(group)
 
         self._register_opts(_extra_configs[uri]["data"])
 
         # non-existing option
-        self.assertIs(sources._NoValue,
-                      source.get("DEFAULT", "bar", cfg.StrOpt("bar"))[0])
+        self.assertIs(
+            sources._NoValue,
+            source.get("DEFAULT", "bar", cfg.StrOpt("bar"))[0],
+        )
 
         # 'g': group, 'o': option, 't': type, and 'v': value
         for g in _extra_configs[uri]["data"]:
             for o, (t, v) in _extra_configs[uri]["data"][g].items():
                 self.assertEqual(str(v), str(source.get(g, o, t(o))[0]))
-                self.assertEqual(v,
-                                 self.conf[g][o] if g != "DEFAULT" else
-                                 self.conf[o])
+                self.assertEqual(
+                    v, self.conf[g][o] if g != "DEFAULT" else self.conf[o]
+                )
 
     @base.mock.patch(
         "oslo_config.sources._uri.URIConfigurationSource._fetch_uri",
-        side_effect=opts_to_ini)
+        side_effect=opts_to_ini,
+    )
     def test_multiple_configuration_sources(self, mock_fetch_uri):
         groups = ["ini_1", "ini_2", "ini_3"]
         uri = make_uri("ini_3")
 
         for group in groups:
             self.conf_fixture.load_raw_values(
-                group=group,
-                driver='remote_file',
-                uri=make_uri(group)
+                group=group, driver='remote_file', uri=make_uri(group)
             )
 
         self.conf_fixture.config(config_source=groups)

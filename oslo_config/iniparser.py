@@ -20,7 +20,7 @@ class ParseError(Exception):
         self.lineno = lineno
 
     def __str__(self):
-        return 'at line %d, %s: %r' % (self.lineno, self.msg, self.line)
+        return f'at line {self.lineno}, {self.msg}: {self.line!r}'
 
 
 class BaseParser:
@@ -46,9 +46,9 @@ class BaseParser:
             return self.error_invalid_assignment(line)
 
         if colon < 0 or (equal >= 0 and equal < colon):
-            key, value = line[:equal], line[equal + 1:]
+            key, value = line[:equal], line[equal + 1 :]
         else:
-            key, value = line[:colon], line[colon + 1:]
+            key, value = line[:colon], line[colon + 1 :]
 
         value = value.strip()
         if value and value[0] == value[-1] and value.startswith(("\"", "'")):
@@ -109,19 +109,20 @@ class BaseParser:
         pass
 
     def error_invalid_assignment(self, line):
-        raise self.parse_exc("No ':' or '=' found in assignment",
-                             self.lineno, line)
+        raise self.parse_exc(
+            "No ':' or '=' found in assignment", self.lineno, line
+        )
 
     def error_empty_key(self, line):
         raise self.parse_exc('Key cannot be empty', self.lineno, line)
 
     def error_unexpected_continuation(self, line):
-        raise self.parse_exc('Unexpected continuation line',
-                             self.lineno, line)
+        raise self.parse_exc('Unexpected continuation line', self.lineno, line)
 
     def error_no_section_end_bracket(self, line):
-        raise self.parse_exc('Invalid section (must end with ])',
-                             self.lineno, line)
+        raise self.parse_exc(
+            'Invalid section (must end with ])', self.lineno, line
+        )
 
     def error_no_section_name(self, line):
         raise self.parse_exc('Empty section name', self.lineno, line)

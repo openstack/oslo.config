@@ -31,14 +31,19 @@ def list_opts():
         '/etc/project/project.conf.d/',
         '/etc/project.conf.d/',
     ]
-    options = [(None, cfg.ConfigOpts._list_options_for_discovery(
-        default_config_files,
-        default_config_dirs,
-    ))]
+    options = [
+        (
+            None,
+            cfg.ConfigOpts._list_options_for_discovery(
+                default_config_files,
+                default_config_dirs,
+            ),
+        )
+    ]
 
     ext_mgr = stevedore.ExtensionManager(
-        "oslo.config.driver",
-        invoke_on_load=True)
+        "oslo.config.driver", invoke_on_load=True
+    )
 
     source_names = ext_mgr.names()
     for source_name in source_names:
@@ -51,16 +56,12 @@ def list_opts():
                 name='driver',
                 sample_default=source_name,
                 help=cfg._SOURCE_DRIVER_OPTION_HELP,
-            )
+            ),
         )
         group_name = f'sample_{source_name}_source'
         group_help = f'Example of using a {source_name} source'
         if source_description:
-            group_help = '{}\n\n{}: {}'.format(
-                group_help,
-                source_name,
-                source_description,
-            )
+            group_help = f'{group_help}\n\n{source_name}: {source_description}'
         group = cfg.OptGroup(
             name=group_name,
             help=group_help,

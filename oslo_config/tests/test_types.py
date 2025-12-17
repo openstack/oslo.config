@@ -67,8 +67,9 @@ class StringTypeTests(TypeTestHelper, unittest.TestCase):
         self.assertConvertedValue('foo', 'foo')
 
     def test_listed_value_dict(self):
-        self.type_instance = types.String(choices=[
-            ('foo', 'ab'), ('bar', 'xy')])
+        self.type_instance = types.String(
+            choices=[('foo', 'ab'), ('bar', 'xy')]
+        )
         self.assertConvertedValue('foo', 'foo')
 
     def test_unlisted_value(self):
@@ -157,10 +158,12 @@ class StringTypeTests(TypeTestHelper, unittest.TestCase):
         self.assertInvalid("foo")
 
     def test_regex_and_choices_raises(self):
-        self.assertRaises(ValueError,
-                          types.String,
-                          regex=re.compile("^[A-Z]"),
-                          choices=["Foo", "Bar", "baz"])
+        self.assertRaises(
+            ValueError,
+            types.String,
+            regex=re.compile("^[A-Z]"),
+            choices=["Foo", "Bar", "baz"],
+        )
 
     def test_equal_with_same_regex(self):
         t1 = types.String(regex=re.compile("^[A-Z]"))
@@ -173,19 +176,22 @@ class StringTypeTests(TypeTestHelper, unittest.TestCase):
         self.assertFalse(t1 == t2)
 
     def test_ignore_case(self):
-        self.type_instance = types.String(choices=['foo', 'bar'],
-                                          ignore_case=True)
+        self.type_instance = types.String(
+            choices=['foo', 'bar'], ignore_case=True
+        )
         self.assertConvertedValue('Foo', 'Foo')
         self.assertConvertedValue('bAr', 'bAr')
 
     def test_ignore_case_raises(self):
-        self.type_instance = types.String(choices=['foo', 'bar'],
-                                          ignore_case=False)
+        self.type_instance = types.String(
+            choices=['foo', 'bar'], ignore_case=False
+        )
         self.assertRaises(ValueError, self.assertConvertedValue, 'Foo', 'Foo')
 
     def test_regex_and_ignore_case(self):
-        self.type_instance = types.String(regex=re.compile("^[A-Z]"),
-                                          ignore_case=True)
+        self.type_instance = types.String(
+            regex=re.compile("^[A-Z]"), ignore_case=True
+        )
         self.assertConvertedValue("foo", "foo")
 
     def test_regex_and_ignore_case_str(self):
@@ -193,8 +199,9 @@ class StringTypeTests(TypeTestHelper, unittest.TestCase):
         self.assertConvertedValue("foo", "foo")
 
     def test_regex_preserve_flags(self):
-        self.type_instance = types.String(regex=re.compile("^[A-Z]", re.I),
-                                          ignore_case=False)
+        self.type_instance = types.String(
+            regex=re.compile("^[A-Z]", re.I), ignore_case=False
+        )
         self.assertConvertedValue("foo", "foo")
 
     def test_max_length(self):
@@ -323,38 +330,24 @@ class IntegerTypeTests(TypeTestHelper, unittest.TestCase):
 
     def test_not_equal(self):
         self.assertFalse(types.Integer(min=123) == types.Integer(min=456))
-        self.assertFalse(types.Integer(choices=[80, 457]) ==
-                         types.Integer(choices=[80, 40]))
-        self.assertFalse(types.Integer(choices=[80, 457]) ==
-                         types.Integer())
+        self.assertFalse(
+            types.Integer(choices=[80, 457]) == types.Integer(choices=[80, 40])
+        )
+        self.assertFalse(types.Integer(choices=[80, 457]) == types.Integer())
 
     def test_not_equal_to_other_class(self):
         self.assertFalse(types.Integer() == types.String())
 
     def test_choices_with_min_max(self):
-        self.assertRaises(ValueError,
-                          types.Integer,
-                          min=100,
-                          choices=[50, 60])
-        self.assertRaises(ValueError,
-                          types.Integer,
-                          max=10,
-                          choices=[50, 60])
+        self.assertRaises(ValueError, types.Integer, min=100, choices=[50, 60])
+        self.assertRaises(ValueError, types.Integer, max=10, choices=[50, 60])
         types.Integer(min=10, max=100, choices=[50, 60])
 
     def test_min_greater_max(self):
-        self.assertRaises(ValueError,
-                          types.Integer,
-                          min=100, max=50)
-        self.assertRaises(ValueError,
-                          types.Integer,
-                          min=-50, max=-100)
-        self.assertRaises(ValueError,
-                          types.Integer,
-                          min=0, max=-50)
-        self.assertRaises(ValueError,
-                          types.Integer,
-                          min=50, max=0)
+        self.assertRaises(ValueError, types.Integer, min=100, max=50)
+        self.assertRaises(ValueError, types.Integer, min=-50, max=-100)
+        self.assertRaises(ValueError, types.Integer, min=0, max=-50)
+        self.assertRaises(ValueError, types.Integer, min=50, max=0)
 
     def test_with_max_and_min(self):
         t = types.Integer(min=123, max=456)
@@ -456,8 +449,10 @@ class FloatTypeTests(TypeTestHelper, unittest.TestCase):
         self.assertFalse(types.Float(min=123.1) == types.Float(min=456.1))
         self.assertFalse(types.Float(max=123.1) == types.Float(max=456.1))
         self.assertFalse(types.Float(min=123.1) == types.Float(max=123.1))
-        self.assertFalse(types.Float(min=123.1, max=456.1) ==
-                         types.Float(min=123.1, max=456.2))
+        self.assertFalse(
+            types.Float(min=123.1, max=456.1)
+            == types.Float(min=123.1, max=456.2)
+        )
 
     def test_not_equal_to_other_class(self):
         self.assertFalse(types.Float() == types.Integer())
@@ -468,18 +463,10 @@ class FloatTypeTests(TypeTestHelper, unittest.TestCase):
         self.assertTrue(t1 == t2)
 
     def test_min_greater_max(self):
-        self.assertRaises(ValueError,
-                          types.Float,
-                          min=100.1, max=50)
-        self.assertRaises(ValueError,
-                          types.Float,
-                          min=-50, max=-100.1)
-        self.assertRaises(ValueError,
-                          types.Float,
-                          min=0.1, max=-50.0)
-        self.assertRaises(ValueError,
-                          types.Float,
-                          min=50.0, max=0.0)
+        self.assertRaises(ValueError, types.Float, min=100.1, max=50)
+        self.assertRaises(ValueError, types.Float, min=-50, max=-100.1)
+        self.assertRaises(ValueError, types.Float, min=0.1, max=-50.0)
+        self.assertRaises(ValueError, types.Float, min=50.0, max=0.0)
 
     def test_with_max_and_min(self):
         t = types.Float(min=123.45, max=678.9)
@@ -519,50 +506,42 @@ class ListTypeTests(TypeTestHelper, unittest.TestCase):
         self.assertConvertedValue('', [])
 
     def test_single_value(self):
-        self.assertConvertedValue(' foo bar ',
-                                  ['foo bar'])
+        self.assertConvertedValue(' foo bar ', ['foo bar'])
 
     def test_tuple_of_values(self):
-        self.assertConvertedValue(('foo', 'bar'),
-                                  ['foo', 'bar'])
+        self.assertConvertedValue(('foo', 'bar'), ['foo', 'bar'])
 
     def test_list_of_values(self):
-        self.assertConvertedValue(' foo bar, baz ',
-                                  ['foo bar',
-                                   'baz'])
+        self.assertConvertedValue(' foo bar, baz ', ['foo bar', 'baz'])
 
     def test_list_of_values_containing_commas(self):
         self.type_instance = types.List(types.String(quotes=True))
-        self.assertConvertedValue('foo,"bar, baz",bam',
-                                  ['foo',
-                                   'bar, baz',
-                                   'bam'])
+        self.assertConvertedValue(
+            'foo,"bar, baz",bam', ['foo', 'bar, baz', 'bam']
+        )
 
     def test_list_of_values_containing_trailing_comma(self):
-        self.assertConvertedValue('foo, bar, baz, ',
-                                  ['foo', 'bar', 'baz'])
+        self.assertConvertedValue('foo, bar, baz, ', ['foo', 'bar', 'baz'])
 
     def test_list_of_lists(self):
         self.type_instance = types.List(
             types.List(types.String(), bounds=True)
         )
-        self.assertConvertedValue('[foo],[bar, baz],[bam]',
-                                  [['foo'], ['bar', 'baz'], ['bam']])
+        self.assertConvertedValue(
+            '[foo],[bar, baz],[bam]', [['foo'], ['bar', 'baz'], ['bam']]
+        )
 
     def test_list_of_custom_type(self):
         self.type_instance = types.List(types.Integer())
-        self.assertConvertedValue('1,2,3,5',
-                                  [1, 2, 3, 5])
+        self.assertConvertedValue('1,2,3,5', [1, 2, 3, 5])
 
     def test_list_of_custom_type_containing_trailing_comma(self):
         self.type_instance = types.List(types.Integer())
-        self.assertConvertedValue('1,2,3,5,',
-                                  [1, 2, 3, 5])
+        self.assertConvertedValue('1,2,3,5,', [1, 2, 3, 5])
 
     def test_tuple_of_custom_type(self):
         self.type_instance = types.List(types.Integer())
-        self.assertConvertedValue(('1', '2', '3', '5'),
-                                  [1, 2, 3, 5])
+        self.assertConvertedValue(('1', '2', '3', '5'), [1, 2, 3, 5])
 
     def test_bounds_parsing(self):
         self.type_instance = types.List(types.Integer(), bounds=True)
@@ -600,8 +579,9 @@ class RangeTypeTests(TypeTestHelper, unittest.TestCase):
     type = types.Range()
 
     def assertRange(self, s, r1, r2, step=1):
-        self.assertEqual(list(range(r1, r2, step)),
-                         list(self.type_instance(s)))
+        self.assertEqual(
+            list(range(r1, r2, step)), list(self.type_instance(s))
+        )
 
     def test_range(self):
         self.assertRange('0-2', 0, 3)
@@ -642,45 +622,45 @@ class DictTypeTests(TypeTestHelper, unittest.TestCase):
         self.assertConvertedValue('', {})
 
     def test_single_value(self):
-        self.assertConvertedValue(' foo: bar ',
-                                  {'foo': 'bar'})
+        self.assertConvertedValue(' foo: bar ', {'foo': 'bar'})
 
     def test_dict_of_values(self):
-        self.assertConvertedValue(' foo: bar, baz: 123 ',
-                                  {'foo': 'bar',
-                                   'baz': '123'})
+        self.assertConvertedValue(
+            ' foo: bar, baz: 123 ', {'foo': 'bar', 'baz': '123'}
+        )
 
     def test_custom_value_type(self):
         self.type_instance = types.Dict(types.Integer())
-        self.assertConvertedValue('foo:123, bar: 456',
-                                  {'foo': 123,
-                                   'bar': 456})
+        self.assertConvertedValue(
+            'foo:123, bar: 456', {'foo': 123, 'bar': 456}
+        )
 
     def test_dict_of_values_containing_commas(self):
         self.type_instance = types.Dict(types.String(quotes=True))
-        self.assertConvertedValue('foo:"bar, baz",bam:quux',
-                                  {'foo': 'bar, baz',
-                                   'bam': 'quux'})
+        self.assertConvertedValue(
+            'foo:"bar, baz",bam:quux', {'foo': 'bar, baz', 'bam': 'quux'}
+        )
 
     def test_custom_separator(self):
         self.type_instance = types.Dict(key_value_separator='=')
-        self.assertConvertedValue(' foo=bar, baz= 123 ',
-                                  {'foo': 'bar',
-                                   'baz': '123'})
+        self.assertConvertedValue(
+            ' foo=bar, baz= 123 ', {'foo': 'bar', 'baz': '123'}
+        )
 
     def test_dict_of_dicts(self):
         self.type_instance = types.Dict(
             types.Dict(types.String(), bounds=True)
         )
-        self.assertConvertedValue('k1:{k1:v1,k2:v2},k2:{k3:v3}',
-                                  {'k1': {'k1': 'v1', 'k2': 'v2'},
-                                   'k2': {'k3': 'v3'}})
+        self.assertConvertedValue(
+            'k1:{k1:v1,k2:v2},k2:{k3:v3}',
+            {'k1': {'k1': 'v1', 'k2': 'v2'}, 'k2': {'k3': 'v3'}},
+        )
 
     def test_bounds_parsing(self):
         self.type_instance = types.Dict(types.String(), bounds=True)
-        self.assertConvertedValue('{foo:bar,baz:123}',
-                                  {'foo': 'bar',
-                                   'baz': '123'})
+        self.assertConvertedValue(
+            '{foo:bar,baz:123}', {'foo': 'bar', 'baz': '123'}
+        )
 
     def test_bounds_required(self):
         self.type_instance = types.Dict(types.String(), bounds=True)
@@ -762,8 +742,9 @@ class HostAddressTypeTests(TypeTestHelper, unittest.TestCase):
         self.assertConvertedValue('foo.bar', 'foo.bar')
         self.assertConvertedValue('192.168.0.1', '192.168.0.1')
         self.assertConvertedValue('abcd:ef::1', 'abcd:ef::1')
-        self.assertConvertedValue('home-site-here.org.com',
-                                  'home-site-here.org.com')
+        self.assertConvertedValue(
+            'home-site-here.org.com', 'home-site-here.org.com'
+        )
         self.assertConvertedValue('3com.com', '3com.com')
         self.assertConvertedValue('10.org', '10.org')
         self.assertConvertedValue('cell1.nova.site1', 'cell1.nova.site1')
@@ -788,7 +769,8 @@ class HostDomainTypeTests(TypeTestHelper, unittest.TestCase):
         self.assertConvertedValue('host_name', 'host_name')
         self.assertConvertedValue(
             'overcloud-novacompute_edge1-0.internalapi.localdomain',
-            'overcloud-novacompute_edge1-0.internalapi.localdomain')
+            'overcloud-novacompute_edge1-0.internalapi.localdomain',
+        )
         self.assertConvertedValue('host_01.co.uk', 'host_01.co.uk')
         self.assertConvertedValue('_site01001', '_site01001')
 
@@ -865,7 +847,7 @@ class HostnameTypeTests(TypeTestHelper, unittest.TestCase):
         self.assertInvalid('host.%s.com' % ('x' * 64))
 
     def test_max_hostname_size(self):
-        test_str = '.'.join('x'*31 for x in range(8))
+        test_str = '.'.join('x' * 31 for x in range(8))
         self.assertEqual(255, len(test_str))
         self.assertInvalid(test_str)
         self.assertConvertedEqual(test_str[:-2])
@@ -885,8 +867,9 @@ class URITypeTests(TypeTestHelper, unittest.TestCase):
     def test_max_length(self):
         self.type_instance = types.String(max_length=30)
         self.assertInvalid('http://www.example.com/versions')
-        self.assertConvertedValue('http://www.example.com',
-                                  'http://www.example.com')
+        self.assertConvertedValue(
+            'http://www.example.com', 'http://www.example.com'
+        )
 
     def test_equality(self):
         a = types.URI()
@@ -999,54 +982,32 @@ class PortTypeTests(TypeTestHelper, unittest.TestCase):
 
     def test_not_equal(self):
         self.assertFalse(types.Port(min=123) == types.Port(min=456))
-        self.assertFalse(types.Port(choices=[80, 457]) ==
-                         types.Port(choices=[80, 40]))
-        self.assertFalse(types.Port(choices=[80, 457]) ==
-                         types.Port())
+        self.assertFalse(
+            types.Port(choices=[80, 457]) == types.Port(choices=[80, 40])
+        )
+        self.assertFalse(types.Port(choices=[80, 457]) == types.Port())
 
     def test_not_equal_to_other_class(self):
         self.assertFalse(types.Port() == types.Integer())
 
     def test_choices_with_min_max(self):
-        self.assertRaises(ValueError,
-                          types.Port,
-                          min=100,
-                          choices=[50, 60])
-        self.assertRaises(ValueError,
-                          types.Port,
-                          max=10,
-                          choices=[50, 60])
+        self.assertRaises(ValueError, types.Port, min=100, choices=[50, 60])
+        self.assertRaises(ValueError, types.Port, max=10, choices=[50, 60])
         types.Port(min=10, max=100, choices=[50, 60])
 
     def test_min_greater_max(self):
-        self.assertRaises(ValueError,
-                          types.Port,
-                          min=100, max=50)
-        self.assertRaises(ValueError,
-                          types.Port,
-                          min=-50, max=-100)
-        self.assertRaises(ValueError,
-                          types.Port,
-                          min=0, max=-50)
-        self.assertRaises(ValueError,
-                          types.Port,
-                          min=50, max=0)
+        self.assertRaises(ValueError, types.Port, min=100, max=50)
+        self.assertRaises(ValueError, types.Port, min=-50, max=-100)
+        self.assertRaises(ValueError, types.Port, min=0, max=-50)
+        self.assertRaises(ValueError, types.Port, min=50, max=0)
 
     def test_illegal_min(self):
-        self.assertRaises(ValueError,
-                          types.Port,
-                          min=-1, max=50)
-        self.assertRaises(ValueError,
-                          types.Port,
-                          min=-50)
+        self.assertRaises(ValueError, types.Port, min=-1, max=50)
+        self.assertRaises(ValueError, types.Port, min=-50)
 
     def test_illegal_max(self):
-        self.assertRaises(ValueError,
-                          types.Port,
-                          min=100, max=65537)
-        self.assertRaises(ValueError,
-                          types.Port,
-                          max=100000)
+        self.assertRaises(ValueError, types.Port, min=100, max=65537)
+        self.assertRaises(ValueError, types.Port, max=100000)
 
     def test_with_max_and_min(self):
         t = types.Port(min=123, max=456)
@@ -1076,35 +1037,36 @@ class PortTypeTests(TypeTestHelper, unittest.TestCase):
 class FormatSampleDefaultTests(unittest.TestCase):
     def test_string(self):
         t = types.String()
-        self.assertEqual([' bar '],
-                         t.format_defaults('foo', sample_default=' bar '))
+        self.assertEqual(
+            [' bar '], t.format_defaults('foo', sample_default=' bar ')
+        )
 
     def test_string_non_str(self):
         t = types.String()
         e = Exception('bar')
-        self.assertEqual(['bar'],
-                         t.format_defaults('', sample_default=e))
+        self.assertEqual(['bar'], t.format_defaults('', sample_default=e))
 
     def test_string_non_str_spaces(self):
         t = types.String()
         e = Exception(' bar ')
-        self.assertEqual(['" bar "'],
-                         t.format_defaults('', sample_default=e))
+        self.assertEqual(['" bar "'], t.format_defaults('', sample_default=e))
 
     def test_list_string(self):
         t = types.List(item_type=types.String())
         test_list = ['foo', Exception(' bar ')]
-        self.assertEqual(['foo," bar "'],
-                         t.format_defaults('', sample_default=test_list))
+        self.assertEqual(
+            ['foo," bar "'], t.format_defaults('', sample_default=test_list)
+        )
 
     def test_list_no_type(self):
         t = types.List()
         test_list = ['foo', Exception(' bar ')]
-        self.assertEqual(['foo," bar "'],
-                         t.format_defaults('', sample_default=test_list))
+        self.assertEqual(
+            ['foo," bar "'], t.format_defaults('', sample_default=test_list)
+        )
 
     def test_list_not_list(self):
         t = types.List()
-        self.assertEqual(['foo'],
-                         t.format_defaults('',
-                                           sample_default=Exception('foo')))
+        self.assertEqual(
+            ['foo'], t.format_defaults('', sample_default=Exception('foo'))
+        )

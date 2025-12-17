@@ -22,25 +22,24 @@ from oslo_config import fixture as config
 
 
 class ConfigTestCase(base.BaseTestCase):
-
     def _make_fixture(self):
         conf = cfg.ConfigOpts()
         config_fixture = config.Config(conf)
         config_fixture.setUp()
-        config_fixture.register_opt(cfg.StrOpt(
-            'testing_option', default='initial_value'))
-        config_fixture.register_opt(cfg.IntOpt(
-            'test2', min=0, default=5))
-        config_fixture.register_opt(cfg.StrOpt(
-            'test3', choices=['a', 'b'], default='a'))
+        config_fixture.register_opt(
+            cfg.StrOpt('testing_option', default='initial_value')
+        )
+        config_fixture.register_opt(cfg.IntOpt('test2', min=0, default=5))
+        config_fixture.register_opt(
+            cfg.StrOpt('test3', choices=['a', 'b'], default='a')
+        )
         return config_fixture
 
     def test_overridden_value(self):
         f = self._make_fixture()
         self.assertEqual(f.conf.get('testing_option'), 'initial_value')
         f.config(testing_option='changed_value')
-        self.assertEqual('changed_value',
-                         f.conf.get('testing_option'))
+        self.assertEqual('changed_value', f.conf.get('testing_option'))
 
     def test_overridden_value_with_wrong_type(self):
         f = self._make_fixture()
@@ -53,8 +52,7 @@ class ConfigTestCase(base.BaseTestCase):
     def test_cleanup(self):
         f = self._make_fixture()
         f.config(testing_option='changed_value')
-        self.assertEqual(f.conf.get('testing_option'),
-                         'changed_value')
+        self.assertEqual(f.conf.get('testing_option'), 'changed_value')
         f.conf.reset()
         self.assertEqual(f.conf.get('testing_option'), 'initial_value')
 
@@ -62,8 +60,7 @@ class ConfigTestCase(base.BaseTestCase):
         f = self._make_fixture()
         opt = cfg.StrOpt('new_test_opt', default='initial_value')
         f.register_opt(opt)
-        self.assertEqual(f.conf.get('new_test_opt'),
-                         opt.default)
+        self.assertEqual(f.conf.get('new_test_opt'), opt.default)
 
     def test_register_options(self):
         f = self._make_fixture()
@@ -77,8 +74,7 @@ class ConfigTestCase(base.BaseTestCase):
         f = self._make_fixture()
         opt = cfg.StrOpt('new_test_opt', default='initial_value')
         f.register_opt(opt)
-        self.assertEqual(f.conf.get('new_test_opt'),
-                         opt.default)
+        self.assertEqual(f.conf.get('new_test_opt'), opt.default)
         f.cleanUp()
         self.assertRaises(cfg.NoSuchOptError, f.conf.get, 'new_test_opt')
 
@@ -86,8 +82,7 @@ class ConfigTestCase(base.BaseTestCase):
         f = self._make_fixture()
         opt = cfg.StrOpt('new_test_opt', default='initial_value')
         f.register_cli_opt(opt)
-        self.assertEqual(f.conf.get('new_test_opt'),
-                         opt.default)
+        self.assertEqual(f.conf.get('new_test_opt'), opt.default)
 
     def test_register_cli_options(self):
         f = self._make_fixture()
@@ -101,15 +96,15 @@ class ConfigTestCase(base.BaseTestCase):
         f = self._make_fixture()
         opt = cfg.StrOpt('new_test_opt', default='initial_value')
         f.register_cli_opt(opt)
-        self.assertEqual(f.conf.get('new_test_opt'),
-                         opt.default)
+        self.assertEqual(f.conf.get('new_test_opt'), opt.default)
         f.cleanUp()
         self.assertRaises(cfg.NoSuchOptError, f.conf.get, 'new_test_opt')
 
     def test_load_raw_values(self):
         f = self._make_fixture()
-        f.load_raw_values(first_test_opt='loaded_value_1',
-                          second_test_opt='loaded_value_2')
+        f.load_raw_values(
+            first_test_opt='loaded_value_1', second_test_opt='loaded_value_2'
+        )
 
         # Must not be registered.
         self.assertRaises(cfg.NoSuchOptError, f.conf.get, 'first_test_opt')

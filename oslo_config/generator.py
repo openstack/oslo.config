@@ -55,42 +55,55 @@ UPPER_CASE_GROUP_NAMES = ['DEFAULT']
 
 _generator_opts = [
     cfg.StrOpt(
-        'output-file',
-        help='Path of the file to write to. Defaults to stdout.'),
+        'output-file', help='Path of the file to write to. Defaults to stdout.'
+    ),
     cfg.IntOpt(
         'wrap-width',
         default=70,
         min=0,
-        help='The maximum length of help lines.'),
+        help='The maximum length of help lines.',
+    ),
     cfg.MultiStrOpt(
         'namespace',
         required=True,
         help='Option namespace under "oslo.config.opts" in which to query '
-        'for options.'),
+        'for options.',
+    ),
     cfg.BoolOpt(
         'minimal',
         default=False,
-        help='Generate a minimal required configuration.'),
+        help='Generate a minimal required configuration.',
+    ),
     cfg.BoolOpt(
         'summarize',
         default=False,
         help='Only output summaries of help text to config files. Retain '
-        'longer help text for Sphinx documents.'),
+        'longer help text for Sphinx documents.',
+    ),
     cfg.StrOpt(
         'format',
         help='Desired format for the output.',
         default='ini',
         choices=[
-            ('ini', 'The only format that can be used directly with '
-             'oslo.config.'),
-            ('json', 'Intended for third-party tools that want to write '
-             'config files based on the sample config data.'),
+            (
+                'ini',
+                'The only format that can be used directly with oslo.config.',
+            ),
+            (
+                'json',
+                'Intended for third-party tools that want to write '
+                'config files based on the sample config data.',
+            ),
             ('yaml', 'Same as json'),
-            ('rst', 'Can be used to dump the text given to Sphinx when '
-             'building documentation using the Sphinx extension. '
-             'Useful for debugging,')
+            (
+                'rst',
+                'Can be used to dump the text given to Sphinx when '
+                'building documentation using the Sphinx extension. '
+                'Useful for debugging,',
+            ),
         ],
-        dest='format_'),
+        dest='format_',
+    ),
 ]
 
 
@@ -120,19 +133,32 @@ def _format_defaults(opt):
             default_str = str(opt.sample_default)
         elif opt.default is None:
             default_str = '<None>'
-        elif isinstance(opt, (cfg.StrOpt, cfg.IntOpt, cfg.FloatOpt, cfg.IPOpt,
-                              cfg.PortOpt, cfg.HostnameOpt, cfg.HostAddressOpt,
-                              cfg.URIOpt, cfg.Opt)):
+        elif isinstance(
+            opt,
+            (
+                cfg.StrOpt,
+                cfg.IntOpt,
+                cfg.FloatOpt,
+                cfg.IPOpt,
+                cfg.PortOpt,
+                cfg.HostnameOpt,
+                cfg.HostAddressOpt,
+                cfg.URIOpt,
+                cfg.Opt,
+            ),
+        ):
             default_str = str(opt.default)
         elif isinstance(opt, cfg.BoolOpt):
             default_str = str(opt.default).lower()
-        elif isinstance(opt, (cfg.ListOpt, cfg._ConfigFileOpt,
-                              cfg._ConfigDirOpt)):
+        elif isinstance(
+            opt, (cfg.ListOpt, cfg._ConfigFileOpt, cfg._ConfigDirOpt)
+        ):
             default_str = ','.join(str(d) for d in opt.default)
         elif isinstance(opt, cfg.DictOpt):
-            sorted_items = sorted(opt.default.items(),
-                                  key=operator.itemgetter(0))
-            default_str = ','.join(['%s:%s' % i for i in sorted_items])
+            sorted_items = sorted(
+                opt.default.items(), key=operator.itemgetter(0)
+            )
+            default_str = ','.join(['{}:{}'.format(*i) for i in sorted_items])
         else:
             LOG.warning('Unknown option type: %s', repr(opt))
             default_str = str(opt.default)
@@ -143,7 +169,7 @@ def _format_defaults(opt):
         if not isinstance(default_str, str):
             default_str = str(default_str)
         if default_str.strip() != default_str:
-            default_str = '"%s"' % default_str
+            default_str = f'"{default_str}"'
         results.append(default_str)
     return results
 
@@ -171,7 +197,6 @@ def _format_type_name(opt_type):
 
 
 class _OptFormatter:
-
     """Format configuration option descriptions to a file."""
 
     def __init__(self, conf, output_file=None):
@@ -196,8 +221,9 @@ class _OptFormatter:
 
             # plus our custom roles
             for rolename in ('oslo.config:option', 'oslo.config:group'):
-                generic = docutils_roles.GenericRole(rolename,
-                                                     docutils_nodes.strong)
+                generic = docutils_roles.GenericRole(
+                    rolename, docutils_nodes.strong
+                )
                 docutils_roles.register_local_role(rolename, generic)
 
     def _format_help(self, help_text):
@@ -209,7 +235,7 @@ class _OptFormatter:
             help_text = docutils_core.publish_string(
                 source=help_text,
                 writer=rst2txt.Writer(),
-                settings_overrides={'wrap_width': self.wrap_width}
+                settings_overrides={'wrap_width': self.wrap_width},
             ).decode()
 
             lines = ''
@@ -220,11 +246,16 @@ class _OptFormatter:
         elif self.wrap_width > 0:
             wrapped = ""
             for line in help_text.splitlines():
-                text = "\n".join(textwrap.wrap(line, self.wrap_width,
-                                               initial_indent='# ',
-                                               subsequent_indent='# ',
-                                               break_long_words=False,
-                                               replace_whitespace=False))
+                text = "\n".join(
+                    textwrap.wrap(
+                        line,
+                        self.wrap_width,
+                        initial_indent='# ',
+                        subsequent_indent='# ',
+                        break_long_words=False,
+                        replace_whitespace=False,
+                    )
+                )
                 wrapped += "#" if text == "" else text
                 wrapped += "\n"
             lines = [wrapped]
@@ -248,12 +279,12 @@ class _OptFormatter:
         """
         if isinstance(group_or_groupname, cfg.OptGroup):
             group = group_or_groupname
-            lines = ['[%s]\n' % group.name]
+            lines = [f'[{group.name}]\n']
             if group.help:
                 lines += self._format_help(group.help)
         else:
             groupname = group_or_groupname
-            lines = ['[%s]\n' % groupname]
+            lines = [f'[{groupname}]\n']
         self.writelines(lines)
 
     def format(self, opt, group_name):
@@ -268,8 +299,9 @@ class _OptFormatter:
 
         opt_type = _format_type_name(opt.type)
         opt_prefix = ''
-        if (opt.deprecated_for_removal and
-                not opt.help.startswith('DEPRECATED')):
+        if opt.deprecated_for_removal and not opt.help.startswith(
+            'DEPRECATED'
+        ):
             opt_prefix = 'DEPRECATED: '
 
         if opt.help:
@@ -286,7 +318,7 @@ class _OptFormatter:
 
             help_text = f'{opt_prefix}{opt_help} ({opt_type})'
         else:
-            help_text = '(%s)' % opt_type
+            help_text = f'({opt_type})'
         lines = self._format_help(help_text)
 
         if getattr(opt.type, 'min', None) is not None:
@@ -300,7 +332,8 @@ class _OptFormatter:
             for choice in opt.type.choices:
                 help_text = '{} - {}'.format(
                     self._get_choice_text(choice),
-                    opt.type.choices[choice] or '<No description provided>')
+                    opt.type.choices[choice] or '<No description provided>',
+                )
                 lines.extend(self._format_help(help_text))
 
         try:
@@ -318,36 +351,39 @@ class _OptFormatter:
             # https://bugs.launchpad.net/keystoneauth/+bug/1548433 for
             # more details.
             import warnings
+
             if not isinstance(opt, cfg.Opt):
                 warnings.warn(
-                    'Incompatible option class for %s (%r): %s' %
-                    (opt.dest, opt.__class__, err),
+                    f'Incompatible option class for {opt.dest} ({opt.__class__!r}): {err}',  # noqa: E501
                 )
             else:
-                warnings.warn('Failed to fully format sample for %s: %s' %
-                              (opt.dest, err))
+                warnings.warn(
+                    f'Failed to fully format sample for {opt.dest}: {err}'
+                )
 
         for d in opt.deprecated_opts:
             # NOTE(bnemec): opt names with a - are not valid in a config file,
             # but it is possible to add a DeprecatedOpt with a - name.  We
             # want to ignore those as they won't work anyway.
             if d.name and '-' not in d.name:
-                lines.append('# Deprecated group/name - [%s]/%s\n' %
-                             (d.group or group_name, d.name or opt.dest))
+                lines.append(
+                    f'# Deprecated group/name - [{d.group or group_name}]/{d.name or opt.dest}\n'  # noqa: E501
+                )
 
         if opt.deprecated_for_removal:
             if opt.deprecated_since:
                 lines.append(
-                    '# This option is deprecated for removal since %s.\n' % (
-                        opt.deprecated_since))
+                    f'# This option is deprecated for removal since {opt.deprecated_since}.\n'  # noqa: E501
+                )
             else:
-                lines.append(
-                    '# This option is deprecated for removal.\n')
+                lines.append('# This option is deprecated for removal.\n')
             lines.append(
-                '# Its value may be silently ignored in the future.\n')
+                '# Its value may be silently ignored in the future.\n'
+            )
             if opt.deprecated_reason:
                 lines.extend(
-                    self._format_help('Reason: ' + opt.deprecated_reason))
+                    self._format_help('Reason: ' + opt.deprecated_reason)
+                )
 
         if opt.advanced:
             lines.append(
@@ -365,15 +401,17 @@ class _OptFormatter:
             )
 
         if hasattr(opt.type, 'format_defaults'):
-            defaults = opt.type.format_defaults(opt.default,
-                                                opt.sample_default)
+            defaults = opt.type.format_defaults(
+                opt.default, opt.sample_default
+            )
         else:
             LOG.debug(
                 "The type for option %(name)s which is %(type)s is not a "
                 "subclass of types.ConfigType and doesn't provide a "
                 "'format_defaults' method. A default formatter is not "
                 "available so the best-effort formatter will be used.",
-                {'type': opt.type, 'name': opt.name})
+                {'type': opt.type, 'name': opt.name},
+            )
             defaults = _format_defaults(opt)
         for default_str in defaults:
             if default_str:
@@ -427,8 +465,11 @@ def _cleanup_opts(read_opts):
                 else:
                     normalized_gn = group_name.lower()
                 if normalized_gn != group_name:
-                    LOG.warning('normalizing group name %r to %r', group_name,
-                                normalized_gn)
+                    LOG.warning(
+                        'normalizing group name %r to %r',
+                        group_name,
+                        normalized_gn,
+                    )
                     if hasattr(group, 'name'):
                         group.name = normalized_gn
                     else:
@@ -442,8 +483,13 @@ def _cleanup_opts(read_opts):
     # recreate the list of (namespace, [(group, [opt_1, opt_2])]) tuples
     # from the cleaned structure.
     cleaned_opts = [
-        (namespace, [(g, list(clean[namespace][g].values()))
-                     for g in clean[namespace]])
+        (
+            namespace,
+            [
+                (g, list(clean[namespace][g].values()))
+                for g in clean[namespace]
+            ],
+        )
         for namespace in clean
     ]
 
@@ -460,7 +506,8 @@ def _get_raw_opts_loaders(namespaces):
         'oslo.config.opts',
         names=namespaces,
         on_load_failure_callback=on_load_failure_callback,
-        invoke_on_load=False)
+        invoke_on_load=False,
+    )
     return [(e.name, e.plugin) for e in mgr]
 
 
@@ -469,7 +516,8 @@ def _get_driver_opts_loaders(namespaces, driver_option_name):
         namespace='oslo.config.opts.' + driver_option_name,
         names=namespaces,
         on_load_failure_callback=on_load_failure_callback,
-        invoke_on_load=False)
+        invoke_on_load=False,
+    )
     return [(e.name, e.plugin) for e in mgr]
 
 
@@ -497,7 +545,8 @@ def _get_opt_default_updaters(namespaces):
         names=namespaces,
         on_missing_entrypoints_callback=None,
         on_load_failure_callback=on_load_failure_callback,
-        invoke_on_load=False)
+        invoke_on_load=False,
+    )
     return [ep.plugin for ep in mgr]
 
 
@@ -551,7 +600,8 @@ def _list_opts(namespaces):
                         # driver name, so combine the lists we do
                         # find.
                         driver_opt_names.setdefault(driver_name, []).extend(
-                            o.name for o in opts)
+                            o.name for o in opts
+                        )
                         group_opts.extend(opts)
                     group._save_driver_opts(driver_opt_names)
             namespace_values.append((group, group_opts))
@@ -565,9 +615,10 @@ def on_load_failure_callback(*args, **kwargs):
 
 def _output_opts(f, group, group_data):
     f.format_group(group_data['object'] or group)
-    for (namespace, opts) in sorted(group_data['namespaces'],
-                                    key=operator.itemgetter(0)):
-        f.write('\n#\n# From %s\n#\n' % namespace)
+    for namespace, opts in sorted(
+        group_data['namespaces'], key=operator.itemgetter(0)
+    ):
+        f.write(f'\n#\n# From {namespace}\n#\n')
         for opt in sorted(opts, key=operator.attrgetter('advanced')):
             try:
                 if f.minimal and not opt.required:
@@ -576,8 +627,7 @@ def _output_opts(f, group, group_data):
                     f.write('\n')
                     f.format(opt, group)
             except Exception as err:
-                f.write('# Warning: Failed to format sample for %s\n' %
-                        (opt.dest,))
+                f.write(f'# Warning: Failed to format sample for {opt.dest}\n')
                 f.write(f'# {err}\n')
 
 
@@ -628,8 +678,11 @@ def _build_entry(opt, group, namespace, conf):
     :param conf: The ConfigOpts object containing the options for the
                  generator tool
     """
-    entry = {key: value for key, value in opt.__dict__.items()
-             if not key.startswith('_')}
+    entry = {
+        key: value
+        for key, value in opt.__dict__.items()
+        if not key.startswith('_')
+    }
     entry['namespace'] = namespace
     # Where present, we store choices as an OrderedDict. The default repr for
     # this is not very machine readable, thus, it is switched to a list of
@@ -649,9 +702,11 @@ def _build_entry(opt, group, namespace, conf):
         # want to ignore those as they won't work anyway.
         if not deprecated_opt.name or '-' not in deprecated_opt.name:
             deprecated_opts.append(
-                {'group': deprecated_opt.group or group,
-                 'name': deprecated_opt.name or entry['name'],
-                 })
+                {
+                    'group': deprecated_opt.group or group,
+                    'name': deprecated_opt.name or entry['name'],
+                }
+            )
     entry['deprecated_opts'] = deprecated_opts
     return entry
 
@@ -676,9 +731,11 @@ def _generate_machine_readable_data(groups, conf):
     :param conf: The ConfigOpts object containing the options for the
                  generator tool
     """
-    output_data = {'options': {},
-                   'deprecated_options': {},
-                   'generator_options': {}}
+    output_data = {
+        'options': {},
+        'deprecated_options': {},
+        'generator_options': {},
+    }
     # See _get_groups for details on the structure of group_data
     for group_name, group_data in groups.items():
         output_group = {'opts': [], 'help': ''}
@@ -690,11 +747,13 @@ def _generate_machine_readable_data(groups, conf):
                         group_data['object']._get_generator_data()
                     )
                 else:
-                    output_group.update({
-                        'dynamic_group_owner': '',
-                        'driver_option': '',
-                        'driver_opts': {},
-                    })
+                    output_group.update(
+                        {
+                            'dynamic_group_owner': '',
+                            'driver_option': '',
+                            'driver_opts': {},
+                        }
+                    )
                 entry = _build_entry(opt, group_name, namespace[0], conf)
                 output_group['opts'].append(entry)
                 # Need copies of the opts because we modify them
@@ -710,8 +769,10 @@ def _generate_machine_readable_data(groups, conf):
         non_driver_opt_names = [
             o['name']
             for o in output_group['opts']
-            if not any(o['name'] in output_group['driver_opts'][d]
-                       for d in output_group['driver_opts'])
+            if not any(
+                o['name'] in output_group['driver_opts'][d]
+                for d in output_group['driver_opts']
+            )
         ]
         output_group['standard_opts'] = non_driver_opt_names
 
@@ -745,8 +806,9 @@ def _output_machine_readable(groups, output_file, conf):
     output_data = _generate_machine_readable_data(groups, conf)
     if conf.format_ == 'yaml':
         yaml.SafeDumper.add_representer(_message.Message, i18n_representer)
-        output_file.write(yaml.safe_dump(output_data,
-                                         default_flow_style=False))
+        output_file.write(
+            yaml.safe_dump(output_data, default_flow_style=False)
+        )
     else:
         output_file.write(json.dumps(output_data, sort_keys=True))
     output_file.write('\n')
@@ -762,11 +824,9 @@ def _output_human_readable(namespaces, output_file):
         from oslo_config import sphinxext
     except ImportError:
         raise RuntimeError(
-            'Could not import sphinxext. '
-            'Please install Sphinx and try again.',
+            'Could not import sphinxext. Please install Sphinx and try again.',
         )
-    output_data = list(sphinxext._format_option_help(
-        LOG, namespaces, False))
+    output_data = list(sphinxext._format_option_help(LOG, namespaces, False))
     output_file.write('\n'.join(output_data))
 
 
@@ -807,9 +867,7 @@ def generate(conf, output_file=None):
             output_file=output_file,
         )
     else:
-        _output_machine_readable(groups,
-                                 output_file=output_file,
-                                 conf=conf)
+        _output_machine_readable(groups, output_file=output_file, conf=conf)
 
     if own_file:
         output_file.close()
