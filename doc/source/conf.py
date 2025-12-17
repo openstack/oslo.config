@@ -29,20 +29,6 @@ extensions = [
     'stevedore.sphinxext',
 ]
 
-# openstackdocstheme options
-openstackdocs_repo_name = 'openstack/oslo.config'
-openstackdocs_bug_project = 'oslo.config'
-openstackdocs_bug_tag = ''
-
-config_generator_config_file = 'config-generator.conf'
-
-# autodoc generation is a bit aggressive and a nuisance when doing heavy
-# text edit cycles.
-# execute "export SPHINX_DEBUG=1" in your terminal to disable
-
-# Add any paths that contain templates here, relative to this directory.
-# templates_path = []
-
 # The suffix of source filenames.
 source_suffix = '.rst'
 
@@ -65,7 +51,6 @@ pygments_style = 'native'
 # A list of ignored prefixes for module index sorting.
 modindex_common_prefix = ['oslo_config.']
 
-
 # -- Options for HTML output --------------------------------------------------
 
 # The theme to use for HTML and HTML Help pages.  Major themes that come with
@@ -75,7 +60,17 @@ modindex_common_prefix = ['oslo_config.']
 # html_static_path = ['static']
 html_theme = 'openstackdocs'
 
-# -- sphinxcontrib.apidoc configuration --------------------------------------
+# -- Options for openstackdocstheme extension ---------------------------------
+
+openstackdocs_repo_name = 'openstack/oslo.config'
+openstackdocs_bug_project = 'oslo.config'
+openstackdocs_bug_tag = ''
+
+# -- Options for oslo_config.sphinxconfiggen extension ------------------------
+
+config_generator_config_file = 'config-generator.conf'
+
+# -- Options for sphinxcontrib.apidoc -----------------------------------------
 
 apidoc_module_dir = '../../oslo_config'
 apidoc_output_dir = 'reference/api'
