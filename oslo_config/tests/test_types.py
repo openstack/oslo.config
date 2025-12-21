@@ -574,6 +574,13 @@ class ListTypeTests(TypeTestHelper, unittest.TestCase):
     def test_not_equal_to_other_class(self):
         self.assertFalse(types.List() == types.Integer())
 
+    def test_list_min_length(self):
+        t = types.List(min_length=2)
+        self.assertRaises(ValueError, t, '')
+        self.assertRaises(ValueError, t, 'a')
+        self.assertConvertedValue('a,b', ['a', 'b'])
+        self.assertConvertedValue('a,b,c', ['a', 'b', 'c'])
+
 
 class RangeTypeTests(TypeTestHelper, unittest.TestCase):
     type = types.Range()
@@ -691,6 +698,12 @@ class DictTypeTests(TypeTestHelper, unittest.TestCase):
 
     def test_not_equal_to_other_class(self):
         self.assertFalse(types.Dict() == types.Integer())
+
+    def test_dict_min_length(self):
+        t = types.Dict(min_length=2)
+        self.assertRaises(ValueError, t, '')
+        self.assertRaises(ValueError, t, 'a:1')
+        self.assertConvertedValue('a:1,b:2', {'a': '1', 'b': '2'})
 
 
 class IPAddressTypeTests(TypeTestHelper, unittest.TestCase):

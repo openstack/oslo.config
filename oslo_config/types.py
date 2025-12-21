@@ -475,9 +475,19 @@ class List(ConfigType):
     .. versionchanged:: 2.7
 
        Added *type_name* parameter.
+
+    .. versionchanged:: 10.3.0
+
+       Added *min_length* parameter.
     """
 
-    def __init__(self, item_type=None, bounds=False, type_name='list value'):
+    def __init__(
+        self,
+        item_type=None,
+        bounds=False,
+        type_name='list value',
+        min_length=0,
+    ):
         super().__init__(type_name=type_name)
 
         if item_type is None:
@@ -487,6 +497,7 @@ class List(ConfigType):
             raise TypeError('item_type must be callable')
         self.item_type = item_type
         self.bounds = bounds
+        self.min_length = min_length
 
     def __call__(self, value):
         if isinstance(value, (list, tuple)):
@@ -503,7 +514,13 @@ class List(ConfigType):
             values = s.split(',')
         else:
             values = []
+
         if not values:
+            if self.min_length > 0:
+                raise ValueError(
+                    'Length should be greater than or equal to %g',
+                    self.min_length,
+                )
             return []
 
         result = []
@@ -523,6 +540,11 @@ class List(ConfigType):
                 value += ',' + values.pop(0)
 
             result.append(validated_value)
+
+        if self.min_length and len(result) < self.min_length:
+            raise ValueError(
+                'Length should be greater than or equal to %g', self.min_length
+            )
 
         return result
 
@@ -619,6 +641,10 @@ class Dict(ConfigType):
     .. versionchanged:: 9.5
 
         Added *key_value_separator* parameter.
+
+    .. versionchanged:: 10.2.0
+
+       Added *min_length* parameter.
     """
 
     def __init__(
@@ -627,6 +653,7 @@ class Dict(ConfigType):
         bounds=False,
         type_name='dict value',
         key_value_separator=':',
+        min_length=0,
     ):
         super().__init__(type_name=type_name)
 
@@ -642,6 +669,7 @@ class Dict(ConfigType):
         self.value_type = value_type
         self.bounds = bounds
         self.key_value_separator = key_value_separator
+        self.min_length = min_length
 
     def __call__(self, value):
         if isinstance(value, dict):
@@ -658,6 +686,11 @@ class Dict(ConfigType):
             s = s[1:-1]
 
         if s == '':
+            if self.min_length > 0:
+                raise ValueError(
+                    'Length should be greater than or equal to %g',
+                    self.min_length,
+                )
             return result
 
         pairs = s.split(',')
@@ -697,6 +730,11 @@ class Dict(ConfigType):
                 raise ValueError(f'Duplicate key {key}')
 
             result[key] = value
+
+        if self.min_length and len(result) < self.min_length:
+            raise ValueError(
+                'Length should be greater than or equal to %g', self.min_length
+            )
 
         return result
 

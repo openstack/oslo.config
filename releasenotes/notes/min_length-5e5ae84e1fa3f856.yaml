@@ -1,0 +1,5 @@
+---
+features:
+  - |
+    The ``List`` type and the ``Dict`` type now supports the ``min_length``
+    parameter.
