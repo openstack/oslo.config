@@ -876,7 +876,7 @@ def generate(conf, output_file=None):
 def main(args=None):
     """The main function of oslo-config-generator."""
     version = importlib.metadata.version('oslo.config')
-    logging.basicConfig(level=logging.WARN)
+    logging.basicConfig(level=logging.WARNING)
     conf = cfg.ConfigOpts()
     register_cli_opts(conf)
     try:
