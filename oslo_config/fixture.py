@@ -15,6 +15,8 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+from typing import Any
+
 import fixtures
 
 from oslo_config import cfg
@@ -27,10 +29,15 @@ class Config(fixtures.Fixture):
 
     """
 
-    def __init__(self, conf=cfg.CONF):
+    conf: cfg.ConfigOpts
+    _registered_config_opts: dict[str | None, set[cfg.Opt]]
+    _default_config_files: list[str] | None
+    _default_config_dirs: list[str] | None
+
+    def __init__(self, conf: cfg.ConfigOpts = cfg.CONF) -> None:
         self.conf = conf
 
-    def setUp(self):
+    def setUp(self) -> None:
         super().setUp()
         # NOTE(morganfainberg): unregister must be added to cleanup before
         # reset is because cleanup works in reverse order of registered items,
@@ -53,7 +60,7 @@ class Config(fixtures.Fixture):
         else:
             self._default_config_dirs = None
 
-    def config(self, **kw):
+    def config(self, **kw: Any) -> None:
         """Override configuration values.
 
         The keyword arguments are the names of configuration options to
@@ -69,35 +76,35 @@ class Config(fixtures.Fixture):
         for k, v in kw.items():
             self.conf.set_override(k, v, group)
 
-    def _unregister_config_opts(self):
+    def _unregister_config_opts(self) -> None:
         for group in self._registered_config_opts:
             self.conf.unregister_opts(
                 self._registered_config_opts[group], group=group
             )
 
-    def _reset_default_config_files(self):
+    def _reset_default_config_files(self) -> None:
         if not hasattr(self.conf, 'default_config_files'):
             return
 
-        if self._default_config_files:
+        if self._default_config_files is not None:
             self.conf.default_config_files = self._default_config_files
         else:
             # Delete, because we could conceivably begin with the property
             # being unset.
-            self.conf.default_config_files = None
+            del self.conf.default_config_files
 
-    def _reset_default_config_dirs(self):
+    def _reset_default_config_dirs(self) -> None:
         if not hasattr(self.conf, 'default_config_dirs'):
             return
 
-        if self._default_config_dirs:
+        if self._default_config_dirs is not None:
             self.conf.default_config_dirs = self._default_config_dirs
         else:
             # Delete, because we could conceivably begin with the property
             # being unset.
-            self.conf.default_config_dirs = None
+            del self.conf.default_config_dirs
 
-    def register_opt(self, opt, group=None):
+    def register_opt(self, opt: cfg.Opt, group: str | None = None) -> None:
         """Register a single option for the test run.
 
         Options registered in this manner will automatically be unregistered
@@ -110,7 +117,9 @@ class Config(fixtures.Fixture):
         self.conf.register_opt(opt, group=group)
         self._registered_config_opts.setdefault(group, set()).add(opt)
 
-    def register_opts(self, opts, group=None):
+    def register_opts(
+        self, opts: list[cfg.Opt], group: str | None = None
+    ) -> None:
         """Register multiple options for the test run.
 
         This works in the same manner as register_opt() but takes a list of
@@ -121,7 +130,7 @@ class Config(fixtures.Fixture):
         for opt in opts:
             self.register_opt(opt, group=group)
 
-    def register_cli_opt(self, opt, group=None):
+    def register_cli_opt(self, opt: cfg.Opt, group: str | None = None) -> None:
         """Register a single CLI option for the test run.
 
         Options registered in this manner will automatically be unregistered
@@ -138,7 +147,9 @@ class Config(fixtures.Fixture):
         self.conf.register_cli_opt(opt, group=group)
         self._registered_config_opts.setdefault(group, set()).add(opt)
 
-    def register_cli_opts(self, opts, group=None):
+    def register_cli_opts(
+        self, opts: list[cfg.Opt], group: str | None = None
+    ) -> None:
         """Register multiple CLI options for the test run.
 
         This works in the same manner as register_opt() but takes a list of
@@ -153,7 +164,7 @@ class Config(fixtures.Fixture):
         for opt in opts:
             self.register_cli_opt(opt, group=group)
 
-    def load_raw_values(self, group=None, **kwargs):
+    def load_raw_values(self, group: str | None = None, **kwargs: Any) -> None:
         """Load raw values into the configuration without registering them.
 
         This method adds a series of parameters into the current config
@@ -169,17 +180,18 @@ class Config(fixtures.Fixture):
         # Default out the group name
         group = 'DEFAULT' if not group else group
 
-        raw_config = dict()
-        raw_config[group] = dict()
+        raw_config: dict[str, dict[str, list[str]]] = {}
+        raw_config[group] = {}
         for key, value in kwargs.items():
             # Parsed values are an array of raw strings.
             raw_config[group][key] = [str(value)]
 
+        assert self.conf._namespace is not None
         self.conf._namespace._add_parsed_config_file(
             '<memory>', raw_config, raw_config
         )
 
-    def set_config_files(self, config_files):
+    def set_config_files(self, config_files: list[str]) -> None:
         """Specify a list of config files to read.
 
         This method allows you to predefine the list of configuration files
@@ -197,7 +209,7 @@ class Config(fixtures.Fixture):
         self.conf.default_config_files = config_files
         self.conf.reload_config_files()
 
-    def set_config_dirs(self, config_dirs):
+    def set_config_dirs(self, config_dirs: list[str]) -> None:
         """Specify a list of config dirs to read.
 
         This method allows you to predefine the list of configuration dirs
@@ -215,7 +227,9 @@ class Config(fixtures.Fixture):
         self.conf.default_config_dirs = config_dirs
         self.conf.reload_config_files()
 
-    def set_default(self, name, default, group=None):
+    def set_default(
+        self, name: str, default: Any, group: str | None = None
+    ) -> None:
         """Set a default value for an option.
 
         This method is not necessarily meant to be invoked

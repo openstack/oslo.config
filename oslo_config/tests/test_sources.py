@@ -16,6 +16,7 @@ from oslotest import base
 from requests import HTTPError
 import requests_mock
 import testtools
+from typing import Any, TypedDict
 
 from oslo_config import _list_opts
 from oslo_config import cfg
@@ -187,7 +188,12 @@ def make_uri(name):
     return f"https://oslo.config/{name}.conf"
 
 
-_extra_configs = {
+class ExtraConfig(TypedDict):
+    name: str
+    data: dict[str, dict[str, tuple[type[cfg.Opt], Any]]]
+
+
+_extra_configs: dict[str, ExtraConfig] = {
     make_uri("types"): {
         "name": "types",
         "data": {
@@ -354,6 +360,7 @@ class URISourceTestCase(base.BaseTestCase):
                     break
 
         self.assertIsNotNone(discovered_group)
+        assert discovered_group is not None
 
         self.assertEqual(
             _uri.URIConfigurationSourceDriver().list_options_for_discovery(),

@@ -27,6 +27,7 @@ classifiers = [
   "Programming Language :: Python :: 3.13",
   "Programming Language :: Python :: 3 :: Only",
   "Programming Language :: Python :: Implementation :: CPython",
+  "Typing :: Typed",
 ]
 
 [project.urls]
@@ -55,17 +56,19 @@ packages = [
 ]
 
 [tool.mypy]
+python_version = "3.10"
 show_column_numbers = true
 show_error_context = true
-ignore_missing_imports = true
-follow_imports = "skip"
-incremental = true
-check_untyped_defs = true
-warn_unused_ignores = true
+strict = true
+disable_error_code = ["import-untyped"]
+exclude = '(?x)(doc | releasenotes)'
 
 [[tool.mypy.overrides]]
-module = "oslo_config.tests.*"
-ignore_errors = true
+module = ["oslo_config.tests.*"]
+disallow_untyped_calls = false
+disallow_untyped_defs = false
+disallow_subclassing_any = false
+disable_error_code = ["import-untyped"]
 
 [tool.ruff]
 line-length = 79

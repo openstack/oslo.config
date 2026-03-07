@@ -10,15 +10,21 @@
 # License for the specific language governing permissions and limitations
 # under the License.
 
+from collections.abc import Generator, Iterable, Set
+from typing import Any, cast
+
 from docutils import nodes
 from docutils.parsers import rst
 from docutils.parsers.rst import directives
 from docutils.statemachine import StringList
 import oslo_i18n
 from sphinx import addnodes
+from sphinx.application import Sphinx
+from sphinx.builders import Builder
 from sphinx.directives import ObjectDescription
 from sphinx.domains import Domain
 from sphinx.domains import ObjType
+from sphinx.environment import BuildEnvironment
 from sphinx.roles import XRefRole
 from sphinx.util import logging
 from sphinx.util.nodes import make_refnode
@@ -30,7 +36,12 @@ from oslo_config import generator
 LOG = logging.getLogger(__name__)
 
 
-def _list_table(headers, data, title='', columns=None):
+def _list_table(
+    headers: list[str],
+    data: Iterable[tuple[str, str]],
+    title: str = '',
+    columns: list[int] | None = None,
+) -> Generator[str, None, None]:
     """Build a list-table directive.
 
     :param add: Function to add one row to output.
@@ -51,13 +62,13 @@ def _list_table(headers, data, title='', columns=None):
             yield f'     * {r}'
 
 
-def _indent(text, n=2):
+def _indent(text: str, n: int = 2) -> str:
     padding = ' ' * n
     # we don't want to indent blank lines so just output them as-is
     return '\n'.join(padding + x if x else '' for x in text.splitlines())
 
 
-def _make_anchor_target(group_name, option_name):
+def _make_anchor_target(group_name: str, option_name: str) -> str:
     # We need to ensure this is unique across entire documentation
     # http://www.sphinx-doc.org/en/stable/markup/inline.html#ref-role
     target = f'{cfg._normalize_group_name(group_name)}.{option_name.lower()}'
@@ -82,7 +93,7 @@ _TYPE_DESCRIPTIONS = {
 }
 
 
-def _get_choice_text(choice):
+def _get_choice_text(choice: Any) -> str:
     if choice is None:
         return '<None>'
     elif choice == '':
@@ -90,7 +101,7 @@ def _get_choice_text(choice):
     return str(choice)
 
 
-def _format_opt(opt, group_name):
+def _format_opt(opt: Any, group_name: str) -> Generator[str, None, None]:
     opt_type = _TYPE_DESCRIPTIONS.get(type(opt), 'unknown type')
     yield f'.. oslo.config:option:: {opt.dest}'
     yield ''
@@ -213,7 +224,11 @@ def _format_opt(opt, group_name):
     yield ''
 
 
-def _format_group(namespace, group_name, group_obj):
+def _format_group(
+    namespace: str | None,
+    group_name: str,
+    group_obj: cfg.OptGroup | None,
+) -> Generator[str, None, None]:
     yield f'.. oslo.config:group:: {group_name}'
     if namespace:
         yield f'   :namespace: {namespace}'
@@ -225,7 +240,12 @@ def _format_group(namespace, group_name, group_obj):
         yield ''
 
 
-def _format_group_opts(namespace, group_name, group_obj, opt_list):
+def _format_group_opts(
+    namespace: str | None,
+    group_name: str | None,
+    group_obj: cfg.OptGroup | None,
+    opt_list: list[Any],
+) -> Generator[str, None, None]:
     group_name = group_name or 'DEFAULT'
     LOG.debug('%s %s', namespace, group_name)
 
@@ -235,7 +255,10 @@ def _format_group_opts(namespace, group_name, group_obj, opt_list):
         yield from _format_opt(opt, group_name)
 
 
-def _format_option_help(namespaces, split_namespaces):
+def _format_option_help(
+    namespaces: list[str],
+    split_namespaces: bool,
+) -> Generator[str, None, None]:
     """Generate a series of lines of restructuredtext.
 
     Format the option help as restructuredtext and return it as a list
@@ -264,8 +287,8 @@ def _format_option_help(namespaces, split_namespaces):
         # Merge the options from different namespaces that belong to
         # the same group together and format them without the
         # namespace.
-        by_section = {}
-        group_objs = {}
+        by_section: dict[str, list[Any]] = {}
+        group_objs: dict[str, cfg.OptGroup | None] = {}
         for ignore, opt_list in opts:
             for group, group_opts in opt_list:
                 if isinstance(group, cfg.OptGroup):
@@ -295,7 +318,7 @@ class ShowOptionsDirective(rst.Directive):
 
     has_content = True
 
-    def run(self):
+    def run(self) -> list[nodes.Node]:
         split_namespaces = 'split-namespaces' in self.options
 
         config_file = self.options.get('config-file')
@@ -337,12 +360,19 @@ class ShowOptionsDirective(rst.Directive):
 class ConfigGroupXRefRole(XRefRole):
     "Handles :oslo.config:group: roles pointing to configuration groups."
 
-    def __init__(self):
+    def __init__(self) -> None:
         super().__init__(
             warn_dangling=True,
         )
 
-    def process_link(self, env, refnode, has_explicit_title, title, target):
+    def process_link(
+        self,
+        env: BuildEnvironment,
+        refnode: nodes.Element,
+        has_explicit_title: bool,
+        title: str,
+        target: str,
+    ) -> tuple[str, str]:
         # The anchor for the group link is the group name.
         return target, target
 
@@ -350,12 +380,19 @@ class ConfigGroupXRefRole(XRefRole):
 class ConfigOptXRefRole(XRefRole):
     "Handles :oslo.config:option: roles pointing to configuration options."
 
-    def __init__(self):
+    def __init__(self) -> None:
         super().__init__(
             warn_dangling=True,
         )
 
-    def process_link(self, env, refnode, has_explicit_title, title, target):
+    def process_link(
+        self,
+        env: BuildEnvironment,
+        refnode: nodes.Element,
+        has_explicit_title: bool,
+        title: str,
+        target: str,
+    ) -> tuple[str, str]:
         if not has_explicit_title:
             title = target
         if '.' in target:
@@ -375,7 +412,7 @@ class ConfigGroup(rst.Directive):
         'namespace': directives.unchanged,
     }
 
-    def run(self):
+    def run(self) -> list[nodes.Node]:
         env = self.state.document.settings.env
 
         group_name = self.arguments[0]
@@ -395,7 +432,7 @@ class ConfigGroup(rst.Directive):
         result = StringList()
         source_name = '<' + __name__ + '>'
 
-        def _add(text):
+        def _add(text: str) -> None:
             "Append some text to the output result view to be parsed."
             result.append(text, source_name)
 
@@ -413,7 +450,7 @@ class ConfigGroup(rst.Directive):
         node.document = self.state.document
         nested_parse_with_titles(self.state, result, node)
 
-        first_child = node.children[0]
+        first_child = cast(nodes.Element, node.children[0])
 
         # Compute the normalized target and set the node to have that
         # as an id
@@ -424,10 +461,12 @@ class ConfigGroup(rst.Directive):
         return [indexnode] + node.children
 
 
-class ConfigOption(ObjectDescription):
+class ConfigOption(ObjectDescription[str]):
     "Description of a configuration option (.. option)."
 
-    def handle_signature(self, sig, signode):
+    def handle_signature(
+        self, sig: str, signode: addnodes.desc_signature
+    ) -> str:
         """Transform an option description into RST nodes."""
         optname = sig
         LOG.debug('oslo.config option %s', optname)
@@ -436,10 +475,15 @@ class ConfigOption(ObjectDescription):
         signode['allnames'] = [optname]
         return optname
 
-    def add_target_and_index(self, firstname, sig, signode):
+    def add_target_and_index(
+        self,
+        firstname: str,
+        sig: str,
+        signode: addnodes.desc_signature,
+    ) -> None:
         cached_options = self.env.domaindata['oslo.config']['options']
         # Look up the current group name from the processing context
-        currgroup = self.env.temp_data.get('oslo.config:group')
+        currgroup = self.env.temp_data.get('oslo.config:group') or 'DEFAULT'
         # Compute the normalized target name for the option and give
         # that to the node as an id
         target_name = _make_anchor_target(currgroup, sig)
@@ -473,8 +517,15 @@ class ConfigDomain(Domain):
     }
 
     def resolve_xref(
-        self, env, fromdocname, builder, typ, target, node, contnode
-    ):
+        self,
+        env: BuildEnvironment,
+        fromdocname: str,
+        builder: Builder,
+        typ: str,
+        target: str,
+        node: addnodes.pending_xref,
+        contnode: nodes.Element,
+    ) -> nodes.Element | None:
         """Resolve cross-references"""
         if typ == 'option':
             group_name, option_name = target.split('.', 1)
@@ -497,7 +548,9 @@ class ConfigDomain(Domain):
             )
         return None
 
-    def merge_domaindata(self, docnames, otherdata):
+    def merge_domaindata(
+        self, docnames: Set[str], otherdata: dict[str, Any]
+    ) -> None:
         for target, docname in otherdata['options'].items():
             if docname in docnames:
                 self.data['options'][target] = docname
@@ -507,7 +560,7 @@ class ConfigDomain(Domain):
                 self.data['groups'][target] = docname
 
 
-def setup(app):
+def setup(app: Sphinx) -> dict[str, Any]:
     # NOTE(dhellmann): Try to turn off lazy translation from oslo_i18n
     # so any translated help text or deprecation messages associated
     # with configuration options are treated as regular strings

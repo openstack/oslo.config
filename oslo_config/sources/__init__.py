@@ -26,6 +26,10 @@ in external sources mutated when they reload configuration files.
 """
 
 import abc
+from typing import TYPE_CHECKING, Any
+
+if TYPE_CHECKING:
+    import oslo_config.cfg
 
 
 # We cannot use None as a sentinel indicating a missing value because it
@@ -64,7 +68,11 @@ class ConfigurationSourceDriver(metaclass=abc.ABCMeta):
     """
 
     @abc.abstractmethod
-    def open_source_from_opt_group(self, conf, group_name):
+    def open_source_from_opt_group(
+        self,
+        conf: 'oslo_config.cfg.ConfigOpts',
+        group_name: str,
+    ) -> 'ConfigurationSource':
         """Return an open configuration source.
 
         Uses group_name to find the configuration settings for the new
@@ -82,7 +90,7 @@ class ConfigurationSourceDriver(metaclass=abc.ABCMeta):
         """
 
     @abc.abstractmethod
-    def list_options_for_discovery(self):
+    def list_options_for_discovery(self) -> list[Any]:
         """Return the list of options available to configure a new source.
 
         Drivers should advertise all supported options in this method
@@ -106,7 +114,12 @@ class ConfigurationSource(metaclass=abc.ABCMeta):
     """
 
     @abc.abstractmethod
-    def get(self, group_name, option_name, opt):
+    def get(
+        self,
+        group_name: str | None,
+        option_name: str,
+        opt: 'oslo_config.cfg.Opt',
+    ) -> tuple[Any, 'oslo_config.cfg.LocationInfo | None']:
         """Return the value of the option from the group.
 
         :param group_name: Name of the group.

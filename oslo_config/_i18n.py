@@ -36,5 +36,5 @@ _C = _translators.contextual_form
 _P = _translators.plural_form
 
 
-def get_available_languages():
+def get_available_languages() -> list[str]:
     return oslo_i18n.get_available_languages(DOMAIN)

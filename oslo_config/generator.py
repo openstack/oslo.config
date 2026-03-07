@@ -30,13 +30,14 @@ import json
 import logging
 import operator
 import sys
+from typing import IO, Any, TypedDict, cast
 
 try:
     # For oslo.config[rst-generator]
     from docutils import core as docutils_core
-    from docutils.parsers.rst import nodes as docutils_nodes
+    from docutils.parsers.rst import nodes as docutils_nodes  # type: ignore[attr-defined]
     from docutils.parsers.rst import roles as docutils_roles
-    import rst2txt
+    import rst2txt  # type: ignore[import-not-found]
     from sphinx import roles as sphinx_roles
 except ImportError:
     import textwrap
@@ -52,6 +53,14 @@ import stevedore.named  # noqa
 
 LOG = logging.getLogger(__name__)
 UPPER_CASE_GROUP_NAMES = ['DEFAULT']
+
+
+class _GroupInfo(TypedDict):
+    """Entry in the groups dict returned by _get_groups()."""
+
+    object: cfg.OptGroup | None
+    namespaces: list[tuple[str, list[cfg.Opt]]]
+
 
 _generator_opts = [
     cfg.StrOpt(
@@ -107,7 +116,7 @@ _generator_opts = [
 ]
 
 
-def register_cli_opts(conf):
+def register_cli_opts(conf: cfg.ConfigOpts) -> None:
     """Register the formatter's CLI options with a ConfigOpts instance.
 
     Note, this must be done before the ConfigOpts instance is called to parse
@@ -119,11 +128,14 @@ def register_cli_opts(conf):
     conf.register_cli_opts(_generator_opts)
 
 
-def _format_defaults(opt):
+def _format_defaults(opt: Any) -> list[str]:
     "Return a list of formatted default values."
+    defaults: list[Any]
     if isinstance(opt, cfg.MultiStrOpt):
         if opt.sample_default is not None:
-            defaults = opt.sample_default
+            # sample_default for MultiStrOpt is list[str] at runtime,
+            # but Opt.sample_default is typed as str | None
+            defaults = cast(list[Any], opt.sample_default)
         elif not opt.default:
             defaults = ['']
         else:
@@ -181,10 +193,10 @@ _TYPE_NAMES = {
 }
 
 
-def _format_type_name(opt_type):
+def _format_type_name(opt_type: Any) -> str:
     """Format the type name to use in describing an option"""
     try:
-        return opt_type.type_name
+        return cast(str, opt_type.type_name)
     except AttributeError:  # nosec
         pass
 
@@ -199,34 +211,38 @@ def _format_type_name(opt_type):
 class _OptFormatter:
     """Format configuration option descriptions to a file."""
 
-    def __init__(self, conf, output_file=None):
+    def __init__(
+        self,
+        conf: cfg.ConfigOpts,
+        output_file: IO[str] | None = None,
+    ) -> None:
         """Construct an OptFormatter object.
 
         :param conf: The config object from _generator_opts
         :param output_file: a writeable file object
         """
-        self.output_file = output_file or sys.stdout
-        self.wrap_width = conf.wrap_width or 998  # arbitrary line length
-        self.minimal = conf.minimal
-        self.summarize = conf.summarize
+        self.output_file: IO[str] = output_file or sys.stdout
+        self.wrap_width: int = conf.wrap_width or 998  # arbitrary line length
+        self.minimal: bool = conf.minimal
+        self.summarize: bool = conf.summarize
 
         if rst2txt:
             # register the default Sphinx roles
             for rolename, nodeclass in sphinx_roles.generic_docroles.items():
                 generic = docutils_roles.GenericRole(rolename, nodeclass)
-                docutils_roles.register_local_role(rolename, generic)
+                docutils_roles.register_local_role(rolename, generic)  # type: ignore[arg-type]
 
             for rolename, func in sphinx_roles.specific_docroles.items():
-                docutils_roles.register_local_role(rolename, func)
+                docutils_roles.register_local_role(rolename, func)  # type: ignore[arg-type]
 
             # plus our custom roles
             for rolename in ('oslo.config:option', 'oslo.config:group'):
                 generic = docutils_roles.GenericRole(
                     rolename, docutils_nodes.strong
                 )
-                docutils_roles.register_local_role(rolename, generic)
+                docutils_roles.register_local_role(rolename, generic)  # type: ignore[arg-type]
 
-    def _format_help(self, help_text):
+    def _format_help(self, help_text: str) -> list[str]:
         """Format the help for a group or option to the output file.
 
         :param help_text: The text of the help string
@@ -242,8 +258,9 @@ class _OptFormatter:
             for line in help_text.splitlines():
                 lines += '# ' + line + '\n' if line else '#\n'
 
-            lines = [lines]
-        elif self.wrap_width > 0:
+            return [lines]
+
+        if self.wrap_width > 0:
             wrapped = ""
             for line in help_text.splitlines():
                 text = "\n".join(
@@ -258,20 +275,18 @@ class _OptFormatter:
                 )
                 wrapped += "#" if text == "" else text
                 wrapped += "\n"
-            lines = [wrapped]
-        else:
-            lines = ['# ' + help_text + '\n']
+            return [wrapped]
 
-        return lines
+        return ['# ' + help_text + '\n']
 
-    def _get_choice_text(self, choice):
+    def _get_choice_text(self, choice: Any) -> str:
         if choice is None:
             return '<None>'
         elif choice == '':
             return "''"
         return str(choice)
 
-    def format_group(self, group_or_groupname):
+    def format_group(self, group_or_groupname: cfg.OptGroup | str) -> None:
         """Format the description of a group header to the output file
 
         :param group_or_groupname: a cfg.OptGroup instance or a name of group
@@ -287,7 +302,7 @@ class _OptFormatter:
             lines = [f'[{groupname}]\n']
         self.writelines(lines)
 
-    def format(self, opt, group_name):
+    def format(self, opt: Any, group_name: str) -> None:
         """Format a description of an option to the output file.
 
         :param opt: a cfg.Opt instance
@@ -423,14 +438,14 @@ class _OptFormatter:
 
         self.writelines(lines)
 
-    def write(self, s):
+    def write(self, s: str) -> None:
         """Write an arbitrary string to the output file.
 
         :param s: an arbitrary string
         """
         self.output_file.write(s)
 
-    def writelines(self, lines):
+    def writelines(self, lines: list[str]) -> None:
         """Write an arbitrary sequence of strings to the output file.
 
         :param lines: a list of arbitrary strings
@@ -438,7 +453,7 @@ class _OptFormatter:
         self.output_file.writelines(lines)
 
 
-def _cleanup_opts(read_opts):
+def _cleanup_opts(read_opts: list[Any]) -> list[Any]:
     """Cleanup duplicate options in namespace groups
 
     Return a structure which removes duplicate options from a namespace group.
@@ -451,7 +466,7 @@ def _cleanup_opts(read_opts):
 
     # OrderedDict is used specifically in the three levels to maintain the
     # source order of namespace/group/opt values
-    clean = collections.OrderedDict()
+    clean: collections.OrderedDict[Any, Any] = collections.OrderedDict()
     for namespace, listing in read_opts:
         if namespace not in clean:
             clean[namespace] = collections.OrderedDict()
@@ -496,7 +511,7 @@ def _cleanup_opts(read_opts):
     return cleaned_opts
 
 
-def _get_raw_opts_loaders(namespaces):
+def _get_raw_opts_loaders(namespaces: list[str]) -> list[Any]:
     """List the options available via the given namespaces.
 
     :param namespaces: a list of namespaces registered under 'oslo.config.opts'
@@ -511,7 +526,9 @@ def _get_raw_opts_loaders(namespaces):
     return [(e.name, e.plugin) for e in mgr]
 
 
-def _get_driver_opts_loaders(namespaces, driver_option_name):
+def _get_driver_opts_loaders(
+    namespaces: list[str], driver_option_name: str
+) -> list[Any]:
     mgr = stevedore.named.NamedExtensionManager(
         namespace='oslo.config.opts.' + driver_option_name,
         names=namespaces,
@@ -521,7 +538,9 @@ def _get_driver_opts_loaders(namespaces, driver_option_name):
     return [(e.name, e.plugin) for e in mgr]
 
 
-def _get_driver_opts(driver_option_name, namespaces):
+def _get_driver_opts(
+    driver_option_name: str, namespaces: list[str]
+) -> dict[str, Any]:
     """List the options available from plugins for drivers based on the option.
 
     :param driver_option_name: The name of the option controlling the
@@ -531,7 +550,7 @@ def _get_driver_opts(driver_option_name, namespaces):
     :returns: a dict mapping driver name to option list
 
     """
-    all_opts = {}
+    all_opts: dict[str, Any] = {}
     loaders = _get_driver_opts_loaders(namespaces, driver_option_name)
     for plugin_name, loader in loaders:
         for driver_name, option_list in loader().items():
@@ -539,7 +558,7 @@ def _get_driver_opts(driver_option_name, namespaces):
     return all_opts
 
 
-def _get_opt_default_updaters(namespaces):
+def _get_opt_default_updaters(namespaces: list[str]) -> list[Any]:
     mgr = stevedore.named.NamedExtensionManager(
         'oslo.config.opts.defaults',
         names=namespaces,
@@ -550,13 +569,13 @@ def _get_opt_default_updaters(namespaces):
     return [ep.plugin for ep in mgr]
 
 
-def _update_defaults(namespaces):
+def _update_defaults(namespaces: list[str]) -> None:
     "Let application hooks update defaults inside libraries."
     for update in _get_opt_default_updaters(namespaces):
         update()
 
 
-def _list_opts(namespaces):
+def _list_opts(namespaces: list[str]) -> list[Any]:
     """List the options available via the given namespaces.
 
     Duplicate options from a namespace are removed.
@@ -571,11 +590,11 @@ def _list_opts(namespaces):
     _update_defaults(namespaces)
     # Ask for the option definitions. At this point any global default
     # changes made by the updaters should be in effect.
-    response = []
+    response: list[Any] = []
     for namespace, loader in loaders:
         # The loaders return iterables for the group opts, and we need
         # to extend them, so build a list.
-        namespace_values = []
+        namespace_values: list[Any] = []
         # Look through the groups and find any that need drivers so we
         # can load those extra options.
         for group, group_opts in loader():
@@ -594,7 +613,7 @@ def _list_opts(namespaces):
                     # options to the group_opts list so they are
                     # processed along with the static options in that
                     # group.
-                    driver_opt_names = {}
+                    driver_opt_names: dict[str, list[Any]] = {}
                     for driver_name, opts in sorted(driver_opts.items()):
                         # Multiple plugins may add values to the same
                         # driver name, so combine the lists we do
@@ -609,11 +628,11 @@ def _list_opts(namespaces):
     return _cleanup_opts(response)
 
 
-def on_load_failure_callback(*args, **kwargs):
+def on_load_failure_callback(*args: Any, **kwargs: Any) -> None:
     raise
 
 
-def _output_opts(f, group, group_data):
+def _output_opts(f: _OptFormatter, group: str, group_data: _GroupInfo) -> None:
     f.format_group(group_data['object'] or group)
     for namespace, opts in sorted(
         group_data['namespaces'], key=operator.itemgetter(0)
@@ -631,7 +650,7 @@ def _output_opts(f, group, group_data):
                 f.write(f'# {err}\n')
 
 
-def _get_groups(conf_ns):
+def _get_groups(conf_ns: list[Any]) -> dict[str, _GroupInfo]:
     """Invert a list of groups by namespace into a dict by group name.
 
     :param conf_ns: a list of (namespace, [(<group>, [opt_1, opt_2])]) tuples,
@@ -648,23 +667,32 @@ def _get_groups(conf_ns):
     added as both an OptGroup and as a str, but still makes the additional
     OptGroup data available to the output code when possible.
     """
-    groups = {'DEFAULT': {'object': None, 'namespaces': []}}
+    groups: dict[str, _GroupInfo] = {
+        'DEFAULT': {'object': None, 'namespaces': []}
+    }
     for namespace, listing in conf_ns:
         for group, opts in listing:
             if not opts:
                 continue
             group = group if group else 'DEFAULT'
-            is_optgroup = hasattr(group, 'name')
-            group_name = group.name if is_optgroup else group
-            if group_name not in groups:
-                groups[group_name] = {'object': None, 'namespaces': []}
-            if is_optgroup:
+            if isinstance(group, cfg.OptGroup):
+                group_name: str = group.name
+                groups.setdefault(
+                    group_name, {'object': None, 'namespaces': []}
+                )
                 groups[group_name]['object'] = group
+            else:
+                group_name = group
+                groups.setdefault(
+                    group_name, {'object': None, 'namespaces': []}
+                )
             groups[group_name]['namespaces'].append((namespace, opts))
     return groups
 
 
-def _build_entry(opt, group, namespace, conf):
+def _build_entry(
+    opt: Any, group: str, namespace: str, conf: cfg.ConfigOpts
+) -> dict[str, Any]:
     """Return a dict representing the passed in opt
 
     The dict will contain all public attributes of opt, as well as additional
@@ -711,7 +739,9 @@ def _build_entry(opt, group, namespace, conf):
     return entry
 
 
-def _generate_machine_readable_data(groups, conf):
+def _generate_machine_readable_data(
+    groups: dict[str, Any], conf: cfg.ConfigOpts
+) -> dict[str, Any]:
     """Create data structure for machine readable sample config
 
     Returns a dictionary with the top-level keys 'options',
@@ -731,14 +761,14 @@ def _generate_machine_readable_data(groups, conf):
     :param conf: The ConfigOpts object containing the options for the
                  generator tool
     """
-    output_data = {
+    output_data: dict[str, Any] = {
         'options': {},
         'deprecated_options': {},
         'generator_options': {},
     }
     # See _get_groups for details on the structure of group_data
     for group_name, group_data in groups.items():
-        output_group = {'opts': [], 'help': ''}
+        output_group: dict[str, Any] = {'opts': [], 'help': ''}
         output_data['options'][group_name] = output_group
         for namespace in group_data['namespaces']:
             for opt in namespace[1]:
@@ -780,7 +810,7 @@ def _generate_machine_readable_data(groups, conf):
     return output_data
 
 
-def i18n_representer(dumper, data):
+def i18n_representer(dumper: Any, data: Any) -> Any:
     """oslo_i18n yaml representer
 
     Returns a translated to the default locale string for yaml.safe_dump
@@ -792,7 +822,9 @@ def i18n_representer(dumper, data):
     return dumper.represent_str(serializedData)
 
 
-def _output_machine_readable(groups, output_file, conf):
+def _output_machine_readable(
+    groups: dict[str, Any], output_file: IO[str], conf: cfg.ConfigOpts
+) -> None:
     """Write a machine readable sample config file
 
     Take the data returned by _generate_machine_readable_data and write it in
@@ -814,7 +846,9 @@ def _output_machine_readable(groups, output_file, conf):
     output_file.write('\n')
 
 
-def _output_human_readable(namespaces, output_file):
+def _output_human_readable(
+    namespaces: list[str], output_file: IO[str]
+) -> None:
     """Write an RST formated version of the docs for the options.
 
     :param groups: A list of the namespaces to use for discovery.
@@ -826,11 +860,11 @@ def _output_human_readable(namespaces, output_file):
         raise RuntimeError(
             'Could not import sphinxext. Please install Sphinx and try again.',
         )
-    output_data = list(sphinxext._format_option_help(LOG, namespaces, False))
+    output_data = list(sphinxext._format_option_help(namespaces, False))
     output_file.write('\n'.join(output_data))
 
 
-def generate(conf, output_file=None):
+def generate(conf: cfg.ConfigOpts, output_file: IO[str] | None = None) -> None:
     """Generate a sample config file.
 
     List all of the options available via the namespaces specified in the given
@@ -873,7 +907,7 @@ def generate(conf, output_file=None):
         output_file.close()
 
 
-def main(args=None):
+def main(args: list[str] | None = None) -> None:
     """The main function of oslo-config-generator."""
     version = importlib.metadata.version('oslo.config')
     logging.basicConfig(level=logging.WARNING)

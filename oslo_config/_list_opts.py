@@ -14,11 +14,12 @@ import copy
 import inspect
 
 from oslo_config import cfg
+from oslo_config import sources
 
 import stevedore
 
 
-def list_opts():
+def list_opts() -> list[tuple[cfg.OptGroup | None, list[cfg.Opt]]]:
     default_config_files = [
         '~/.project/project.conf',
         '~/project.conf',
@@ -31,7 +32,7 @@ def list_opts():
         '/etc/project/project.conf.d/',
         '/etc/project.conf.d/',
     ]
-    options = [
+    options: list[tuple[cfg.OptGroup | None, list[cfg.Opt]]] = [
         (
             None,
             cfg.ConfigOpts._list_options_for_discovery(
@@ -41,13 +42,14 @@ def list_opts():
         )
     ]
 
-    ext_mgr = stevedore.ExtensionManager(
-        "oslo.config.driver", invoke_on_load=True
+    ext_mgr: stevedore.ExtensionManager[sources.ConfigurationSourceDriver] = (
+        stevedore.ExtensionManager("oslo.config.driver", invoke_on_load=True)
     )
 
     source_names = ext_mgr.names()
     for source_name in source_names:
         source = ext_mgr[source_name].obj
+        assert source is not None
         source_options = copy.deepcopy(source.list_options_for_discovery())
         source_description = inspect.getdoc(source)
         source_options.insert(

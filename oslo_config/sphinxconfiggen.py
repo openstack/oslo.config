@@ -13,7 +13,9 @@
 # under the License.
 
 import os
+from typing import Any
 
+from sphinx.application import Sphinx
 from sphinx.util import logging
 
 from oslo_config import generator
@@ -21,7 +23,7 @@ from oslo_config import generator
 LOG = logging.getLogger(__name__)
 
 
-def generate_sample(app):
+def generate_sample(app: Sphinx) -> None:
     if not app.config.config_generator_config_file:
         LOG.warning(
             "No config_generator_config_file is specified, "
@@ -52,12 +54,14 @@ def generate_sample(app):
         )
 
 
-def _get_default_basename(config_file):
+def _get_default_basename(config_file: str) -> str:
     return os.path.splitext(os.path.basename(config_file))[0]
 
 
-def _generate_sample(app, config_file, base_name):
-    def info(msg):
+def _generate_sample(
+    app: Sphinx, config_file: str, base_name: str | None
+) -> None:
+    def info(msg: str) -> None:
         LOG.info(f'[{__name__}] {msg}')
 
     # If we are given a file that isn't an absolute path, look for it
@@ -94,7 +98,7 @@ def _generate_sample(app, config_file, base_name):
     )
 
 
-def setup(app):
+def setup(app: Sphinx) -> dict[str, Any]:
     app.add_config_value('config_generator_config_file', None, 'env')
     app.add_config_value('sample_config_basename', None, 'env')
     app.connect('builder-inited', generate_sample)

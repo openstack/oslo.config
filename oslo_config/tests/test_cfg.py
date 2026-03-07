@@ -21,6 +21,7 @@ import os
 import shutil
 import sys
 import tempfile
+from typing import Any
 import unittest
 from unittest import mock
 
@@ -2894,7 +2895,7 @@ class ConfigFileMutateTestCase(BaseTestCase):
         self.assertEqual(expected, self.log_fixture.output)
 
     def test_hooks_invoked_once(self):
-        fresh = {}
+        fresh: dict[str, Any] = {}
         result = [0]
 
         def foo(conf, foo_fresh):
@@ -4373,22 +4374,24 @@ class SadPathTestCase(BaseTestCase):
     def test_bad_cli_arg(self):
         self.conf.register_opt(cfg.BoolOpt('foo'))
 
-        self.useFixture(fixtures.MonkeyPatch('sys.stderr', io.StringIO()))
+        stderr = io.StringIO()
+        self.useFixture(fixtures.MonkeyPatch('sys.stderr', stderr))
 
         self.assertRaises(SystemExit, self.conf, ['--foo'])
 
-        self.assertIn('error', sys.stderr.getvalue())
-        self.assertIn('--foo', sys.stderr.getvalue())
+        self.assertIn('error', stderr.getvalue())
+        self.assertIn('--foo', stderr.getvalue())
 
     def _do_test_bad_cli_value(self, opt_class):
         self.conf.register_cli_opt(opt_class('foo'))
 
-        self.useFixture(fixtures.MonkeyPatch('sys.stderr', io.StringIO()))
+        stderr = io.StringIO()
+        self.useFixture(fixtures.MonkeyPatch('sys.stderr', stderr))
 
         self.assertRaises(SystemExit, self.conf, ['--foo', 'bar'])
 
-        self.assertIn('foo', sys.stderr.getvalue())
-        self.assertIn('bar', sys.stderr.getvalue())
+        self.assertIn('foo', stderr.getvalue())
+        self.assertIn('bar', stderr.getvalue())
 
     def test_bad_int_arg(self):
         self._do_test_bad_cli_value(cfg.IntOpt)
@@ -4667,7 +4670,7 @@ class ConfigParserTestCase(BaseTestCase):
             [('test', '[DEFAULT]\nfoo = bar\n[BLAA]\nbar = foo\n')]
         )
 
-        sections = {}
+        sections: dict[str, dict[str, list[str]]] = {}
         parser = cfg.ConfigParser(paths[0], sections)
         parser.parse()
 
@@ -4681,8 +4684,8 @@ class ConfigParserTestCase(BaseTestCase):
             [('test', '[DEFAULT]\nfoo = bar\n[BLAA]\nbar = foo\n')]
         )
 
-        sections = {}
-        normalized = {}
+        sections: dict[str, dict[str, list[str]]] = {}
+        normalized: dict[str, dict[str, list[str]]] = {}
         parser = cfg.ConfigParser(paths[0], sections)
         parser._add_normalized(normalized)
         parser.parse()
@@ -4936,9 +4939,10 @@ class SubCommandTestCase(BaseTestCase):
 
     def test_sub_command_no_handler(self):
         self.conf.register_cli_opt(cfg.SubCommandOpt('cmd'))
-        self.useFixture(fixtures.MonkeyPatch('sys.stderr', io.StringIO()))
+        stderr = io.StringIO()
+        self.useFixture(fixtures.MonkeyPatch('sys.stderr', stderr))
         self.assertRaises(SystemExit, self.conf, [])
-        self.assertIn('error', sys.stderr.getvalue())
+        self.assertIn('error', stderr.getvalue())
 
     def test_sub_command_with_help(self):
         def add_parsers(subparsers):
@@ -4976,7 +4980,8 @@ class SubCommandTestCase(BaseTestCase):
     def test_sub_command_multiple(self):
         self.conf.register_cli_opt(cfg.SubCommandOpt('cmd1'))
         self.conf.register_cli_opt(cfg.SubCommandOpt('cmd2'))
-        self.useFixture(fixtures.MonkeyPatch('sys.stderr', io.StringIO()))
+        stderr = io.StringIO()
+        self.useFixture(fixtures.MonkeyPatch('sys.stderr', stderr))
 
         if sys.version_info >= (3, 14):
             self.assertRaisesRegex(
@@ -4991,7 +4996,7 @@ class SubCommandTestCase(BaseTestCase):
             )
         else:
             self.assertRaises(SystemExit, self.conf, [])
-            self.assertIn('multiple', sys.stderr.getvalue())
+            self.assertIn('multiple', stderr.getvalue())
 
 
 class SetDefaultsTestCase(BaseTestCase):
@@ -5692,7 +5697,7 @@ class DeprecationWarningTests(DeprecationWarningTestBase):
         )
 
     def test_check_deprecated(self):
-        namespace = cfg._Namespace(None)
+        namespace = cfg._Namespace(cfg.ConfigOpts())
         deprecated_list = [('DEFAULT', 'bar')]
         namespace._check_deprecated(
             ('DEFAULT', 'bar'), (None, 'foo'), deprecated_list
