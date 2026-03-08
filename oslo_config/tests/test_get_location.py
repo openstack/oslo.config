@@ -20,7 +20,18 @@ from oslo_config import cfg
 
 class TestConfigOpts(cfg.ConfigOpts):
     def __call__(
-        self, args=None, default_config_files=[], default_config_dirs=[]
+        self,
+        args=None,
+        project=None,
+        prog=None,
+        version=None,
+        usage=None,
+        default_config_files=None,
+        default_config_dirs=None,
+        validate_default_values=False,
+        description=None,
+        epilog=None,
+        use_env=True,
     ):
         return cfg.ConfigOpts.__call__(
             self,
