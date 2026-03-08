@@ -1315,22 +1315,21 @@ class CliOptsTestCase(BaseTestCase):
 
 class CliSpecialOptsTestCase(BaseTestCase):
     def test_help(self):
-        self.useFixture(fixtures.MonkeyPatch('sys.stdout', io.StringIO()))
+        stdout = io.StringIO()
+        self.useFixture(fixtures.MonkeyPatch('sys.stdout', stdout))
         self.assertRaises(SystemExit, self.conf, ['--help'])
-        self.assertIn('usage: test', sys.stdout.getvalue())
-        self.assertIn('[--version]', sys.stdout.getvalue())
-        self.assertIn('[-h]', sys.stdout.getvalue())
-        self.assertIn('--help', sys.stdout.getvalue())
-        self.assertIn('[--config-dir DIR]', sys.stdout.getvalue())
-        self.assertIn('[--config-file PATH]', sys.stdout.getvalue())
+        self.assertIn('usage: test', stdout.getvalue())
+        self.assertIn('[--version]', stdout.getvalue())
+        self.assertIn('[-h]', stdout.getvalue())
+        self.assertIn('--help', stdout.getvalue())
+        self.assertIn('[--config-dir DIR]', stdout.getvalue())
+        self.assertIn('[--config-file PATH]', stdout.getvalue())
 
     def test_version(self):
-        stream_name = 'stdout'
-        self.useFixture(
-            fixtures.MonkeyPatch(f"sys.{stream_name}", io.StringIO())
-        )
+        stdout = io.StringIO()
+        self.useFixture(fixtures.MonkeyPatch('sys.stdout', stdout))
         self.assertRaises(SystemExit, self.conf, ['--version'])
-        self.assertIn('1.0', getattr(sys, stream_name).getvalue())
+        self.assertIn('1.0', stdout.getvalue())
 
     def test_config_file(self):
         paths = self.create_tempfiles([('1', '[DEFAULT]'), ('2', '[DEFAULT]')])
@@ -1460,9 +1459,10 @@ class PositionalTestCase(BaseTestCase):
             cfg.StrOpt('foo', required=True, positional=True)
         )
 
-        self.useFixture(fixtures.MonkeyPatch('sys.stdout', io.StringIO()))
+        stdout = io.StringIO()
+        self.useFixture(fixtures.MonkeyPatch('sys.stdout', stdout))
         self.assertRaises(SystemExit, self.conf, ['--help'])
-        self.assertIn(' foo\n', sys.stdout.getvalue())
+        self.assertIn(' foo\n', stdout.getvalue())
 
         self.conf(['bar'])
 
@@ -1474,9 +1474,10 @@ class PositionalTestCase(BaseTestCase):
             cfg.StrOpt('foo', required=True, positional=True)
         )
 
-        self.useFixture(fixtures.MonkeyPatch('sys.stdout', io.StringIO()))
+        stdout = io.StringIO()
+        self.useFixture(fixtures.MonkeyPatch('sys.stdout', stdout))
         self.assertRaises(SystemExit, self.conf, ['--help'])
-        self.assertIn(' foo\n', sys.stdout.getvalue())
+        self.assertIn(' foo\n', stdout.getvalue())
 
         self.assertRaises(SystemExit, self.conf, [])
 
@@ -1485,9 +1486,10 @@ class PositionalTestCase(BaseTestCase):
             cfg.StrOpt('foo', required=False, positional=True)
         )
 
-        self.useFixture(fixtures.MonkeyPatch('sys.stdout', io.StringIO()))
+        stdout = io.StringIO()
+        self.useFixture(fixtures.MonkeyPatch('sys.stdout', stdout))
         self.assertRaises(SystemExit, self.conf, ['--help'])
-        self.assertIn(' [foo]\n', sys.stdout.getvalue())
+        self.assertIn(' [foo]\n', stdout.getvalue())
 
         self.conf(['bar'])
 
@@ -1499,9 +1501,10 @@ class PositionalTestCase(BaseTestCase):
             cfg.StrOpt('foo', required=False, positional=True)
         )
 
-        self.useFixture(fixtures.MonkeyPatch('sys.stdout', io.StringIO()))
+        stdout = io.StringIO()
+        self.useFixture(fixtures.MonkeyPatch('sys.stdout', stdout))
         self.assertRaises(SystemExit, self.conf, ['--help'])
-        self.assertIn(' [foo]\n', sys.stdout.getvalue())
+        self.assertIn(' [foo]\n', stdout.getvalue())
 
         self.conf([])
 
@@ -1513,9 +1516,10 @@ class PositionalTestCase(BaseTestCase):
             cfg.StrOpt('foo-bar', required=False, positional=True)
         )
 
-        self.useFixture(fixtures.MonkeyPatch('sys.stdout', io.StringIO()))
+        stdout = io.StringIO()
+        self.useFixture(fixtures.MonkeyPatch('sys.stdout', stdout))
         self.assertRaises(SystemExit, self.conf, ['--help'])
-        self.assertIn(' [foo_bar]\n', sys.stdout.getvalue())
+        self.assertIn(' [foo_bar]\n', stdout.getvalue())
 
         self.conf(['baz'])
         self.assertTrue(hasattr(self.conf, 'foo_bar'))
@@ -1526,9 +1530,10 @@ class PositionalTestCase(BaseTestCase):
             cfg.StrOpt('foo-bar', required=False, positional=True)
         )
 
-        self.useFixture(fixtures.MonkeyPatch('sys.stdout', io.StringIO()))
+        stdout = io.StringIO()
+        self.useFixture(fixtures.MonkeyPatch('sys.stdout', stdout))
         self.assertRaises(SystemExit, self.conf, ['--help'])
-        self.assertIn(' [foo_bar]\n', sys.stdout.getvalue())
+        self.assertIn(' [foo_bar]\n', stdout.getvalue())
 
         self.conf([])
         self.assertTrue(hasattr(self.conf, 'foo_bar'))
@@ -1539,9 +1544,10 @@ class PositionalTestCase(BaseTestCase):
             cfg.StrOpt('foo-bar', required=True, positional=True)
         )
 
-        self.useFixture(fixtures.MonkeyPatch('sys.stdout', io.StringIO()))
+        stdout = io.StringIO()
+        self.useFixture(fixtures.MonkeyPatch('sys.stdout', stdout))
         self.assertRaises(SystemExit, self.conf, ['--help'])
-        self.assertIn(' foo_bar\n', sys.stdout.getvalue())
+        self.assertIn(' foo_bar\n', stdout.getvalue())
 
         self.conf(['baz'])
         self.assertTrue(hasattr(self.conf, 'foo_bar'))
@@ -1552,9 +1558,10 @@ class PositionalTestCase(BaseTestCase):
             cfg.StrOpt('foo-bar', required=True, positional=True)
         )
 
-        self.useFixture(fixtures.MonkeyPatch('sys.stdout', io.StringIO()))
+        stdout = io.StringIO()
+        self.useFixture(fixtures.MonkeyPatch('sys.stdout', stdout))
         self.assertRaises(SystemExit, self.conf, ['--help'])
-        self.assertIn(' foo_bar\n', sys.stdout.getvalue())
+        self.assertIn(' foo_bar\n', stdout.getvalue())
 
         self.assertRaises(SystemExit, self.conf, [])
 
@@ -4939,11 +4946,12 @@ class SubCommandTestCase(BaseTestCase):
                 handler=add_parsers,
             )
         )
-        self.useFixture(fixtures.MonkeyPatch('sys.stdout', io.StringIO()))
+        stdout = io.StringIO()
+        self.useFixture(fixtures.MonkeyPatch('sys.stdout', stdout))
         self.assertRaises(SystemExit, self.conf, ['--help'])
-        self.assertIn('foo foo', sys.stdout.getvalue())
-        self.assertIn('bar bar', sys.stdout.getvalue())
-        self.assertIn('blaa blaa', sys.stdout.getvalue())
+        self.assertIn('foo foo', stdout.getvalue())
+        self.assertIn('bar bar', stdout.getvalue())
+        self.assertIn('blaa blaa', stdout.getvalue())
 
     def test_sub_command_errors(self):
         def add_parsers(subparsers):
