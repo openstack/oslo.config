@@ -13,7 +13,7 @@
 from docutils import nodes
 from docutils.parsers import rst
 from docutils.parsers.rst import directives
-from docutils.statemachine import ViewList
+from docutils.statemachine import StringList
 import oslo_i18n
 from sphinx import addnodes
 from sphinx.directives import ObjectDescription
@@ -311,7 +311,7 @@ class ShowOptionsDirective(rst.Directive):
         else:
             namespaces = [c.strip() for c in self.content if c.strip()]
 
-        result = ViewList()
+        result = StringList()
         source_name = self.state.document.current_source
 
         for count, line in enumerate(
@@ -392,7 +392,7 @@ class ConfigGroup(rst.Directive):
         # FIXME: This should take the source namespace into account, too
         cached_groups[group_name] = env.docname
 
-        result = ViewList()
+        result = StringList()
         source_name = '<' + __name__ + '>'
 
         def _add(text):
