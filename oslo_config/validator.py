@@ -25,6 +25,7 @@ import importlib.metadata
 import logging
 import re
 import sys
+from typing import Any, cast
 
 import yaml
 
@@ -85,7 +86,7 @@ _validator_opts = [
 KNOWN_BAD_GROUPS = ['keystone_authtoken']
 
 
-def _register_cli_opts(conf):
+def _register_cli_opts(conf: cfg.ConfigOpts) -> None:
     """Register the formatter's CLI options with a ConfigOpts instance.
 
     Note, this must be done before the ConfigOpts instance is called to parse
@@ -97,7 +98,9 @@ def _register_cli_opts(conf):
     conf.register_cli_opts(_validator_opts)
 
 
-def _validate_deprecated_opt(group, option, opt_data):
+def _validate_deprecated_opt(
+    group: str, option: str, opt_data: dict[str, Any]
+) -> bool:
     if group not in opt_data['deprecated_options']:
         return False
     name_data = [o['name'] for o in opt_data['deprecated_options'][group]]
@@ -105,7 +108,9 @@ def _validate_deprecated_opt(group, option, opt_data):
     return option in name_data
 
 
-def _validate_defaults(sections, opt_data, conf):
+def _validate_defaults(
+    sections: dict[str, Any], opt_data: dict[str, Any], conf: cfg.ConfigOpts
+) -> bool:
     """Compares the current and sample configuration and reports differences
 
     :param section: ConfigParser instance
@@ -184,7 +189,7 @@ def _validate_defaults(sections, opt_data, conf):
     return warnings
 
 
-def _validate_opt(group, option, opt_data):
+def _validate_opt(group: str, option: str, opt_data: dict[str, Any]) -> bool:
     if group not in opt_data['options']:
         return False
     name_data = [o['name'] for o in opt_data['options'][group]['opts']]
@@ -192,12 +197,12 @@ def _validate_opt(group, option, opt_data):
     return option in name_data
 
 
-def load_opt_data(conf):
+def load_opt_data(conf: cfg.ConfigOpts) -> dict[str, Any]:
     with open(conf.opt_data) as f:
-        return yaml.safe_load(f)
+        return cast(dict[str, Any], yaml.safe_load(f))
 
 
-def _validate(conf):
+def _validate(conf: cfg.ConfigOpts) -> int:
     conf.register_opts(_validator_opts)
     if conf.namespace:
         groups = generator._get_groups(generator._list_opts(conf.namespace))
@@ -207,7 +212,7 @@ def _validate(conf):
     else:
         # TODO(bnemec): Implement this logic with group?
         raise RuntimeError('Neither namespace nor opt-data provided.')
-    sections = {}
+    sections: dict[str, Any] = {}
     parser = cfg.ConfigParser(conf.input_file, sections)
     parser.parse()
     warnings = False
@@ -241,7 +246,7 @@ def _validate(conf):
     return 0
 
 
-def main():
+def main() -> int:
     """The main function of oslo-config-validator."""
     version = importlib.metadata.version('oslo.config')
     logging.basicConfig(level=logging.INFO)

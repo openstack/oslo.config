@@ -37,7 +37,9 @@ class ConfigTypeTests(unittest.TestCase):
         MyString()
 
 
-class TypeTestHelper:
+class TypeTestHelper(unittest.TestCase):
+    type: types.ConfigType
+
     def setUp(self):
         super().setUp()
         self.type_instance = self.type

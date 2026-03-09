@@ -21,9 +21,11 @@ Use these classes as values for the `type` argument to
 """
 
 import collections
+from collections.abc import Callable, KeysView
 import operator
 import re
 import warnings
+from typing import Any, cast
 
 import abc
 import netaddr
@@ -31,12 +33,14 @@ import rfc3986
 
 
 class ConfigType(metaclass=abc.ABCMeta):
-    def __init__(self, type_name='unknown type'):
+    NONE_DEFAULT: str = '<None>'
+
+    def __init__(self, type_name: str = 'unknown type') -> None:
         self.type_name = type_name
 
-    NONE_DEFAULT = '<None>'
-
-    def format_defaults(self, default, sample_default=None):
+    def format_defaults(
+        self, default: Any, sample_default: Any = None
+    ) -> list[str]:
         """Return a list of formatted default values."""
         if sample_default is not None:
             if isinstance(sample_default, str):
@@ -49,16 +53,19 @@ class ConfigType(metaclass=abc.ABCMeta):
             default_str = self._formatter(default)
         return [default_str]
 
-    def quote_trailing_and_leading_space(self, str_val):
+    def quote_trailing_and_leading_space(self, str_val: Any) -> str:
         if not isinstance(str_val, str):
             warnings.warn(f'converting \'{str_val}\' to a string')
             str_val = str(str_val)
         if str_val.strip() != str_val:
             return f'"{str_val}"'
-        return str_val
+        return cast(str, str_val)
+
+    def __call__(self, value: Any) -> Any:
+        pass
 
     @abc.abstractmethod
-    def _formatter(self, value):
+    def _formatter(self, value: Any) -> Any:
         pass
 
 
@@ -101,15 +108,18 @@ class String(ConfigType):
        tuple is of form (*choice*, *description*)
     """
 
+    choices: collections.OrderedDict[str, str | None] | None
+    regex: re.Pattern[str] | None
+
     def __init__(
         self,
-        choices=None,
-        quotes=False,
-        regex=None,
-        ignore_case=False,
-        max_length=None,
-        type_name='string value',
-    ):
+        choices: Any = None,
+        quotes: bool = False,
+        regex: Any = None,
+        ignore_case: bool = False,
+        max_length: int | None = None,
+        type_name: str = 'string value',
+    ) -> None:
         super().__init__(type_name=type_name)
         if choices and regex:
             raise ValueError("'choices' and 'regex' cannot both be specified")
@@ -126,7 +136,7 @@ class String(ConfigType):
         else:
             self.choices = None
 
-        self.lower_case_choices = None
+        self.lower_case_choices: list[str] | None = None
         if self.choices is not None and self.ignore_case:
             self.lower_case_choices = [c.lower() for c in self.choices]
 
@@ -140,43 +150,47 @@ class String(ConfigType):
             else:
                 self.regex = re.compile(regex.pattern, re_flags | regex.flags)
 
-    def __call__(self, value):
-        value = str(value)
-        if self.quotes and value:
-            if value[0] in "\"'":
-                if len(value) == 1 or value[-1] != value[0]:
-                    raise ValueError(f'Non-closed quote: {value}')
-                value = value[1:-1]
+    def __call__(self, value: Any) -> str:
+        str_value: str = str(value)
+        if self.quotes and str_value:
+            if str_value[0] in "\"'":
+                if len(str_value) == 1 or str_value[-1] != str_value[0]:
+                    raise ValueError(f'Non-closed quote: {str_value}')
+                str_value = str_value[1:-1]
 
-        if self.max_length > 0 and len(value) > self.max_length:
+        if self.max_length > 0 and len(str_value) > self.max_length:
             raise ValueError(
-                f"Value {value!r} exceeds maximum length {self.max_length}"
+                f"Value {str_value!r} exceeds maximum length {self.max_length}"
             )
 
-        if self.regex and not self.regex.search(value):
+        if self.regex and not self.regex.search(str_value):
             raise ValueError(
-                f"Value {value!r} doesn't match regex {self.regex.pattern!r}"
+                f"Value {str_value!r} doesn't match regex "
+                f"{self.regex.pattern!r}"
             )
 
         if self.choices is None:
-            return value
+            return str_value
 
         # Check for case insensitive
-        processed_value, choices = (
-            (value.lower(), self.lower_case_choices)
-            if self.ignore_case
-            else (value, self.choices.keys())
-        )
+        choices: KeysView[str] | list[str]
+        if self.ignore_case:
+            assert self.lower_case_choices is not None
+            processed_value = str_value.lower()
+            choices = self.lower_case_choices
+        else:
+            processed_value = str_value
+            choices = self.choices.keys()
         if processed_value in choices:
-            return value
+            return str_value
 
         raise ValueError(
             'Valid values are [{}], but found {}'.format(
-                ', '.join([str(v) for v in self.choices]), repr(value)
+                ', '.join([str(v) for v in self.choices]), repr(str_value)
             )
         )
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         details = []
         if self.choices is not None:
             details.append(f"choices={list(self.choices.keys())!r}")
@@ -186,7 +200,9 @@ class String(ConfigType):
             return "String({})".format(",".join(details))
         return 'String'
 
-    def __eq__(self, other):
+    def __eq__(self, other: object) -> bool:
+        if not isinstance(other, String):
+            return False
         return (
             (self.__class__ == other.__class__)
             and (self.quotes == other.quotes)
@@ -199,19 +215,21 @@ class String(ConfigType):
             )
         )
 
-    def _formatter(self, value):
+    def _formatter(self, value: Any) -> str:
         return self.quote_trailing_and_leading_space(value)
 
 
 class MultiString(String):
     """Multi-valued string."""
 
-    def __init__(self, type_name='multi valued'):
+    def __init__(self, type_name: str = 'multi valued') -> None:
         super().__init__(type_name=type_name)
 
-    NONE_DEFAULT = ['']
+    NONE_DEFAULT = ['']  # type: ignore[assignment]
 
-    def format_defaults(self, default, sample_default=None):
+    def format_defaults(
+        self, default: Any, sample_default: Any = None
+    ) -> list[str]:
         """Return a list of formatted default values."""
         if sample_default is not None:
             default_list = self._formatter(sample_default)
@@ -221,7 +239,7 @@ class MultiString(String):
             default_list = self._formatter(default)
         return default_list
 
-    def _formatter(self, value):
+    def _formatter(self, value: Any) -> list[str]:  # type: ignore[override]
         return [self.quote_trailing_and_leading_space(v) for v in value]
 
 
@@ -238,13 +256,13 @@ class Boolean(ConfigType):
        Added *type_name* parameter.
     """
 
-    TRUE_VALUES = ['true', '1', 'on', 'yes']
-    FALSE_VALUES = ['false', '0', 'off', 'no']
+    TRUE_VALUES: list[str] = ['true', '1', 'on', 'yes']
+    FALSE_VALUES: list[str] = ['false', '0', 'off', 'no']
 
-    def __init__(self, type_name='boolean value'):
+    def __init__(self, type_name: str = 'boolean value') -> None:
         super().__init__(type_name=type_name)
 
-    def __call__(self, value):
+    def __call__(self, value: Any) -> bool:
         if isinstance(value, bool):
             return value
 
@@ -256,13 +274,13 @@ class Boolean(ConfigType):
         else:
             raise ValueError(f'Unexpected boolean value {value!r}')
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return 'Boolean'
 
-    def __eq__(self, other):
+    def __eq__(self, other: object) -> bool:
         return self.__class__ == other.__class__
 
-    def _formatter(self, value):
+    def _formatter(self, value: Any) -> str:
         return str(value).lower()
 
 
@@ -283,7 +301,16 @@ class Number(ConfigType):
        tuple is of form (*choice*, *description*)
     """
 
-    def __init__(self, num_type, type_name, min=None, max=None, choices=None):
+    choices: collections.OrderedDict[int | float, str | None] | None
+
+    def __init__(
+        self,
+        num_type: type[int] | type[float],
+        type_name: str,
+        min: int | float | None = None,
+        max: int | float | None = None,
+        choices: Any = None,
+    ) -> None:
         super().__init__(type_name=type_name)
 
         if min is not None and max is not None and max < min:
@@ -311,30 +338,32 @@ class Number(ConfigType):
         self.max = max
         self.num_type = num_type
 
-    def __call__(self, value):
+    def __call__(self, value: Any) -> int | float | None:
         if not isinstance(value, self.num_type):
             s = str(value).strip()
             if s == '':
                 return None
             value = self.num_type(value)
 
+        num_value: int | float = value
         if self.choices is None:
-            if self.min is not None and value < self.min:
+            if self.min is not None and num_value < self.min:
                 raise ValueError(
                     f'Should be greater than or equal to {self.min:g}'
                 )
-            if self.max is not None and value > self.max:
+            if self.max is not None and num_value > self.max:
                 raise ValueError(
                     f'Should be less than or equal to {self.max:g}'
                 )
         else:
-            if value not in self.choices:
+            if num_value not in self.choices:
                 raise ValueError(
-                    f'Valid values are {self.choices!r}, but found {value:g}'
+                    f'Valid values are {self.choices!r}, but found '
+                    f'{num_value:g}'
                 )
-        return value
+        return num_value
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         props = []
         if self.choices is not None:
             props.append(f"choices={list(self.choices.keys())!r}")
@@ -348,7 +377,9 @@ class Number(ConfigType):
             return self.__class__.__name__ + '({})'.format(', '.join(props))
         return self.__class__.__name__
 
-    def __eq__(self, other):
+    def __eq__(self, other: object) -> bool:
+        if not isinstance(other, Number):
+            return False
         return (
             (self.__class__ == other.__class__)
             and (self.min == other.min)
@@ -361,7 +392,7 @@ class Number(ConfigType):
             )
         )
 
-    def _formatter(self, value):
+    def _formatter(self, value: Any) -> str:
         return str(value)
 
 
@@ -396,8 +427,12 @@ class Integer(Number):
     """
 
     def __init__(
-        self, min=None, max=None, type_name='integer value', choices=None
-    ):
+        self,
+        min: int | None = None,
+        max: int | None = None,
+        type_name: str = 'integer value',
+        choices: Any = None,
+    ) -> None:
         super().__init__(int, type_name, min=min, max=max, choices=choices)
 
 
@@ -418,7 +453,12 @@ class Float(Number):
        must be within the range.
     """
 
-    def __init__(self, min=None, max=None, type_name='floating point value'):
+    def __init__(
+        self,
+        min: float | None = None,
+        max: float | None = None,
+        type_name: str = 'floating point value',
+    ) -> None:
         super().__init__(float, type_name, min=min, max=max)
 
 
@@ -440,10 +480,16 @@ class Port(Integer):
        tuple is of form (*choice*, *description*)
     """
 
-    PORT_MIN = 0
-    PORT_MAX = 65535
+    PORT_MIN: int = 0
+    PORT_MAX: int = 65535
 
-    def __init__(self, min=None, max=None, type_name='port', choices=None):
+    def __init__(
+        self,
+        min: int | None = None,
+        max: int | None = None,
+        type_name: str = 'port',
+        choices: Any = None,
+    ) -> None:
         min = self.PORT_MIN if min is None else min
         max = self.PORT_MAX if max is None else max
         if min < self.PORT_MIN:
@@ -481,13 +527,15 @@ class List(ConfigType):
        Added *min_length* parameter.
     """
 
+    item_type: 'ConfigType'
+
     def __init__(
         self,
-        item_type=None,
-        bounds=False,
-        type_name='list value',
-        min_length=0,
-    ):
+        item_type: 'ConfigType | None' = None,
+        bounds: bool = False,
+        type_name: str = 'list value',
+        min_length: int = 0,
+    ) -> None:
         super().__init__(type_name=type_name)
 
         if item_type is None:
@@ -499,7 +547,7 @@ class List(ConfigType):
         self.bounds = bounds
         self.min_length = min_length
 
-    def __call__(self, value):
+    def __call__(self, value: Any) -> list[Any]:
         if isinstance(value, (list, tuple)):
             return list(map(self.item_type, value))
 
@@ -523,7 +571,7 @@ class List(ConfigType):
                 )
             return []
 
-        result = []
+        result: list[Any] = []
         while values:
             value = values.pop(0)
             while True:
@@ -548,15 +596,17 @@ class List(ConfigType):
 
         return result
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return f'List of {repr(self.item_type)}'
 
-    def __eq__(self, other):
+    def __eq__(self, other: object) -> bool:
+        if not isinstance(other, List):
+            return False
         return (self.__class__ == other.__class__) and (
             self.item_type == other.item_type
         )
 
-    def _formatter(self, value):
+    def _formatter(self, value: Any) -> str:
         fmtstr = '[{}]' if self.bounds else '{}'
         if isinstance(value, str):
             return fmtstr.format(value)
@@ -583,14 +633,18 @@ class Range(ConfigType):
     """
 
     def __init__(
-        self, min=None, max=None, inclusive=True, type_name='range value'
-    ):
+        self,
+        min: int | None = None,
+        max: int | None = None,
+        inclusive: bool = True,
+        type_name: str = 'range value',
+    ) -> None:
         super().__init__(type_name)
         self.min = min
         self.max = max
         self.inclusive = inclusive
 
-    def __call__(self, value):
+    def __call__(self, value: Any) -> range:
         value = str(value)
         num = "0|-?[1-9][0-9]*"
         m = re.match(f"^({num})(?:-({num}))?$", value)
@@ -600,25 +654,27 @@ class Range(ConfigType):
         right = int(left if m.group(2) is None else m.group(2))
 
         if left < right:
-            left = Integer(min=self.min)(left)
-            right = Integer(max=self.max)(right)
+            left = cast(int, Integer(min=self.min)(left))
+            right = cast(int, Integer(max=self.max)(right))
             step = 1
         else:
-            left = Integer(max=self.max)(left)
-            right = Integer(min=self.min)(right)
+            left = cast(int, Integer(max=self.max)(left))
+            right = cast(int, Integer(min=self.min)(right))
             step = -1
         if self.inclusive:
             right += step
         return range(left, right, step)
 
-    def __eq__(self, other):
+    def __eq__(self, other: object) -> bool:
+        if not isinstance(other, Range):
+            return False
         return (
             (self.__class__ == other.__class__)
             and (self.min == other.min)
             and (self.max == other.max)
         )
 
-    def _formatter(self, value):
+    def _formatter(self, value: Any) -> Any:
         return value
 
 
@@ -649,12 +705,12 @@ class Dict(ConfigType):
 
     def __init__(
         self,
-        value_type=None,
-        bounds=False,
-        type_name='dict value',
-        key_value_separator=':',
-        min_length=0,
-    ):
+        value_type: 'ConfigType | None' = None,
+        bounds: bool = False,
+        type_name: str = 'dict value',
+        key_value_separator: str = ':',
+        min_length: int = 0,
+    ) -> None:
         super().__init__(type_name=type_name)
 
         if value_type is None:
@@ -671,11 +727,11 @@ class Dict(ConfigType):
         self.key_value_separator = key_value_separator
         self.min_length = min_length
 
-    def __call__(self, value):
+    def __call__(self, value: Any) -> dict[str, Any]:
         if isinstance(value, dict):
             return value
 
-        result = {}
+        result: dict[str, Any] = {}
         s = value.strip()
 
         if self.bounds:
@@ -738,15 +794,17 @@ class Dict(ConfigType):
 
         return result
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return f'Dict of {repr(self.value_type)}'
 
-    def __eq__(self, other):
+    def __eq__(self, other: object) -> bool:
+        if not isinstance(other, Dict):
+            return False
         return (self.__class__ == other.__class__) and (
             self.value_type == other.value_type
         )
 
-    def _formatter(self, value):
+    def _formatter(self, value: Any) -> str:
         sorted_items = sorted(value.items(), key=operator.itemgetter(0))
         return ','.join(['{}:{}'.format(*i) for i in sorted_items])
 
@@ -765,48 +823,55 @@ class IPAddress(ConfigType):
        Added *type_name* parameter.
     """
 
-    def __init__(self, version=None, type_name='IP address value'):
+    version_checker: Callable[[str], None]
+
+    def __init__(
+        self,
+        version: int | None = None,
+        type_name: str = 'IP address value',
+    ) -> None:
         super().__init__(type_name=type_name)
-        version_checkers = {
+        version_checkers: dict[int | None, Callable[[str], None]] = {
             None: self._check_both_versions,
             4: self._check_ipv4,
             6: self._check_ipv6,
         }
 
-        self.version_checker = version_checkers.get(version)
-        if self.version_checker is None:
+        version_checker = version_checkers.get(version)
+        if version_checker is None:
             raise TypeError(f"{version} is not a valid IP version.")
+        self.version_checker = version_checker
 
-    def __call__(self, value):
-        value = str(value)
-        if not value:
+    def __call__(self, value: Any) -> str:
+        str_value: str = str(value)
+        if not str_value:
             raise ValueError("IP address cannot be an empty string")
-        self.version_checker(value)
-        return value
+        self.version_checker(str_value)
+        return str_value
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return "IPAddress"
 
-    def __eq__(self, other):
+    def __eq__(self, other: object) -> bool:
         return self.__class__ == other.__class__
 
-    def _check_ipv4(self, address):
+    def _check_ipv4(self, address: str) -> None:
         if not netaddr.valid_ipv4(address, netaddr.core.INET_PTON):
             raise ValueError(f"{address} is not an IPv4 address")
 
-    def _check_ipv6(self, address):
+    def _check_ipv6(self, address: str) -> None:
         if not netaddr.valid_ipv6(address, netaddr.core.INET_PTON):
             raise ValueError(f"{address} is not an IPv6 address")
 
-    def _check_both_versions(self, address):
+    def _check_both_versions(self, address: str) -> None:
         if not (
             netaddr.valid_ipv4(address, netaddr.core.INET_PTON)
             or netaddr.valid_ipv6(address, netaddr.core.INET_PTON)
         ):
             raise ValueError(f"{address} is not IPv4 or IPv6 address")
 
-    def _formatter(self, value):
-        return value
+    def _formatter(self, value: Any) -> str:
+        return cast(str, value)
 
 
 class Hostname(ConfigType):
@@ -822,10 +887,10 @@ class Hostname(ConfigType):
 
     HOSTNAME_REGEX = '(?!-)[A-Z0-9-]{1,63}(?<!-)$'
 
-    def __init__(self, type_name='hostname value'):
+    def __init__(self, type_name: str = 'hostname value') -> None:
         super().__init__(type_name=type_name)
 
-    def __call__(self, value, regex=HOSTNAME_REGEX):
+    def __call__(self, value: Any, regex: str = HOSTNAME_REGEX) -> str:
         """Check hostname is valid.
 
         Ensures that each segment
@@ -859,16 +924,16 @@ class Hostname(ConfigType):
             )
         if any((not allowed.match(x)) for x in value.split(".")):
             raise ValueError(f"{value} is an invalid hostname")
-        return value
+        return cast(str, value)
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return 'Hostname'
 
-    def __eq__(self, other):
+    def __eq__(self, other: object) -> bool:
         return self.__class__ == other.__class__
 
-    def _formatter(self, value):
-        return value
+    def _formatter(self, value: Any) -> str:
+        return cast(str, value)
 
 
 class HostAddress(ConfigType):
@@ -884,14 +949,18 @@ class HostAddress(ConfigType):
     :param type_name: Type name to be used in the sample config file.
     """
 
-    def __init__(self, version=None, type_name='host address value'):
+    def __init__(
+        self,
+        version: int | None = None,
+        type_name: str = 'host address value',
+    ) -> None:
         """Check for valid version in case an IP address is provided"""
 
         super().__init__(type_name=type_name)
         self.ip_address = IPAddress(version, type_name)
         self.hostname = Hostname('localhost')
 
-    def __call__(self, value):
+    def __call__(self, value: Any) -> str:
         """Checks if is a valid IP/hostname.
 
         If not a valid IP, makes sure it is not a mistyped IP before
@@ -906,16 +975,16 @@ class HostAddress(ConfigType):
                 value = self.hostname(value)
             except ValueError:
                 raise ValueError(f"{value} is not a valid host address")
-        return value
+        return cast(str, value)
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return 'HostAddress'
 
-    def __eq__(self, other):
+    def __eq__(self, other: object) -> bool:
         return self.__class__ == other.__class__
 
-    def _formatter(self, value):
-        return value
+    def _formatter(self, value: Any) -> str:
+        return cast(str, value)
 
 
 class HostDomain(HostAddress):
@@ -931,12 +1000,16 @@ class HostDomain(HostAddress):
     # DOMAIN_REGEX is HOSTNAME_REGEX with the _ character added
     DOMAIN_REGEX = '(?!-)[A-Z0-9-_]{1,63}(?<!-)$'
 
-    def __init__(self, version=None, type_name='host domain value'):
+    def __init__(
+        self,
+        version: int | None = None,
+        type_name: str = 'host domain value',
+    ) -> None:
         """Check for valid version in case an IP address is provided"""
 
         super().__init__(version=version, type_name=type_name)
 
-    def __call__(self, value):
+    def __call__(self, value: Any) -> str:
         """Checks if is a valid IP/hostname.
 
         If not a valid IP, makes sure it is not a mistyped IP before
@@ -956,9 +1029,9 @@ class HostDomain(HostAddress):
                 value = self.hostname(value, regex=self.DOMAIN_REGEX)
             except ValueError:
                 raise ValueError(f"{value} is not a valid host address")
-        return value
+        return cast(str, value)
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return 'HostDomain'
 
 
@@ -980,12 +1053,17 @@ class URI(ConfigType):
        Added *schemes* parameter.
     """
 
-    def __init__(self, max_length=None, schemes=None, type_name='uri value'):
+    def __init__(
+        self,
+        max_length: int | None = None,
+        schemes: list[str] | None = None,
+        type_name: str = 'uri value',
+    ) -> None:
         super().__init__(type_name=type_name)
         self.max_length = max_length
         self.schemes = schemes
 
-    def __call__(self, value):
+    def __call__(self, value: Any) -> str:
         uri = rfc3986.uri_reference(value)
         validator = (
             rfc3986.validators.Validator()
@@ -1011,12 +1089,12 @@ class URI(ConfigType):
                 f"Value {value!r} exceeds maximum length {self.max_length}"
             )
 
-        return value
+        return cast(str, value)
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return 'URI'
 
-    def __eq__(self, other):
+    def __eq__(self, other: object) -> bool:
         to_compare = ['__class__', 'max_length', 'schemes']
         unset = object()
         my_values = tuple(getattr(self, name, unset) for name in to_compare)
@@ -1025,5 +1103,5 @@ class URI(ConfigType):
         )
         return my_values == other_values
 
-    def _formatter(self, value):
-        return value
+    def _formatter(self, value: Any) -> str:
+        return cast(str, value)

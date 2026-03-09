@@ -19,7 +19,7 @@ from oslo_config import iniparser
 
 class TestParser(iniparser.BaseParser):
     comment_called = False
-    values = None
+    values: dict[str, dict[str, str]] = {}
     section = ''
 
     def __init__(self):

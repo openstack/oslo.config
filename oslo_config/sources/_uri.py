@@ -55,6 +55,8 @@ The Configuration Source Class
 
 """
 
+from typing import Any
+
 import requests
 import tempfile
 
@@ -126,10 +128,14 @@ class URIConfigurationSourceDriver(sources.ConfigurationSourceDriver):
         ),
     ]
 
-    def list_options_for_discovery(self):
+    def list_options_for_discovery(self) -> list[Any]:
         return self._uri_driver_opts
 
-    def open_source_from_opt_group(self, conf, group_name):
+    def open_source_from_opt_group(
+        self,
+        conf: cfg.ConfigOpts,
+        group_name: str,
+    ) -> 'URIConfigurationSource':
         conf.register_opts(self._uri_driver_opts, group_name)
 
         return URIConfigurationSource(
@@ -159,8 +165,13 @@ class URIConfigurationSource(sources.ConfigurationSource):
     """
 
     def __init__(
-        self, uri, ca_path=None, client_cert=None, client_key=None, timeout=60
-    ):
+        self,
+        uri: str,
+        ca_path: str | None = None,
+        client_cert: str | None = None,
+        client_key: str | None = None,
+        timeout: int = 60,
+    ) -> None:
         self._uri = uri
         self._namespace = cfg._Namespace(cfg.ConfigOpts())
 
@@ -172,9 +183,16 @@ class URIConfigurationSource(sources.ConfigurationSource):
 
             cfg.ConfigParser._parse_file(tmpfile.name, self._namespace)
 
-    def _fetch_uri(self, uri, ca_path, client_cert, client_key, timeout):
-        verify = ca_path if ca_path else True
-        cert = (
+    def _fetch_uri(
+        self,
+        uri: str,
+        ca_path: str | None,
+        client_cert: str | None,
+        client_key: str | None,
+        timeout: int,
+    ) -> str:
+        verify: str | bool = ca_path if ca_path else True
+        cert: tuple[str, str] | str | None = (
             (client_cert, client_key)
             if client_cert and client_key
             else client_cert
@@ -184,13 +202,20 @@ class URIConfigurationSource(sources.ConfigurationSource):
             uri, verify=verify, cert=cert, timeout=timeout
         ) as response:
             response.raise_for_status()  # raises only in case of HTTPError
-
             return response.text
 
-    def get(self, group_name, option_name, opt):
+    def get(
+        self,
+        group_name: str | None,
+        option_name: str,
+        opt: cfg.Opt,
+    ) -> tuple[Any, cfg.LocationInfo | None]:
         try:
-            return self._namespace._get_value(
-                [(group_name, option_name)], multi=opt.multi
+            result: tuple[Any, cfg.LocationInfo | None] = (
+                self._namespace._get_value(
+                    [(group_name, option_name)], multi=opt.multi
+                )
             )
+            return result
         except KeyError:
             return (sources._NoValue, None)

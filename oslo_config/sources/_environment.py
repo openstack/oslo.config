@@ -47,11 +47,17 @@ The Configuration Source Class
 
 """
 
+from __future__ import annotations
+
 import os
+from typing import TYPE_CHECKING, Any
 
 # Avoid circular import
 import oslo_config.cfg
 from oslo_config import sources
+
+if TYPE_CHECKING:
+    from oslo_config import cfg
 
 
 # In current practice this class is not used because the
@@ -65,11 +71,15 @@ class EnvironmentConfigurationSourceDriver(sources.ConfigurationSourceDriver):
     not necessary.
     """
 
-    def list_options_for_discovery(self):
+    def list_options_for_discovery(self) -> list[Any]:
         """There are no options for this driver."""
         return []
 
-    def open_source_from_opt_group(self, conf, group_name):
+    def open_source_from_opt_group(
+        self,
+        conf: cfg.ConfigOpts,
+        group_name: str,
+    ) -> EnvironmentConfigurationSource:
         return EnvironmentConfigurationSource()
 
 
@@ -77,7 +87,7 @@ class EnvironmentConfigurationSource(sources.ConfigurationSource):
     """A configuration source for options in the environment."""
 
     @staticmethod
-    def get_name(group_name, option_name):
+    def get_name(group_name: str | None, option_name: str) -> str:
         """Return the expected environment variable name for the given option.
 
         :param group_name: The group name or None. Defaults to 'DEFAULT' if
@@ -88,7 +98,12 @@ class EnvironmentConfigurationSource(sources.ConfigurationSource):
         group_name = group_name or 'DEFAULT'
         return f'OS_{group_name.upper()}__{option_name.upper()}'
 
-    def get(self, group_name, option_name, opt):
+    def get(
+        self,
+        group_name: str | None,
+        option_name: str,
+        opt: cfg.Opt,
+    ) -> tuple[Any, cfg.LocationInfo | None]:
         env_name = self.get_name(group_name, option_name)
         try:
             value = os.environ[env_name]
