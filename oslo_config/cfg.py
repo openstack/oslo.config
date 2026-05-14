@@ -1705,7 +1705,7 @@ class OptGroup:
     ) -> None:
         """Constructs an OptGroup object."""
         self.name = name
-        self.title: str = f"{name} options" if title is None else title
+        self.title = f"{name} options" if title is None else title
         self.help = help
         self.dynamic_group_owner = dynamic_group_owner
         self.driver_option = driver_option

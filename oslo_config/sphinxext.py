@@ -525,7 +525,7 @@ class ConfigDomain(Domain):
         target: str,
         node: addnodes.pending_xref,
         contnode: nodes.Element,
-    ) -> nodes.Element | None:
+    ) -> nodes.reference | None:
         """Resolve cross-references"""
         if typ == 'option':
             group_name, option_name = target.split('.', 1)
