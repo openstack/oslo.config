@@ -50,7 +50,7 @@ rst-generator = [
 "remote_file" = "oslo_config.sources._uri:URIConfigurationSourceDriver"
 
 [tool.setuptools.packages.find]
-include = ["oslo_config"]
+include = ["oslo_config*"]
 
 [tool.mypy]
 python_version = "3.10"
