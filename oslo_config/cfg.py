@@ -2442,7 +2442,7 @@ class ConfigOpts(Mapping[str, Any]):
 
     def __call__(
         self,
-        args: list[str] | None = None,
+        args: Sequence[str] | None = None,
         project: str | None = None,
         prog: str | None = None,
         version: str | None = None,
@@ -3611,7 +3611,7 @@ class ConfigOpts(Mapping[str, Any]):
                 if self._get(opt.dest, group, namespace) is None:
                     raise RequiredOptError(opt.name, group)
 
-    def _parse_cli_opts(self, args: list[str]) -> '_Namespace':
+    def _parse_cli_opts(self, args: Sequence[str]) -> '_Namespace':
         """Parse command line options.
 
         Initializes the command line option parser and parses the supplied
@@ -3623,7 +3623,7 @@ class ConfigOpts(Mapping[str, Any]):
                  ConfigFileParseError, ConfigFileValueError
 
         """
-        self._args = args
+        self._args = list(args)
         assert self._oparser is not None
         for opt, group in self._all_cli_opts():
             opt._add_to_cli(self._oparser, group)
