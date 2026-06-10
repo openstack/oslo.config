@@ -16,7 +16,7 @@
 
 import argparse
 import collections
-from collections.abc import Callable, Iterator, Mapping, Sequence
+from collections.abc import Callable, Iterable, Iterator, Mapping, Sequence
 import copy
 import enum
 import errno
@@ -161,7 +161,7 @@ class TemplateSubstitutionError(Error):
 class ConfigFilesNotFoundError(Error):
     """Raised if one or more config files are not found."""
 
-    def __init__(self, config_files: list[str]) -> None:
+    def __init__(self, config_files: Iterable[str]) -> None:
         self.config_files = config_files
 
     def __str__(self) -> str:
@@ -173,7 +173,7 @@ class ConfigFilesNotFoundError(Error):
 class ConfigFilesPermissionDeniedError(Error):
     """Raised if one or more config files are not readable."""
 
-    def __init__(self, config_files: list[str]) -> None:
+    def __init__(self, config_files: Iterable[str]) -> None:
         self.config_files = config_files
 
     def __str__(self) -> str:
