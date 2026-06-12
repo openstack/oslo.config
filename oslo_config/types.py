@@ -21,7 +21,7 @@ Use these classes as values for the `type` argument to
 """
 
 import collections
-from collections.abc import Callable, KeysView
+from collections.abc import Callable, Iterable, KeysView
 import operator
 import re
 import warnings
@@ -1056,7 +1056,7 @@ class URI(ConfigType):
     def __init__(
         self,
         max_length: int | None = None,
-        schemes: list[str] | None = None,
+        schemes: Iterable[str] | None = None,
         type_name: str = 'uri value',
     ) -> None:
         super().__init__(type_name=type_name)
