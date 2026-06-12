@@ -1373,7 +1373,7 @@ class URIOpt(Opt):
     :param name: the option's name
     :param max_length: If positive integer, the value must be less than or
                        equal to this parameter.
-    :param schemes: list of valid URI schemes, e.g. 'https', 'ftp', 'git'
+    :param schemes: iterable of valid URI schemes, e.g. 'https', 'ftp', 'git'
     :param \*\*kwargs: arbitrary keyword arguments passed to :class:`Opt`
 
     .. versionadded:: 3.12
@@ -1388,7 +1388,7 @@ class URIOpt(Opt):
         self,
         name: str,
         max_length: int | None = None,
-        schemes: list[str] | None = None,
+        schemes: Iterable[str] | None = None,
         **kwargs: Any,
     ) -> None:
         type = types.URI(max_length=max_length, schemes=schemes)
