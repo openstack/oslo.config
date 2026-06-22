@@ -23,3 +23,8 @@ repos:
       - id: ruff-check
         args: ['--fix', '--unsafe-fixes']
       - id: ruff-format
+  - repo: https://github.com/PyCQA/doc8
+    rev: v2.0.0
+    hooks:
+      - id: doc8
+        args: ['--ignore', 'D001']
