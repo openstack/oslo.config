@@ -93,6 +93,9 @@ _TYPE_DESCRIPTIONS = {
 }
 
 
+_UNKNOWN_TYPE = 'unknown type'
+
+
 def _get_choice_text(choice: Any) -> str:
     if choice is None:
         return '<None>'
@@ -102,7 +105,13 @@ def _get_choice_text(choice: Any) -> str:
 
 
 def _format_opt(opt: Any, group_name: str) -> Generator[str, None, None]:
-    opt_type = _TYPE_DESCRIPTIONS.get(type(opt), 'unknown type')
+    opt_type = _TYPE_DESCRIPTIONS.get(type(opt), _UNKNOWN_TYPE)
+
+    # NOTE(clif): If we don't have a type description handy, fall back to
+    # trying to retrieve the type from opt.type if available.
+    if opt_type == _UNKNOWN_TYPE and hasattr(opt, 'type'):
+        opt_type = getattr(opt.type, 'type_name', _UNKNOWN_TYPE)
+
     yield f'.. oslo.config:option:: {opt.dest}'
     yield ''
     yield _indent(f':Type: {opt_type}')

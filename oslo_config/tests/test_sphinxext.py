@@ -17,6 +17,7 @@ from oslotest import base
 
 from oslo_config import cfg
 from oslo_config import sphinxext
+from oslo_config import types
 
 
 class FormatGroupTest(base.BaseTestCase):
@@ -78,6 +79,49 @@ class FormatGroupTest(base.BaseTestCase):
           :Default: ``this is the default``
 
           this appears in the default group
+        ''').lstrip(),
+            results,
+        )
+
+    def test_with_custom_type(self):
+        TEST_TYPE_NAME = 'test type'
+
+        class TestType(types.ConfigType):
+            def __init__(self):
+                super().__init__(type_name=TEST_TYPE_NAME)
+
+            def __call__(self, value):
+                return str(value)
+
+            def _formatter(self, value):
+                return self.quote_trailing_and_leading_space(value)
+
+        results = '\n'.join(
+            list(
+                sphinxext._format_group_opts(
+                    namespace=None,
+                    group_name=None,
+                    group_obj=None,
+                    opt_list=[
+                        cfg.Opt(
+                            'custom_type_opt_name',
+                            type=TestType(),
+                            help='this is a custom option type',
+                        ),
+                    ],
+                )
+            )
+        )
+        self.assertEqual(
+            textwrap.dedent('''
+        .. oslo.config:group:: DEFAULT
+
+        .. oslo.config:option:: custom_type_opt_name
+
+          :Type: test type
+          :Default: ``<None>``
+
+          this is a custom option type
         ''').lstrip(),
             results,
         )
