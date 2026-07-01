@@ -1,0 +1,10 @@
+---
+features:
+  - |
+    There is now new `sample_min` and `sample_max` attributes to the int
+    configuration object. They may be use to replace the min and max values
+    when generating the configuration file with oslo-config-generator. For
+    example, if one wants max=processutils.get_worker_count(), it is desirable
+    to set a sample_max value (ie: `sample_max='<WORKER_COUNT>'`) to avoid
+    that the number of CPU of the builder machine leaks in the generated
+    configuration file.
