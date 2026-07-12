@@ -62,7 +62,7 @@ def _generate_sample(
     app: Sphinx, config_file: str, base_name: str | None
 ) -> None:
     def info(msg: str) -> None:
-        LOG.info(f'[{__name__}] {msg}')
+        LOG.info('[%s] {%s}', __name__, msg)
 
     # If we are given a file that isn't an absolute path, look for it
     # in the source directory if it doesn't exist.
