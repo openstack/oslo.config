@@ -9,6 +9,7 @@
    defining
    naming
    accessing
+   configopts-state
    configuration-files
    command-line
    deprecating
