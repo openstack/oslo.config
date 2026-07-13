@@ -1,0 +1,14 @@
+---
+features:
+  - |
+    ``ConfigOpts`` instances can now export and import a serialized state and
+    use that state for pickle serialization. This allows configuration state to
+    be passed to multiprocessing workers that use the ``spawn`` start method.
+    The serialized state preserves registered options and groups, parsed
+    command-line and config-file values, defaults, overrides, and setup
+    metadata.
+
+    Process-local helpers such as argparse parsers, caches, extension managers,
+    mutation hooks, and environment drivers are intentionally excluded from the
+    serialized state. Loaded configuration source objects are rejected with
+    ``ConfigOptsSerializationError`` instead of being silently dropped.

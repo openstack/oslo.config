@@ -17,11 +17,14 @@ import errno
 import functools
 import io
 import logging
+import multiprocessing
 import os
+import pickle
+import queue
 import shutil
 import sys
 import tempfile
-from typing import Any
+from typing import Any, cast
 import unittest
 from unittest import mock
 
@@ -33,6 +36,46 @@ from oslo_config import cfg
 from oslo_config import types
 
 load_tests = testscenarios.load_tests_apply_scenarios
+
+
+class _UnserializableType:
+    def __init__(self):
+        self._not_picklable = lambda value: value
+
+    def __call__(self, value):
+        return value
+
+
+def _spawn_config_opts_worker(conf, result_queue):
+    try:
+        assert conf.spawn_default == 'changed-default'
+        assert conf.spawn_override == 'override-value'
+        assert conf.spawn_cli == 'cli-value'
+        assert conf.spawn_file == 'file-value'
+        assert conf.spawn_bool is True
+        assert conf.spawn_int == 42
+        assert conf.spawn_list == ['alpha', 'beta']
+        assert conf.spawn_dict == {'one': '1', 'two': '2'}
+        assert conf.spawn_multi == ['first', 'second']
+        assert conf.spawn_group.spawn_group_default == 'group-default'
+        assert conf.spawn_group.spawn_group_override == 'group-override'
+        assert conf.spawn_group.spawn_group_file == 'group-file'
+    except Exception as exc:
+        result_queue.put(('error', repr(exc)))
+    else:
+        result_queue.put(('ok', None))
+
+
+def _spawn_global_conf_worker(conf, result_queue):
+    try:
+        assert conf is cfg.CONF
+        assert cfg.CONF.ovn.ovsdb_retry_max_interval == 42
+        assert cfg.CONF.ovn.ovn_metadata_enabled is True
+        assert cfg.CONF.agent.extensions == ['metadata']
+    except Exception as exc:
+        result_queue.put(('error', repr(exc)))
+    else:
+        result_queue.put(('ok', None))
 
 
 class ExceptionsTestCase(base.BaseTestCase):
@@ -5581,6 +5624,448 @@ class PrintHelpTestCase(base.BaseTestCase):
         conf([])
         conf.clear()
         self.assertRaises(cfg.NotInitializedError, conf.print_help)
+
+
+class ConfigOptsSerializationTestCase(BaseTestCase):
+    def _roundtrip_pickle(self, conf):
+        return pickle.loads(pickle.dumps(conf))
+
+    def test_basic_export_import_state(self):
+        conf = cfg.ConfigOpts()
+        conf([])
+
+        restored = cfg.ConfigOpts.import_state(conf.export_state())
+
+        self.assertEqual([], restored.config_file)
+        self.assertEqual([], restored.config_dir)
+
+    def test_basic_pickle_serialization(self):
+        conf = cfg.ConfigOpts()
+        conf([])
+
+        restored = self._roundtrip_pickle(conf)
+
+        self.assertEqual([], restored.config_file)
+        self.assertEqual([], restored.config_dir)
+
+    def test_unknown_state_version_fails_clearly(self):
+        conf = cfg.ConfigOpts()
+        state = conf.export_state()
+        state['version'] = 2
+
+        exc = self.assertRaises(
+            cfg.ConfigOptsSerializationError,
+            cfg.ConfigOpts.import_state,
+            state,
+        )
+        self.assertIn(
+            'unsupported ConfigOpts serialized state version', str(exc)
+        )
+
+    def test_registered_options_survive_serialization(self):
+        conf = cfg.ConfigOpts()
+        conf.register_opt(cfg.StrOpt('registered_opt', default='registered'))
+        conf([])
+
+        restored = self._roundtrip_pickle(conf)
+
+        self.assertEqual('registered', restored.registered_opt)
+
+    def test_common_option_types_survive_serialization(self):
+        conf = cfg.ConfigOpts()
+        conf.register_cli_opt(cfg.BoolOpt('bool_opt'))
+        conf.register_cli_opt(cfg.IntOpt('int_opt'))
+        conf.register_cli_opt(cfg.ListOpt('list_opt'))
+        conf.register_cli_opt(cfg.DictOpt('dict_opt'))
+        conf.register_cli_opt(cfg.MultiStrOpt('multi_opt'))
+        conf(
+            [
+                '--bool_opt',
+                '--int_opt=42',
+                '--list_opt=alpha,beta',
+                '--dict_opt=one:1,two:2',
+                '--multi_opt=first',
+                '--multi_opt=second',
+            ]
+        )
+
+        restored_from_state = cfg.ConfigOpts.import_state(conf.export_state())
+        restored_from_pickle = self._roundtrip_pickle(conf)
+
+        for restored in (restored_from_state, restored_from_pickle):
+            self.assertIs(True, restored.bool_opt)
+            self.assertEqual(42, restored.int_opt)
+            self.assertEqual(['alpha', 'beta'], restored.list_opt)
+            self.assertEqual({'one': '1', 'two': '2'}, restored.dict_opt)
+            self.assertEqual(['first', 'second'], restored.multi_opt)
+
+    def test_set_default_before_parse_survives_serialization(self):
+        conf = cfg.ConfigOpts()
+        conf.register_opt(cfg.StrOpt('default_opt', default='original'))
+        conf.set_default('default_opt', 'changed')
+        conf([])
+
+        restored = self._roundtrip_pickle(conf)
+
+        self.assertEqual('changed', restored.default_opt)
+
+    def test_set_default_after_parse_survives_serialization(self):
+        conf = cfg.ConfigOpts()
+        conf.register_opt(cfg.StrOpt('default_opt', default='original'))
+        conf([])
+        conf.set_default('default_opt', 'changed')
+
+        restored = self._roundtrip_pickle(conf)
+
+        self.assertEqual('changed', restored.default_opt)
+
+    def test_set_override_before_parse_survives_serialization(self):
+        conf = cfg.ConfigOpts()
+        conf.register_opt(cfg.StrOpt('override_opt', default='original'))
+        conf.set_override('override_opt', 'override')
+        conf([])
+
+        restored = self._roundtrip_pickle(conf)
+
+        self.assertEqual('override', restored.override_opt)
+
+    def test_set_override_after_parse_survives_serialization(self):
+        conf = cfg.ConfigOpts()
+        conf.register_opt(cfg.StrOpt('override_opt', default='original'))
+        conf([])
+        conf.set_override('override_opt', 'override')
+
+        restored = self._roundtrip_pickle(conf)
+
+        self.assertEqual('override', restored.override_opt)
+
+    def test_group_values_survive_serialization(self):
+        conf = cfg.ConfigOpts()
+        conf.register_group(cfg.OptGroup('serial_group'))
+        conf.register_opt(
+            cfg.StrOpt('group_default_opt', default='original'),
+            group='serial_group',
+        )
+        conf.register_opt(
+            cfg.StrOpt('group_override_opt', default='original'),
+            group='serial_group',
+        )
+        conf.set_default('group_default_opt', 'changed', group='serial_group')
+        conf.set_override(
+            'group_override_opt', 'override', group='serial_group'
+        )
+        conf([])
+
+        restored = self._roundtrip_pickle(conf)
+
+        self.assertEqual('changed', restored.serial_group.group_default_opt)
+        self.assertEqual('override', restored.serial_group.group_override_opt)
+
+    def test_config_file_values_survive_serialization(self):
+        paths = self.create_tempfiles(
+            [('serialization', '[DEFAULT]\nfile_opt = file-value\n')]
+        )
+        conf = cfg.ConfigOpts()
+        conf.register_opt(cfg.StrOpt('file_opt'))
+        conf(args=[], default_config_files=paths, use_env=False)
+
+        restored = self._roundtrip_pickle(conf)
+
+        self.assertEqual('file-value', restored.file_opt)
+        self.assertEqual(paths, restored.config_file)
+
+    def test_multiple_config_files_preserve_precedence(self):
+        paths = self.create_tempfiles(
+            [
+                ('serialization-1', '[DEFAULT]\nfile_opt = first\n'),
+                ('serialization-2', '[DEFAULT]\nfile_opt = second\n'),
+            ]
+        )
+        conf = cfg.ConfigOpts()
+        conf.register_opt(cfg.StrOpt('file_opt'))
+        conf(args=[], default_config_files=paths, use_env=False)
+
+        restored = self._roundtrip_pickle(conf)
+
+        self.assertEqual('second', restored.file_opt)
+        self.assertEqual(paths, restored.config_file)
+
+    def test_group_values_from_multiple_config_files_preserve_precedence(self):
+        paths = self.create_tempfiles(
+            [
+                (
+                    'serialization-group-1',
+                    '[serial_group]\nfile_opt = first\n',
+                ),
+                (
+                    'serialization-group-2',
+                    '[serial_group]\nfile_opt = second\n',
+                ),
+            ]
+        )
+        conf = cfg.ConfigOpts()
+        conf.register_group(cfg.OptGroup('serial_group'))
+        conf.register_opt(cfg.StrOpt('file_opt'), group='serial_group')
+        conf(args=[], default_config_files=paths, use_env=False)
+
+        restored = self._roundtrip_pickle(conf)
+
+        self.assertEqual('second', restored.serial_group.file_opt)
+
+    def test_deprecated_opts_survive_serialization(self):
+        paths = self.create_tempfiles(
+            [('deprecated-serialization', '[DEFAULT]\nold_opt = from-file\n')]
+        )
+        conf = cfg.ConfigOpts()
+        conf.register_opt(
+            cfg.StrOpt(
+                'new_opt',
+                deprecated_opts=[cfg.DeprecatedOpt('old_opt')],
+            )
+        )
+        conf(args=[], default_config_files=paths, use_env=False)
+
+        restored = self._roundtrip_pickle(conf)
+
+        self.assertEqual('from-file', restored.new_opt)
+
+    def test_deprecated_opts_in_group_with_cli_opt_survive_serialization(self):
+        paths = self.create_tempfiles(
+            [
+                (
+                    'deprecated-group-cli',
+                    '[serial_group]\nold_group_opt = group-from-file\n',
+                )
+            ]
+        )
+        conf = cfg.ConfigOpts()
+        conf.register_group(cfg.OptGroup('serial_group'))
+        # A CLI opt in the named group forces OptGroup._argparse_group to be
+        # populated with an unpicklable argparse object during parsing.
+        conf.register_cli_opt(
+            cfg.StrOpt('serial_group_cli'), group='serial_group'
+        )
+        conf.register_opt(
+            cfg.StrOpt(
+                'new_group_opt',
+                deprecated_opts=[
+                    cfg.DeprecatedOpt('old_group_opt', group='serial_group')
+                ],
+            ),
+            group='serial_group',
+        )
+        conf(args=[], default_config_files=paths, use_env=False)
+
+        restored = self._roundtrip_pickle(conf)
+
+        # The deprecated name in the config file still resolves to the new opt.
+        self.assertEqual(
+            'group-from-file', restored.serial_group.new_group_opt
+        )
+        # The deprecated-alias reverse lookup survives and is keyed on the
+        # group.
+        self.assertEqual(
+            ('new_group_opt', 'serial_group'),
+            restored._find_deprecated_opts('old_group_opt', 'serial_group'),
+        )
+        # The restored _deprecated_opts re-resolves to the live group instance
+        # rather than carrying a duplicate OptGroup with process-local state.
+        dep_group = restored._deprecated_opts['serial_group']['old_group_opt'][
+            'group'
+        ]
+        self.assertIs(dep_group, restored._groups['serial_group'])
+        self.assertIsNone(dep_group._argparse_group)
+
+    def test_import_state_rejects_missing_referenced_group(self):
+        # A valid state produced by export_state always includes every group a
+        # deprecated entry references. A state where such a group is absent is
+        # corrupt; import should reject it rather than silently repairing it.
+        conf = cfg.ConfigOpts()
+        conf.register_opt(cfg.StrOpt('new_opt'))
+        conf([])
+        state = conf.export_state()
+        state['deprecated_opts']['ghost_group'] = {
+            'old_x': {
+                'opt': conf._opts['new_opt']['opt'],
+                'group_name': 'ghost_group',
+            }
+        }
+
+        exc = self.assertRaises(
+            cfg.ConfigOptsSerializationError,
+            cfg.ConfigOpts.import_state,
+            state,
+        )
+        self.assertIn(
+            "references group 'ghost_group', which is not present",
+            str(exc),
+        )
+
+    def test_repeated_pickle_roundtrip(self):
+        conf = cfg.ConfigOpts()
+        conf.register_opt(cfg.StrOpt('roundtrip_opt', default='original'))
+        conf.set_override('roundtrip_opt', 'override')
+        conf([])
+
+        restored = self._roundtrip_pickle(self._roundtrip_pickle(conf))
+
+        self.assertEqual('override', restored.roundtrip_opt)
+
+    def test_unserializable_opt_fails_clearly(self):
+        conf = cfg.ConfigOpts()
+        conf.register_opt(
+            cfg.Opt(
+                'broken_opt',
+                type=cast(types.ConfigType, _UnserializableType()),
+            )
+        )
+        conf([])
+
+        exc = self.assertRaises(
+            cfg.ConfigOptsSerializationError,
+            conf.export_state,
+        )
+        self.assertIn('cannot serialize ConfigOpts state', str(exc))
+
+    def test_loaded_sources_fail_clearly(self):
+        conf = cfg.ConfigOpts()
+        conf._sources.append(mock.Mock())
+
+        exc = self.assertRaises(
+            cfg.ConfigOptsSerializationError,
+            conf.export_state,
+        )
+        self.assertIn('loaded configuration sources', str(exc))
+
+    def test_driver_opts_fail_clearly(self):
+        conf = cfg.ConfigOpts()
+        group = cfg.OptGroup('driver_group')
+        group._save_driver_opts({'driver': [cfg.StrOpt('driver_opt')]})
+        conf.register_group(group)
+
+        exc = self.assertRaises(
+            cfg.ConfigOptsSerializationError,
+            conf.export_state,
+        )
+        self.assertIn('contains driver options', str(exc))
+
+    def test_multiprocessing_spawn_observes_parent_state(self):
+        paths = self.create_tempfiles(
+            [
+                (
+                    'spawn',
+                    '[DEFAULT]\n'
+                    'spawn_file = file-value\n'
+                    'spawn_bool = true\n'
+                    'spawn_int = 42\n'
+                    'spawn_list = alpha,beta\n'
+                    'spawn_dict = one:1,two:2\n'
+                    'spawn_multi = first\n'
+                    'spawn_multi = second\n'
+                    '[spawn_group]\n'
+                    'spawn_group_file = group-file\n',
+                )
+            ]
+        )
+        conf = cfg.ConfigOpts()
+        conf.register_opt(cfg.StrOpt('spawn_default', default='original'))
+        conf.register_opt(cfg.StrOpt('spawn_override', default='original'))
+        conf.register_cli_opt(cfg.StrOpt('spawn_cli'))
+        conf.register_opt(cfg.StrOpt('spawn_file'))
+        conf.register_opt(cfg.BoolOpt('spawn_bool'))
+        conf.register_opt(cfg.IntOpt('spawn_int'))
+        conf.register_opt(cfg.ListOpt('spawn_list'))
+        conf.register_opt(cfg.DictOpt('spawn_dict'))
+        conf.register_opt(cfg.MultiStrOpt('spawn_multi'))
+        conf.register_group(cfg.OptGroup('spawn_group'))
+        conf.register_opt(
+            cfg.StrOpt('spawn_group_default', default='group-original'),
+            group='spawn_group',
+        )
+        conf.register_opt(
+            cfg.StrOpt('spawn_group_override', default='group-original'),
+            group='spawn_group',
+        )
+        conf.register_opt(
+            cfg.StrOpt('spawn_group_file'),
+            group='spawn_group',
+        )
+        conf(
+            args=['--spawn_cli=cli-value'],
+            default_config_files=paths,
+            use_env=False,
+        )
+        conf.set_default('spawn_default', 'changed-default')
+        conf.set_override('spawn_override', 'override-value')
+        conf.set_default(
+            'spawn_group_default', 'group-default', group='spawn_group'
+        )
+        conf.set_override(
+            'spawn_group_override', 'group-override', group='spawn_group'
+        )
+
+        ctx = multiprocessing.get_context('spawn')
+        result_queue = ctx.Queue()
+        proc = ctx.Process(
+            target=_spawn_config_opts_worker,
+            args=(conf, result_queue),
+        )
+        proc.start()
+        proc.join(10)
+        if proc.is_alive():
+            proc.terminate()
+            proc.join()
+            self.fail('spawn worker did not finish')
+
+        try:
+            status, details = result_queue.get(timeout=5)
+        except queue.Empty:
+            self.fail('spawn worker did not report a result')
+
+        self.assertEqual(0, proc.exitcode)
+        self.assertEqual(('ok', None), (status, details))
+
+    def test_multiprocessing_spawn_restores_global_conf_singleton(self):
+        state = cfg.CONF.export_state()
+        self.addCleanup(cfg.CONF.__setstate__, state)
+        cfg.CONF.__setstate__(cfg.ConfigOpts().export_state())
+
+        cfg.CONF.register_group(cfg.OptGroup('ovn'))
+        cfg.CONF.register_opt(
+            cfg.IntOpt('ovsdb_retry_max_interval', default=10),
+            group='ovn',
+        )
+        cfg.CONF.register_opt(
+            cfg.BoolOpt('ovn_metadata_enabled', default=False),
+            group='ovn',
+        )
+        cfg.CONF.register_group(cfg.OptGroup('agent'))
+        cfg.CONF.register_opt(cfg.ListOpt('extensions'), group='agent')
+        cfg.CONF([])
+        cfg.CONF.set_override('ovsdb_retry_max_interval', 42, group='ovn')
+        cfg.CONF.set_override('ovn_metadata_enabled', True, group='ovn')
+        cfg.CONF.set_override('extensions', ['metadata'], group='agent')
+
+        ctx = multiprocessing.get_context('spawn')
+        result_queue = ctx.Queue()
+        proc = ctx.Process(
+            target=_spawn_global_conf_worker,
+            args=(cfg.CONF, result_queue),
+        )
+        proc.start()
+        proc.join(10)
+        if proc.is_alive():
+            proc.terminate()
+            proc.join()
+            self.fail('spawn worker did not finish')
+
+        try:
+            status, details = result_queue.get(timeout=5)
+        except queue.Empty:
+            self.fail('spawn worker did not report a result')
+
+        self.assertEqual(0, proc.exitcode)
+        self.assertEqual(('ok', None), (status, details))
 
 
 class OptTestCase(base.BaseTestCase):

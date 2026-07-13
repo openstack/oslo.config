@@ -26,6 +26,7 @@ import inspect
 import itertools
 import logging
 import os
+import pickle
 import string
 import sys
 from typing import IO, Any, Protocol, TypedDict, cast
@@ -48,6 +49,19 @@ from oslo_config import types
 import stevedore
 
 LOG = logging.getLogger(__name__)
+
+
+def _identity(value: Any) -> Any:
+    return value
+
+
+def _import_config_opts_state(state: Mapping[str, Any]) -> 'ConfigOpts':
+    return ConfigOpts.import_state(state)
+
+
+def _import_global_config_opts_state(state: Mapping[str, Any]) -> 'ConfigOpts':
+    CONF.__setstate__(state)
+    return CONF
 
 
 class _SupportsLog(Protocol):
@@ -208,6 +222,10 @@ class ConfigFileParseError(Error):
 
     def __str__(self) -> str:
         return f'Failed to parse {self.config_file}: {self.msg}'
+
+
+class ConfigOptsSerializationError(Error):
+    """Raised if a ConfigOpts instance cannot be serialized safely."""
 
 
 class ConfigSourceValueError(Error, ValueError):
@@ -1564,7 +1582,7 @@ class _ConfigFileOpt(Opt):
             ConfigParser._parse_file(values, namespace)
 
     def __init__(self, name: str, **kwargs: Any) -> None:
-        super().__init__(name, cast(types.ConfigType, lambda x: x), **kwargs)
+        super().__init__(name, cast(types.ConfigType, _identity), **kwargs)
 
     def _get_argparse_kwargs(
         self, group: 'OptGroup | None', **kwargs: Any
@@ -1651,6 +1669,17 @@ class _OptInfo(_OptInfoRequired, total=False):
     location: LocationInfo
     override: Any
     default: Any
+
+
+class _OptGroupState(TypedDict):
+    """Serialized form for an OptGroup."""
+
+    name: str
+    title: str
+    help: str | None
+    dynamic_group_owner: str
+    driver_option: str
+    opts: dict[str, _OptInfo]
 
 
 class _OptGroupGeneratorData(TypedDict):
@@ -1784,6 +1813,75 @@ class _CliOptEntry(TypedDict):
 
     opt: Opt
     group: OptGroup | None
+
+
+def _copy_opt_info(info: _OptInfo) -> _OptInfo:
+    copied: _OptInfo = {
+        'opt': info['opt'],
+        'cli': info['cli'],
+    }
+    if 'location' in info:
+        copied['location'] = info['location']
+    if 'override' in info:
+        copied['override'] = info['override']
+    if 'default' in info:
+        copied['default'] = info['default']
+    return copied
+
+
+def _export_group(group: OptGroup) -> _OptGroupState:
+    if group._driver_opts:
+        raise ConfigOptsSerializationError(
+            'cannot serialize ConfigOpts state because group '
+            f'{group.name!r} contains driver options. Driver option metadata '
+            'is not part of the supported runtime configuration snapshot; '
+            'avoid passing ConfigOpts instances with driver option metadata '
+            'to spawn workers or rebuild that metadata in the child process.'
+        )
+    return {
+        'name': group.name,
+        'title': group.title,
+        'help': group.help,
+        'dynamic_group_owner': group.dynamic_group_owner,
+        'driver_option': group.driver_option,
+        'opts': {
+            opt_name: _copy_opt_info(info)
+            for opt_name, info in group._opts.items()
+        },
+    }
+
+
+def _import_group(state: _OptGroupState) -> OptGroup:
+    group = OptGroup(
+        state['name'],
+        title=state['title'],
+        help=state['help'],
+        dynamic_group_owner=state['dynamic_group_owner'],
+        driver_option=state['driver_option'],
+    )
+    group._opts = state['opts']
+    return group
+
+
+def _export_namespace(namespace: '_Namespace | None') -> dict[str, Any] | None:
+    if namespace is None:
+        return None
+    return {
+        key: value
+        for key, value in namespace.__dict__.items()
+        if key != '_conf'
+    }
+
+
+def _import_namespace(
+    conf: 'ConfigOpts', state: Mapping[str, Any] | None
+) -> '_Namespace | None':
+    if state is None:
+        return None
+    namespace = _Namespace(conf)
+    namespace.__dict__.update(state)
+    namespace._conf = conf
+    return namespace
 
 
 class ParseError(iniparser.ParseError):
@@ -2291,6 +2389,14 @@ class ConfigOpts(Mapping[str, Any]):
         choices=supported_shell_completion,
         help='Display a shell completion script',
     )
+    _serialized_setup_attrs = (
+        'project',
+        'prog',
+        'version',
+        'usage',
+        'default_config_files',
+        'default_config_dirs',
+    )
 
     def __init__(self) -> None:
         """Construct a ConfigOpts object."""
@@ -2319,6 +2425,190 @@ class ConfigOpts(Mapping[str, Any]):
 
         self.register_opt(self._config_source_opt)
         self.register_cli_opt(self._shell_completion_opt)
+
+    def _export_deprecated_opts(
+        self,
+    ) -> dict[str, dict[str, dict[str, Any]]]:
+        """Return a serializable copy of ``_deprecated_opts``.
+
+        The live mapping stores raw :class:`OptGroup` references, which may
+        hold process-local argparse objects after CLI parsing. Replace those
+        references with the group name so the snapshot remains picklable; the
+        name is re-resolved to the live group on import.
+        """
+        exported: dict[str, dict[str, dict[str, Any]]] = {}
+        for group_name, entries in self._deprecated_opts.items():
+            exported[group_name] = {
+                dest: {
+                    'opt': info['opt'],
+                    'group_name': (
+                        info['group'].name
+                        if info['group'] is not None
+                        else None
+                    ),
+                }
+                for dest, info in entries.items()
+            }
+        return exported
+
+    def _import_deprecated_opts(
+        self,
+        state: Mapping[str, Mapping[str, Mapping[str, Any]]],
+    ) -> dict[str, dict[str, _DeprecatedOptInfo]]:
+        """Rebuild ``_deprecated_opts`` from an exported snapshot.
+
+        ``OptGroup`` references are re-resolved against the groups restored by
+        :meth:`__setstate__`. A valid snapshot produced by ``export_state``
+        always includes every group a deprecated entry references, because
+        ``register_opt`` creates the group before tracking it and
+        ``export_state`` serializes every group. A referenced group that is
+        absent from the restored ``_groups`` therefore indicates a corrupt or
+        hand-built state, which is rejected rather than silently repaired.
+        """
+        imported: dict[str, dict[str, _DeprecatedOptInfo]] = {}
+        for group_name, entries in state.items():
+            imported_entries: dict[str, _DeprecatedOptInfo] = {}
+            for dest, info in entries.items():
+                ref_group_name: str | None = info['group_name']
+                if ref_group_name is None:
+                    ref_group: OptGroup | None = None
+                else:
+                    ref_group = self._groups.get(ref_group_name)
+                    if ref_group is None:
+                        raise ConfigOptsSerializationError(
+                            'cannot import ConfigOpts state because the '
+                            f'deprecated option {dest!r} references group '
+                            f'{ref_group_name!r}, which is not present in '
+                            'the serialized groups. The state is invalid.'
+                        )
+                imported_entries[dest] = {
+                    'opt': info['opt'],
+                    'group': ref_group,
+                }
+            imported[group_name] = imported_entries
+        return imported
+
+    def export_state(self) -> dict[str, Any]:
+        """Return a serializable snapshot of this configuration state.
+
+        The snapshot preserves registered opts and groups, parsed CLI and
+        config-file values, defaults, overrides, and setup metadata. It
+        intentionally excludes process-local parser objects, caches, mutation
+        hooks, extension managers, and environment drivers.
+
+        Alternative configuration source objects are not serialized because
+        they may hold process-local resources. If any are loaded, exporting
+        fails instead of silently dropping meaningful configuration state.
+        """
+        if self._sources:
+            raise ConfigOptsSerializationError(
+                'cannot serialize ConfigOpts state because it contains loaded '
+                'configuration sources. Source objects may hold process-local '
+                'or non-picklable state; avoid passing this ConfigOpts '
+                'instance to spawn workers or use serializable configuration '
+                'inputs before spawning.'
+            )
+
+        state: dict[str, Any] = {
+            'version': 1,
+            'opts': {
+                opt_name: _copy_opt_info(info)
+                for opt_name, info in self._opts.items()
+            },
+            'groups': {
+                group_name: _export_group(group)
+                for group_name, group in self._groups.items()
+            },
+            'deprecated_opts': self._export_deprecated_opts(),
+            'args': list(self._args) if self._args is not None else None,
+            'namespace': _export_namespace(self._namespace),
+            'mutable_ns': _export_namespace(self._mutable_ns),
+            'config_opts': list(self._config_opts),
+            'cli_opts': [
+                (
+                    item['opt'],
+                    item['group'].name if item['group'] is not None else None,
+                )
+                for item in self._cli_opts
+            ],
+            'validate_default_values': self._validate_default_values,
+            'use_env': self._use_env,
+            'setup_attrs': {
+                name: getattr(self, name)
+                for name in self._serialized_setup_attrs
+                if hasattr(self, name)
+            },
+        }
+        self._assert_serializable(state)
+        return state
+
+    @classmethod
+    def import_state(cls, state: Mapping[str, Any]) -> 'ConfigOpts':
+        """Create a ConfigOpts instance from an exported state snapshot."""
+        conf = cls()
+        conf.__setstate__(state)
+        return conf
+
+    @staticmethod
+    def _assert_serializable(state: Mapping[str, Any]) -> None:
+        try:
+            pickle.dumps(state)
+        except Exception as exc:
+            raise ConfigOptsSerializationError(
+                'cannot serialize ConfigOpts state because it contains a '
+                'non-picklable option, option type, or source-related value. '
+                'Avoid passing such state to spawn workers or use '
+                f'serializable option types. Original error: {exc}'
+            ) from exc
+
+    def __getstate__(self) -> dict[str, Any]:
+        return self.export_state()
+
+    def __setstate__(self, state: Mapping[str, Any]) -> None:
+        if state.get('version') != 1:
+            raise ConfigOptsSerializationError(
+                'unsupported ConfigOpts serialized state version '
+                f'{state.get("version")!r}'
+            )
+
+        self._opts = state['opts']
+        self._groups = {
+            group_name: _import_group(group_state)
+            for group_name, group_state in state['groups'].items()
+        }
+        self._deprecated_opts = self._import_deprecated_opts(
+            state['deprecated_opts']
+        )
+        self._args = state['args']
+        self._oparser = None
+        self._namespace = _import_namespace(self, state['namespace'])
+        self._mutable_ns = _import_namespace(self, state['mutable_ns'])
+        self._mutate_hooks = set()
+        self.__cache = {}
+        self.__drivers_cache = {}
+        self._config_opts = state['config_opts']
+        self._cli_opts = collections.deque(
+            {
+                'opt': opt,
+                'group': self._groups[group_name]
+                if group_name is not None
+                else None,
+            }
+            for opt, group_name in state['cli_opts']
+        )
+        self._validate_default_values = state['validate_default_values']
+        self._sources = []
+        self._ext_mgr = None
+        self._use_env = state['use_env']
+        self._env_driver = _environment.EnvironmentConfigurationSource()
+
+        for name, value in state['setup_attrs'].items():
+            setattr(self, name, value)
+
+    def __reduce__(self) -> tuple[Any, tuple[dict[str, Any]]]:
+        if self is CONF:
+            return (_import_global_config_opts_state, (self.export_state(),))
+        return (_import_config_opts_state, (self.export_state(),))
 
     def _pre_setup(
         self,
