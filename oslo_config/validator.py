@@ -83,6 +83,9 @@ _validator_opts = [
 ]
 
 
+LOG = logging.getLogger(__name__)
+
+
 KNOWN_BAD_GROUPS = ['keystone_authtoken']
 
 
@@ -127,7 +130,7 @@ def _validate_defaults(
         if group in conf.exclude_group:
             continue
         if group not in sections:
-            logging.warning(
+            LOG.warning(
                 'Group %s from the sample config is not defined in input-file',
                 group,
             )
@@ -156,7 +159,7 @@ def _validate_defaults(
                 keyname = opt.get('dest')
 
             if any(rex.fullmatch(keyname) for rex in exclusion_regexes):
-                logging.info(
+                LOG.info(
                     '%s/%s Ignoring option because it is part of the excluded '
                     'patterns. This can be changed with the --exclude-options '
                     'argument',
@@ -166,11 +169,9 @@ def _validate_defaults(
                 continue
 
             if len(value) > 1:
-                logging.info(
-                    '%s/%s defined %s times', group, keyname, len(value)
-                )
+                LOG.info('%s/%s defined %s times', group, keyname, len(value))
             if not opt['default']:
-                logging.warning(
+                LOG.warning(
                     '%s/%s sample value is empty but input-file has %s',
                     group,
                     keyname,
@@ -178,7 +179,7 @@ def _validate_defaults(
                 )
                 warnings = True
             elif not frozenset(defaults).intersection(value):
-                logging.warning(
+                LOG.warning(
                     '%s/%s sample value %s is not in %s',
                     group,
                     keyname,
@@ -224,11 +225,11 @@ def _validate(conf: cfg.ConfigOpts) -> int:
             continue
         for option in options:
             if _validate_deprecated_opt(section, option, opt_data):
-                logging.warning('Deprecated opt %s/%s found', section, option)
+                LOG.warning('Deprecated opt %s/%s found', section, option)
                 warnings = True
             elif not _validate_opt(section, option, opt_data):
                 if section in KNOWN_BAD_GROUPS:
-                    logging.info(
+                    LOG.info(
                         'Ignoring missing option "%s" from group '
                         '"%s" because the group is known to have '
                         'incomplete sample config data and thus '
@@ -237,7 +238,7 @@ def _validate(conf: cfg.ConfigOpts) -> int:
                         section,
                     )
                     continue
-                logging.error(
+                LOG.error(
                     '%s/%s is not part of the sample config', section, option
                 )
                 errors = True
