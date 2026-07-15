@@ -50,6 +50,8 @@ import stevedore
 
 LOG = logging.getLogger(__name__)
 
+_CONFIG_OPTS_STATE_VERSION = 1
+
 
 def _identity(value: Any) -> Any:
     return value
@@ -2510,7 +2512,7 @@ class ConfigOpts(Mapping[str, Any]):
             )
 
         state: dict[str, Any] = {
-            'version': 1,
+            'version': _CONFIG_OPTS_STATE_VERSION,
             'opts': {
                 opt_name: _copy_opt_info(info)
                 for opt_name, info in self._opts.items()
@@ -2565,7 +2567,7 @@ class ConfigOpts(Mapping[str, Any]):
         return self.export_state()
 
     def __setstate__(self, state: Mapping[str, Any]) -> None:
-        if state.get('version') != 1:
+        if state.get('version') != _CONFIG_OPTS_STATE_VERSION:
             raise ConfigOptsSerializationError(
                 'unsupported ConfigOpts serialized state version '
                 f'{state.get("version")!r}'
