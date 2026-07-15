@@ -10,5 +10,7 @@ features:
 
     Process-local helpers such as argparse parsers, caches, extension managers,
     mutation hooks, and environment drivers are intentionally excluded from the
-    serialized state. Loaded configuration source objects are rejected with
-    ``ConfigOptsSerializationError`` instead of being silently dropped.
+    serialized state. Loaded configuration source objects, typically created
+    through the ``config_source`` option or ``--config_source`` argument, are
+    rejected with ``ConfigOptsSerializationError`` instead of being silently
+    dropped.
