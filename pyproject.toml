@@ -83,3 +83,6 @@ ignore = [
 
 [tool.ruff.lint.per-file-ignores]
 "oslo_config/tests/*" = ["S"]
+
+[tool.doc8]
+ignore = ["D001"]
