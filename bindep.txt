@@ -2,6 +2,6 @@
 # see http://docs.openstack.org/infra/bindep/ for additional information.
 
 locales [platform:debian]
-python3-all-dev [platform:ubuntu !platform:ubuntu-precise]
+python3-all-dev [platform:ubuntu]
 python3-dev [platform:dpkg]
 python3-devel [platform:fedora]
