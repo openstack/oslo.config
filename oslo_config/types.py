@@ -291,6 +291,10 @@ class Number(ConfigType):
     :param type_name: Type name to be used in the sample config file.
     :param min: Optional check that value is greater than or equal to min.
     :param max: Optional check that value is less than or equal to max.
+    :param sample_min: Optional display value when generating config file,
+                       replacing min.
+    :param sample_max: Optional display value when generating config file,
+                       replacing max.
     :param choices: Optional sequence of either valid values or tuples of valid
         values with descriptions.
 
@@ -299,6 +303,11 @@ class Number(ConfigType):
     .. versionchanged:: 5.2
        The *choices* parameter will now accept a sequence of tuples, where each
        tuple is of form (*choice*, *description*)
+
+    .. versionchanged:: 10.7.0
+
+       Added sample_min and sample_max,
+
     """
 
     choices: collections.OrderedDict[int | float, str | None] | None
@@ -310,6 +319,8 @@ class Number(ConfigType):
         min: int | float | None = None,
         max: int | float | None = None,
         choices: Any = None,
+        sample_min: str | None = None,
+        sample_max: str | None = None,
     ) -> None:
         super().__init__(type_name=type_name)
 
@@ -336,6 +347,8 @@ class Number(ConfigType):
 
         self.min = min
         self.max = max
+        self.sample_min = sample_min
+        self.sample_max = sample_max
         self.num_type = num_type
 
     def __call__(self, value: Any) -> int | float | None:
@@ -407,6 +420,10 @@ class Integer(Number):
     :param type_name: Type name to be used in the sample config file.
     :param choices: Optional sequence of either valid values or tuples of valid
         values with descriptions.
+    :param sample_min: Optional display value when generating config file,
+                       replacing min.
+    :param sample_max: Optional display value when generating config file,
+                       replacing max.
 
     .. versionchanged:: 2.4
        The class now honors zero for *min* and *max* parameters.
@@ -424,6 +441,11 @@ class Integer(Number):
     .. versionchanged:: 5.2
        The *choices* parameter will now accept a sequence of tuples, where each
        tuple is of form (*choice*, *description*)
+
+    .. versionchanged:: 10.7.0
+
+       Added sample_min and sample_max,
+
     """
 
     def __init__(
@@ -432,8 +454,18 @@ class Integer(Number):
         max: int | None = None,
         type_name: str = 'integer value',
         choices: Any = None,
+        sample_min: str | None = None,
+        sample_max: str | None = None,
     ) -> None:
-        super().__init__(int, type_name, min=min, max=max, choices=choices)
+        super().__init__(
+            int,
+            type_name,
+            min=min,
+            max=max,
+            choices=choices,
+            sample_min=sample_min,
+            sample_max=sample_max,
+        )
 
 
 class Float(Number):

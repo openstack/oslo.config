@@ -160,6 +160,20 @@ class GeneratorTestCase(base.BaseTestCase):
         'int_opt_max_0': cfg.IntOpt(
             'int_opt_max_0', default=-1, max=0, help='an integer'
         ),
+        'int_opt_max_0_with_spl': cfg.IntOpt(
+            'int_opt_max_0_with_spl',
+            default=-1,
+            max=0,
+            sample_max='zero',
+            help='an integer',
+        ),
+        'int_opt_min_2_with_spl': cfg.IntOpt(
+            'int_opt_min_2_with_spl',
+            default=5,
+            min=0,
+            sample_min='two',
+            help='an integer',
+        ),
         'float_opt': cfg.FloatOpt('float_opt', default=0.1, help='a float'),
         'list_opt': cfg.ListOpt(
             'list_opt', default=['1', '2', '3'], help='a list'
@@ -785,6 +799,38 @@ class GeneratorTestCase(base.BaseTestCase):
 # an integer (integer value)
 # Maximum value: 0
 #int_opt_max_0 = -1
+''',
+            ),
+        ),
+        (
+            'int_opt_max_0_with_spl',
+            dict(
+                opts=[('test', [(None, [opts['int_opt_max_0_with_spl']])])],
+                expected='''[DEFAULT]
+
+#
+# From test
+#
+
+# an integer (integer value)
+# Maximum value: zero
+#int_opt_max_0_with_spl = -1
+''',
+            ),
+        ),
+        (
+            'int_opt_min_2_with_spl',
+            dict(
+                opts=[('test', [(None, [opts['int_opt_min_2_with_spl']])])],
+                expected='''[DEFAULT]
+
+#
+# From test
+#
+
+# an integer (integer value)
+# Minimum value: two
+#int_opt_min_2_with_spl = 5
 ''',
             ),
         ),

@@ -1176,6 +1176,8 @@ class IntOpt(Opt):
     :param max: maximum value the integer can take
     :param choices: Optional sequence of either valid values or tuples of valid
         values with descriptions.
+    :param sample_min: a minimum value string for sample config files
+    :param sample_max: a maximum value string for sample config files
     :param \*\*kwargs: arbitrary keyword arguments passed to :class:`Opt`
 
     .. versionchanged:: 1.15
@@ -1186,6 +1188,11 @@ class IntOpt(Opt):
     .. versionchanged:: 9.3.0
 
        Added *choices* parameter.
+
+    .. versionchanged:: 10.7.0
+
+       Added sample_min and sample_max,
+
     """
 
     def __init__(
@@ -1194,11 +1201,19 @@ class IntOpt(Opt):
         min: int | None = None,
         max: int | None = None,
         choices: Any = None,
+        sample_min: str | None = None,
+        sample_max: str | None = None,
         **kwargs: Any,
     ) -> None:
         super().__init__(
             name,
-            type=types.Integer(min=min, max=max, choices=choices),
+            type=types.Integer(
+                min=min,
+                max=max,
+                choices=choices,
+                sample_min=sample_min,
+                sample_max=sample_max,
+            ),
             **kwargs,
         )
 
