@@ -3885,19 +3885,14 @@ class ConfigOpts(Mapping[str, Any]):
             )
             if not real_opt_name:
                 raise NoSuchOptError(opt_name, group)
-            log_real_group_name = real_group_name or 'DEFAULT'
-            dep_message = (
-                'Config option %(dep_group)s.%(dep_option)s '
-                ' is deprecated. Use option %(group)s.'
-                '%(option)s instead.'
-            )
             LOG.warning(
-                dep_message,
+                'Config option %(dep_group)s.%(dep_option)s is deprecated. '
+                'Use option %(group)s.%(option)s instead.',
                 {
                     'dep_option': opt_name,
                     'dep_group': group,
                     'option': real_opt_name,
-                    'group': log_real_group_name,
+                    'group': real_group_name or 'DEFAULT',
                 },
             )
             opt_name = real_opt_name
