@@ -251,7 +251,7 @@ class GeneratorTestCase(base.BaseTestCase):
         ),
     }
 
-    content_scenarios = [
+    content_scenarios: list[tuple[str, dict[str, Any]]] = [
         (
             'empty',
             dict(
@@ -1251,7 +1251,7 @@ class GeneratorTestCase(base.BaseTestCase):
         ),
     ]
 
-    output_file_scenarios = [
+    output_file_scenarios: list[tuple[str, dict[str, Any]]] = [
         ('stdout', dict(stdout=True, output_file=None)),
         ('output_file', dict(output_file='sample.conf', stdout=False)),
     ]
@@ -1455,7 +1455,7 @@ GENERATOR_OPTS = {
 class MachineReadableGeneratorTestCase(base.BaseTestCase):
     all_opts = GeneratorTestCase.opts
     all_groups = GeneratorTestCase.groups
-    content_scenarios = [
+    content_scenarios: list[tuple[str, dict[str, Any]]] = [
         (
             'single_namespace',
             dict(
