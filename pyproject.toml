@@ -58,6 +58,7 @@ source = [
     "oslo_config"
 ]
 branch = true
+parallel = true
 omit = [
     "oslo_config/tests/*"
 ]
