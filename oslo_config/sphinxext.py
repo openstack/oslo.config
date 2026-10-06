@@ -273,7 +273,13 @@ def _format_option_help(
     Format the option help as restructuredtext and return it as a list
     of lines.
     """
-    opts = generator._list_opts(namespaces)
+    # Plugin discovery order depends on how the packages were installed.
+    # Use the order the namespaces were requested in for reproducible output.
+    order = {namespace: i for i, namespace in enumerate(namespaces)}
+    opts = sorted(
+        generator._list_opts(namespaces),
+        key=lambda item: order.get(item[0], len(order)),
+    )
 
     if split_namespaces:
         for namespace, opt_list in opts:
