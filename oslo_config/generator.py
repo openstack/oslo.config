@@ -24,6 +24,7 @@ Tool for generating a sample configuration file. See
 """
 
 import collections
+from collections.abc import Callable, Iterable
 import copy
 import importlib.metadata
 import json
@@ -517,11 +518,13 @@ def _cleanup_opts(read_opts: list[Any]) -> list[Any]:
     return cleaned_opts
 
 
-def _get_raw_opts_loaders(namespaces: list[str]) -> list[Any]:
+def _get_raw_opts_loaders(
+    namespaces: list[str],
+) -> list[tuple[str, Callable[[], Iterable[tuple[str, Iterable[Any]]]]]]:
     """List the options available via the given namespaces.
 
     :param namespaces: a list of namespaces registered under 'oslo.config.opts'
-    :returns: a list of (namespace, [(group, [opt_1, opt_2])]) tuples
+    :returns: a list of (namespace, loader) tuples
     """
     mgr = stevedore.named.NamedExtensionManager(
         'oslo.config.opts',
@@ -534,7 +537,7 @@ def _get_raw_opts_loaders(namespaces: list[str]) -> list[Any]:
 
 def _get_driver_opts_loaders(
     namespaces: list[str], driver_option_name: str
-) -> list[Any]:
+) -> list[tuple[str, Callable[[], dict[str, Any]]]]:
     mgr = stevedore.named.NamedExtensionManager(
         namespace='oslo.config.opts.' + driver_option_name,
         names=namespaces,
@@ -546,7 +549,7 @@ def _get_driver_opts_loaders(
 
 def _get_driver_opts(
     driver_option_name: str, namespaces: list[str]
-) -> dict[str, Any]:
+) -> dict[str, list[Any]]:
     """List the options available from plugins for drivers based on the option.
 
     :param driver_option_name: The name of the option controlling the
@@ -556,7 +559,7 @@ def _get_driver_opts(
     :returns: a dict mapping driver name to option list
 
     """
-    all_opts: dict[str, Any] = {}
+    all_opts: dict[str, list[Any]] = {}
     loaders = _get_driver_opts_loaders(namespaces, driver_option_name)
     for plugin_name, loader in loaders:
         for driver_name, option_list in loader().items():
