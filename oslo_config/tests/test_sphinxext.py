@@ -86,7 +86,7 @@ class FormatGroupTest(base.BaseTestCase):
     def test_with_custom_type(self):
         TEST_TYPE_NAME = 'test type'
 
-        class TestType(types.ConfigType):
+        class TestType(types.ConfigType[str]):
             def __init__(self):
                 super().__init__(type_name=TEST_TYPE_NAME)
 

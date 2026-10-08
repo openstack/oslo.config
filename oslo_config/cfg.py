@@ -587,7 +587,7 @@ class Opt:
     def __init__(
         self,
         name: str,
-        type: types.ConfigType | None = None,
+        type: types.ConfigType[Any] | None = None,
         dest: str | None = None,
         short: str | None = None,
         default: Any = None,
@@ -1260,7 +1260,7 @@ class ListOpt(Opt):
     def __init__(
         self,
         name: str,
-        item_type: types.ConfigType | None = None,
+        item_type: types.ConfigType[Any] | None = None,
         bounds: bool | None = None,
         **kwargs: Any,
     ) -> None:
@@ -1458,7 +1458,7 @@ class MultiOpt(Opt):
     multi: bool = True
 
     def __init__(
-        self, name: str, item_type: types.ConfigType, **kwargs: Any
+        self, name: str, item_type: types.ConfigType[Any], **kwargs: Any
     ) -> None:
         super().__init__(name, item_type, **kwargs)
 
@@ -1599,7 +1599,9 @@ class _ConfigFileOpt(Opt):
             ConfigParser._parse_file(values, namespace)
 
     def __init__(self, name: str, **kwargs: Any) -> None:
-        super().__init__(name, cast(types.ConfigType, _identity), **kwargs)
+        super().__init__(
+            name, cast(types.ConfigType[Any], _identity), **kwargs
+        )
 
     def _get_argparse_kwargs(
         self, group: 'OptGroup | None', **kwargs: Any

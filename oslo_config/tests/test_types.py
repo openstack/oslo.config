@@ -13,6 +13,7 @@
 #    under the License.
 
 import re
+from typing import Any
 import unittest
 
 from oslo_config import types
@@ -20,14 +21,14 @@ from oslo_config import types
 
 class ConfigTypeTests(unittest.TestCase):
     def test_none_concrete_class(self):
-        class MyString(types.ConfigType):
+        class MyString(types.ConfigType[str]):
             def __init__(self, type_name='mystring value'):
                 super().__init__(type_name=type_name)
 
         self.assertRaises(TypeError, MyString)
 
     def test_concrete_class(self):
-        class MyString(types.ConfigType):
+        class MyString(types.ConfigType[str]):
             def __init__(self, type_name='mystring value'):
                 super().__init__(type_name=type_name)
 
@@ -38,7 +39,7 @@ class ConfigTypeTests(unittest.TestCase):
 
 
 class TypeTestHelper(unittest.TestCase):
-    type: types.ConfigType
+    type: types.ConfigType[Any]
 
     def setUp(self):
         super().setUp()

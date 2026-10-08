@@ -5916,7 +5916,7 @@ class ConfigOptsSerializationTestCase(BaseTestCase):
         conf.register_opt(
             cfg.Opt(
                 'broken_opt',
-                type=cast(types.ConfigType, _UnserializableType()),
+                type=cast(types.ConfigType[Any], _UnserializableType()),
             )
         )
         conf([])

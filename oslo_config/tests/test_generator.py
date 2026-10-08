@@ -226,22 +226,22 @@ class GeneratorTestCase(base.BaseTestCase):
         'native_str_type': cfg.Opt(
             'native_str_type',
             help='native help',
-            type=cast(types.ConfigType, str),
+            type=cast(types.ConfigType[str], str),
         ),
         'native_int_type': cfg.Opt(
             'native_int_type',
             help='native help',
-            type=cast(types.ConfigType, int),
+            type=cast(types.ConfigType[int], int),
         ),
         'native_float_type': cfg.Opt(
             'native_float_type',
             help='native help',
-            type=cast(types.ConfigType, float),
+            type=cast(types.ConfigType[float], float),
         ),
         'custom_type': cfg.Opt(
             'custom_type',
             help='custom help',
-            type=cast(types.ConfigType, custom_type),
+            type=cast(types.ConfigType[Any], custom_type),
         ),
         'custom_type_name': cfg.Opt(
             'custom_opt_type',
