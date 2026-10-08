@@ -562,6 +562,57 @@ class FormatGroupTest(base.BaseTestCase):
 
 class FormatOptionHelpTest(base.BaseTestCase):
     @mock.patch('oslo_config.generator._list_opts')
+    def test_namespace_discovery_order_does_not_change_output(self, list_opts):
+        namespaces = ['namespace1', 'namespace2']
+        opts = [
+            (
+                'namespace1',
+                [
+                    (None, [cfg.StrOpt('z_opt'), cfg.StrOpt('a_opt')]),
+                    (
+                        cfg.OptGroup('group', help='First namespace help'),
+                        [cfg.StrOpt('first_opt')],
+                    ),
+                ],
+            ),
+            (
+                'namespace2',
+                [
+                    ('DEFAULT', [cfg.StrOpt('second_opt')]),
+                    (
+                        cfg.OptGroup('group', help='Second namespace help'),
+                        [cfg.StrOpt('last_opt')],
+                    ),
+                ],
+            ),
+        ]
+        for split_namespaces in (False, True):
+            with self.subTest(split_namespaces=split_namespaces):
+                list_opts.return_value = opts
+                expected = list(
+                    sphinxext._format_option_help(namespaces, split_namespaces)
+                )
+                list_opts.return_value = opts[::-1]
+                actual = list(
+                    sphinxext._format_option_help(namespaces, split_namespaces)
+                )
+                self.assertEqual(expected, actual)
+                self.assertLess(
+                    actual.index('.. oslo.config:option:: z_opt'),
+                    actual.index('.. oslo.config:option:: a_opt'),
+                )
+                # The requested namespace order is honored, not sorted.
+                reordered = list(
+                    sphinxext._format_option_help(
+                        namespaces[::-1], split_namespaces
+                    )
+                )
+                self.assertLess(
+                    reordered.index('.. oslo.config:option:: second_opt'),
+                    reordered.index('.. oslo.config:option:: z_opt'),
+                )
+
+    @mock.patch('oslo_config.generator._list_opts')
     @mock.patch('oslo_config.sphinxext._format_group_opts')
     def test_split_namespaces(self, _format_group_opts, _list_opts):
         _list_opts.return_value = [
