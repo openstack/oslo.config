@@ -104,7 +104,7 @@ def _get_choice_text(choice: Any) -> str:
     return str(choice)
 
 
-def _format_opt(opt: Any, group_name: str) -> Generator[str, None, None]:
+def _format_opt(opt: cfg.Opt, group_name: str) -> Generator[str, None, None]:
     opt_type = _TYPE_DESCRIPTIONS.get(type(opt), _UNKNOWN_TYPE)
 
     # NOTE(clif): If we don't have a type description handy, fall back to
@@ -120,13 +120,13 @@ def _format_opt(opt: Any, group_name: str) -> Generator[str, None, None]:
             yield _indent(f':Default: ``{default}``')
         else:
             yield _indent(f':Default: ``{default!r}``')
-    if getattr(opt.type, 'min', None) is not None:
-        yield _indent(f':Minimum Value: {opt.type.min}')
-    if getattr(opt.type, 'max', None) is not None:
-        yield _indent(f':Maximum Value: {opt.type.max}')
-    if getattr(opt.type, 'choices', None):
+    if (min_val := getattr(opt.type, 'min', None)) is not None:
+        yield _indent(f':Minimum Value: {min_val}')
+    if (max_val := getattr(opt.type, 'max', None)) is not None:
+        yield _indent(f':Maximum Value: {max_val}')
+    if choices := getattr(opt.type, 'choices', None):
         choices_text = ', '.join(
-            [_get_choice_text(choice) for choice in opt.type.choices]
+            [_get_choice_text(choice) for choice in choices]
         )
         yield _indent(f':Valid Values: {choices_text}')
     try:
@@ -145,7 +145,7 @@ def _format_opt(opt: Any, group_name: str) -> Generator[str, None, None]:
         # more details.
         import warnings
 
-        if not isinstance(cfg.Opt, opt):
+        if not isinstance(opt, cfg.Opt):
             warnings.warn(
                 f'Incompatible option class for {opt.dest} '
                 f'({opt.__class__!r}): {err}',
@@ -171,32 +171,31 @@ def _format_opt(opt: Any, group_name: str) -> Generator[str, None, None]:
         )
         yield _indent('above.')
 
-    try:
-        help_text = opt.help % {'default': 'the value above'}
-    except (TypeError, KeyError, ValueError):
-        # There is no mention of the default in the help string,
-        # the string had some unknown key, or the string contained
-        # invalid formatting characters
-        help_text = opt.help
+    help_text = opt.help
     if help_text:
+        try:
+            help_text = help_text % {'default': 'the value above'}
+        except (TypeError, KeyError, ValueError):
+            # There is no mention of the default in the help string,
+            # the string had some unknown key, or the string contained
+            # invalid formatting characters
+            pass
         yield ''
         for line in help_text.strip().splitlines():
             yield _indent(line.rstrip())
 
     # We don't bother outputting this if not using new-style choices with
     # inline descriptions
-    if getattr(opt.type, 'choices', None) and not all(
-        x is None for x in opt.type.choices.values()
+    if (choices := getattr(opt.type, 'choices', None)) and not all(
+        x is None for x in choices.values()
     ):
         yield ''
         yield _indent('.. rubric:: Possible values')
-        for choice in opt.type.choices:
+        for choice in choices:
             yield ''
             yield _indent(_get_choice_text(choice))
             yield _indent(
-                _indent(
-                    opt.type.choices[choice] or '<No description provided>'
-                )
+                _indent(choices[choice] or '<No description provided>')
             )
 
     if opt.deprecated_opts:
@@ -253,7 +252,7 @@ def _format_group_opts(
     namespace: str | None,
     group_name: str | None,
     group_obj: cfg.OptGroup | None,
-    opt_list: list[Any],
+    opt_list: list[cfg.Opt],
 ) -> Generator[str, None, None]:
     group_name = group_name or 'DEFAULT'
     LOG.debug('%s %s', namespace, group_name)
@@ -283,37 +282,39 @@ def _format_option_help(
 
     if split_namespaces:
         for namespace, opt_list in opts:
-            for group, opts in opt_list:
+            for group, group_opts in opt_list:
+                group_obj: cfg.OptGroup | None = None
                 if isinstance(group, cfg.OptGroup):
                     group_name = group.name
-                else:
+                    group_obj = group
+                elif group is not None:
                     group_name = group
-                    group = None
-                if group_name is None:
+                else:
                     group_name = 'DEFAULT'
                 lines = _format_group_opts(
                     namespace=namespace,
                     group_name=group_name,
-                    group_obj=group,
-                    opt_list=opts,
+                    group_obj=group_obj,
+                    opt_list=group_opts,
                 )
                 yield from lines
     else:
         # Merge the options from different namespaces that belong to
         # the same group together and format them without the
         # namespace.
-        by_section: dict[str, list[Any]] = {}
+        by_section: dict[str, list[cfg.Opt]] = {}
         group_objs: dict[str, cfg.OptGroup | None] = {}
         for ignore, opt_list in opts:
             for group, group_opts in opt_list:
+                group_obj = None
                 if isinstance(group, cfg.OptGroup):
                     group_name = group.name
-                else:
+                    group_obj = group
+                elif group is not None:
                     group_name = group
-                    group = None
-                if group_name is None:
+                else:
                     group_name = 'DEFAULT'
-                group_objs.setdefault(group_name, group)
+                group_objs.setdefault(group_name, group_obj)
                 by_section.setdefault(group_name, []).extend(group_opts)
         for group_name, group_opts in sorted(by_section.items()):
             lines = _format_group_opts(

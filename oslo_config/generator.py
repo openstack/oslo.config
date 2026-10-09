@@ -24,7 +24,7 @@ Tool for generating a sample configuration file. See
 """
 
 import collections
-from collections.abc import Callable, Iterable
+from collections.abc import Callable, Iterable, Sequence
 import copy
 import importlib.metadata
 import json
@@ -32,6 +32,13 @@ import logging
 import operator
 import sys
 from typing import IO, Any, TypedDict, cast
+
+from oslo_i18n import _message
+import stevedore.named
+import yaml
+
+from oslo_config import cfg
+from oslo_config import types
 
 try:
     # For oslo.config[rst-generator]
@@ -46,12 +53,6 @@ except ImportError:
     rst2txt = None
 
 
-import yaml
-
-from oslo_config import cfg
-from oslo_i18n import _message
-import stevedore.named  # noqa
-
 LOG = logging.getLogger(__name__)
 UPPER_CASE_GROUP_NAMES = ['DEFAULT']
 
@@ -60,7 +61,7 @@ class _GroupInfo(TypedDict):
     """Entry in the groups dict returned by _get_groups()."""
 
     object: cfg.OptGroup | None
-    namespaces: list[tuple[str, list[cfg.Opt]]]
+    namespaces: list[tuple[str, Sequence[cfg.Opt]]]
 
 
 _generator_opts = [
@@ -195,12 +196,12 @@ _TYPE_NAMES = {
 }
 
 
-def _format_type_name(opt_type: Any) -> str:
+def _format_type_name(
+    opt_type: types.ConfigType[Any] | type[str | int | float],
+) -> str:
     """Format the type name to use in describing an option"""
-    try:
-        return cast(str, opt_type.type_name)
-    except AttributeError:  # nosec
-        pass
+    if isinstance(opt_type, types.ConfigType):
+        return opt_type.type_name
 
     try:
         return _TYPE_NAMES[opt_type]
@@ -461,7 +462,14 @@ class _OptFormatter:
         self.output_file.writelines(lines)
 
 
-def _cleanup_opts(read_opts: list[Any]) -> list[Any]:
+def _cleanup_opts(
+    read_opts: Sequence[
+        tuple[
+            str,
+            Sequence[tuple[str | cfg.OptGroup | None, Sequence[cfg.Opt]]],
+        ]
+    ],
+) -> list[tuple[str, list[tuple[str | cfg.OptGroup | None, list[cfg.Opt]]]]]:
     """Cleanup duplicate options in namespace groups
 
     Return a structure which removes duplicate options from a namespace group.
@@ -474,7 +482,13 @@ def _cleanup_opts(read_opts: list[Any]) -> list[Any]:
 
     # OrderedDict is used specifically in the three levels to maintain the
     # source order of namespace/group/opt values
-    clean: collections.OrderedDict[Any, Any] = collections.OrderedDict()
+    clean: collections.OrderedDict[
+        str,
+        collections.OrderedDict[
+            str | cfg.OptGroup | None,
+            collections.OrderedDict[str, cfg.Opt],
+        ],
+    ] = collections.OrderedDict()
     for namespace, listing in read_opts:
         if namespace not in clean:
             clean[namespace] = collections.OrderedDict()
@@ -521,7 +535,14 @@ def _cleanup_opts(read_opts: list[Any]) -> list[Any]:
 
 def _get_raw_opts_loaders(
     namespaces: list[str],
-) -> list[tuple[str, Callable[[], Iterable[tuple[str, Iterable[Any]]]]]]:
+) -> list[
+    tuple[
+        str,
+        Callable[
+            [], Iterable[tuple[str | cfg.OptGroup | None, Iterable[cfg.Opt]]]
+        ],
+    ]
+]:
     """List the options available via the given namespaces.
 
     :param namespaces: a list of namespaces registered under 'oslo.config.opts'
@@ -538,7 +559,7 @@ def _get_raw_opts_loaders(
 
 def _get_driver_opts_loaders(
     namespaces: list[str], driver_option_name: str
-) -> list[tuple[str, Callable[[], dict[str, Any]]]]:
+) -> list[tuple[str, Callable[[], dict[str, list[cfg.Opt]]]]]:
     mgr = stevedore.named.NamedExtensionManager(
         namespace='oslo.config.opts.' + driver_option_name,
         names=namespaces,
@@ -550,7 +571,7 @@ def _get_driver_opts_loaders(
 
 def _get_driver_opts(
     driver_option_name: str, namespaces: list[str]
-) -> dict[str, list[Any]]:
+) -> dict[str, list[cfg.Opt]]:
     """List the options available from plugins for drivers based on the option.
 
     :param driver_option_name: The name of the option controlling the
@@ -560,7 +581,7 @@ def _get_driver_opts(
     :returns: a dict mapping driver name to option list
 
     """
-    all_opts: dict[str, list[Any]] = {}
+    all_opts: dict[str, list[cfg.Opt]] = {}
     loaders = _get_driver_opts_loaders(namespaces, driver_option_name)
     for plugin_name, loader in loaders:
         for driver_name, option_list in loader().items():
@@ -568,7 +589,9 @@ def _get_driver_opts(
     return all_opts
 
 
-def _get_opt_default_updaters(namespaces: list[str]) -> list[Any]:
+def _get_opt_default_updaters(
+    namespaces: list[str],
+) -> list[Callable[[], None]]:
     mgr = stevedore.named.NamedExtensionManager(
         'oslo.config.opts.defaults',
         names=namespaces,
@@ -585,7 +608,9 @@ def _update_defaults(namespaces: list[str]) -> None:
         update()
 
 
-def _list_opts(namespaces: list[str]) -> list[Any]:
+def _list_opts(
+    namespaces: list[str],
+) -> list[tuple[str, list[tuple[str | cfg.OptGroup | None, list[cfg.Opt]]]]]:
     """List the options available via the given namespaces.
 
     Duplicate options from a namespace are removed.
@@ -600,17 +625,21 @@ def _list_opts(namespaces: list[str]) -> list[Any]:
     _update_defaults(namespaces)
     # Ask for the option definitions. At this point any global default
     # changes made by the updaters should be in effect.
-    response: list[Any] = []
+    response: list[
+        tuple[str, list[tuple[str | cfg.OptGroup | None, list[cfg.Opt]]]]
+    ] = []
     for namespace, loader in loaders:
         # The loaders return iterables for the group opts, and we need
         # to extend them, so build a list.
-        namespace_values: list[Any] = []
+        namespace_values: list[
+            tuple[str | cfg.OptGroup | None, list[cfg.Opt]]
+        ] = []
         # Look through the groups and find any that need drivers so we
         # can load those extra options.
         for group, group_opts in loader():
             # group_opts is an iterable but we are going to extend it
             # so convert it to a list.
-            group_opts = list(group_opts)
+            group_opts_list = list(group_opts)
             if isinstance(group, cfg.OptGroup):
                 if group.driver_option:
                     # Load the options for all of the known drivers.
@@ -623,7 +652,7 @@ def _list_opts(namespaces: list[str]) -> list[Any]:
                     # options to the group_opts list so they are
                     # processed along with the static options in that
                     # group.
-                    driver_opt_names: dict[str, list[Any]] = {}
+                    driver_opt_names: dict[str, list[str]] = {}
                     for driver_name, opts in sorted(driver_opts.items()):
                         # Multiple plugins may add values to the same
                         # driver name, so combine the lists we do
@@ -631,9 +660,9 @@ def _list_opts(namespaces: list[str]) -> list[Any]:
                         driver_opt_names.setdefault(driver_name, []).extend(
                             o.name for o in opts
                         )
-                        group_opts.extend(opts)
+                        group_opts_list.extend(opts)
                     group._save_driver_opts(driver_opt_names)
-            namespace_values.append((group, group_opts))
+            namespace_values.append((group, group_opts_list))
         response.append((namespace, namespace_values))
     return _cleanup_opts(response)
 
@@ -660,7 +689,13 @@ def _output_opts(f: _OptFormatter, group: str, group_data: _GroupInfo) -> None:
                 f.write(f'# {err}\n')
 
 
-def _get_groups(conf_ns: list[Any]) -> dict[str, _GroupInfo]:
+def _get_groups(
+    conf_ns: Sequence[
+        tuple[
+            str, Sequence[tuple[str | cfg.OptGroup | None, Sequence[cfg.Opt]]]
+        ]
+    ],
+) -> dict[str, _GroupInfo]:
     """Invert a list of groups by namespace into a dict by group name.
 
     :param conf_ns: a list of (namespace, [(<group>, [opt_1, opt_2])]) tuples,
@@ -701,7 +736,7 @@ def _get_groups(conf_ns: list[Any]) -> dict[str, _GroupInfo]:
 
 
 def _build_entry(
-    opt: Any, group: str, namespace: str, conf: cfg.ConfigOpts
+    opt: cfg.Opt, group: str, namespace: str, conf: cfg.ConfigOpts
 ) -> dict[str, Any]:
     """Return a dict representing the passed in opt
 
@@ -750,7 +785,7 @@ def _build_entry(
 
 
 def _generate_machine_readable_data(
-    groups: dict[str, Any], conf: cfg.ConfigOpts
+    groups: dict[str, _GroupInfo], conf: cfg.ConfigOpts
 ) -> dict[str, Any]:
     """Create data structure for machine readable sample config
 
@@ -833,7 +868,7 @@ def i18n_representer(dumper: Any, data: Any) -> Any:
 
 
 def _output_machine_readable(
-    groups: dict[str, Any], output_file: IO[str], conf: cfg.ConfigOpts
+    groups: dict[str, _GroupInfo], output_file: IO[str], conf: cfg.ConfigOpts
 ) -> None:
     """Write a machine readable sample config file
 

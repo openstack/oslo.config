@@ -112,11 +112,13 @@ def _validate_deprecated_opt(
 
 
 def _validate_defaults(
-    sections: dict[str, Any], opt_data: dict[str, Any], conf: cfg.ConfigOpts
+    sections: dict[str, dict[str, list[str]]],
+    opt_data: dict[str, Any],
+    conf: cfg.ConfigOpts,
 ) -> bool:
     """Compares the current and sample configuration and reports differences
 
-    :param section: ConfigParser instance
+    :param sections: a mapping of section names to dicts of config values
     :param opt_data: machine readable data from the generator instance
     :param conf: ConfigOpts instance
     :returns: boolean wether or not warnings were reported
@@ -213,7 +215,7 @@ def _validate(conf: cfg.ConfigOpts) -> int:
     else:
         # TODO(bnemec): Implement this logic with group?
         raise RuntimeError('Neither namespace nor opt-data provided.')
-    sections: dict[str, Any] = {}
+    sections: dict[str, dict[str, list[str]]] = {}
     parser = cfg.ConfigParser(conf.input_file, sections)
     parser.parse()
     warnings = False

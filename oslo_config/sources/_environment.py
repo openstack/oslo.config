@@ -71,7 +71,7 @@ class EnvironmentConfigurationSourceDriver(sources.ConfigurationSourceDriver):
     not necessary.
     """
 
-    def list_options_for_discovery(self) -> list[Any]:
+    def list_options_for_discovery(self) -> list[cfg.Opt]:
         """There are no options for this driver."""
         return []
 

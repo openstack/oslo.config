@@ -29,7 +29,7 @@ import abc
 from typing import TYPE_CHECKING, Any
 
 if TYPE_CHECKING:
-    import oslo_config.cfg
+    from oslo_config import cfg
 
 
 # We cannot use None as a sentinel indicating a missing value because it
@@ -69,9 +69,7 @@ class ConfigurationSourceDriver(metaclass=abc.ABCMeta):
 
     @abc.abstractmethod
     def open_source_from_opt_group(
-        self,
-        conf: 'oslo_config.cfg.ConfigOpts',
-        group_name: str,
+        self, conf: 'cfg.ConfigOpts', group_name: str
     ) -> 'ConfigurationSource':
         """Return an open configuration source.
 
@@ -88,7 +86,7 @@ class ConfigurationSourceDriver(metaclass=abc.ABCMeta):
         """
 
     @abc.abstractmethod
-    def list_options_for_discovery(self) -> list[Any]:
+    def list_options_for_discovery(self) -> list['cfg.Opt']:
         """Return the list of options available to configure a new source.
 
         Drivers should advertise all supported options in this method
@@ -115,8 +113,8 @@ class ConfigurationSource(metaclass=abc.ABCMeta):
         self,
         group_name: str | None,
         option_name: str,
-        opt: 'oslo_config.cfg.Opt',
-    ) -> tuple[Any, 'oslo_config.cfg.LocationInfo | None']:
+        opt: 'cfg.Opt',
+    ) -> tuple[Any, 'cfg.LocationInfo | None']:
         """Return the value of the option from the group.
 
         :param group_name: Name of the group.

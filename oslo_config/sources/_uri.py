@@ -82,7 +82,7 @@ class URIConfigurationSourceDriver(sources.ConfigurationSourceDriver):
                     specified but does not includes the private key.
     """
 
-    _uri_driver_opts = [
+    _uri_driver_opts: list[cfg.Opt] = [
         cfg.URIOpt(
             'uri',
             schemes=['http', 'https'],
@@ -128,7 +128,7 @@ class URIConfigurationSourceDriver(sources.ConfigurationSourceDriver):
         ),
     ]
 
-    def list_options_for_discovery(self) -> list[Any]:
+    def list_options_for_discovery(self) -> list[cfg.Opt]:
         return self._uri_driver_opts
 
     def open_source_from_opt_group(
