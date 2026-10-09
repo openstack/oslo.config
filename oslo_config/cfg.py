@@ -29,7 +29,12 @@ import os
 import pickle
 import string
 import sys
-from typing import IO, Any, Protocol, TypedDict, cast
+from typing import IO, Any, Generic, Protocol, TypeAlias, TypedDict, cast
+
+if sys.version_info >= (3, 13):
+    from typing import TypeVar
+else:
+    from typing_extensions import TypeVar
 
 # NOTE(bnemec): oslo.log depends on oslo.config, so we can't
 # have a hard dependency on oslo.log.  However, in most cases
@@ -51,6 +56,12 @@ import stevedore
 LOG = logging.getLogger(__name__)
 
 _CONFIG_OPTS_STATE_VERSION = 1
+
+T_co = TypeVar('T_co', default=Any, covariant=True)
+T_item = TypeVar('T_item', default=str)
+_T = TypeVar('_T')
+
+_Choices: TypeAlias = Iterable[_T | None] | Iterable[tuple[_T | None, str]]
 
 
 def _identity(value: Any) -> Any:
@@ -479,7 +490,7 @@ def _report_deprecation(
 
 
 @functools.total_ordering
-class Opt:
+class Opt(Generic[T_co]):
     """Base class for all configuration options.
 
     The only required parameter is the option's name. However, it is
@@ -587,10 +598,10 @@ class Opt:
     def __init__(
         self,
         name: str,
-        type: types.ConfigType[Any] | None = None,
+        type: types.ConfigType[T_co] | None = None,
         dest: str | None = None,
         short: str | None = None,
-        default: Any = None,
+        default: T_co | None = None,
         positional: bool = False,
         metavar: str | None = None,
         help: str | None = None,
@@ -611,7 +622,7 @@ class Opt:
         self.name = name
 
         if type is None:
-            type = types.String()
+            type = cast(types.ConfigType[T_co], types.String())
 
         if not callable(type):
             raise TypeError('type must be callable')
@@ -1009,7 +1020,7 @@ class DeprecatedOpt:
         return hash(self.__key())
 
 
-class StrOpt(Opt):
+class StrOpt(Opt[str]):
     r"""Option with String type
 
     Option with ``type`` :class:`oslo_config.types.String`
@@ -1047,7 +1058,7 @@ class StrOpt(Opt):
     def __init__(
         self,
         name: str,
-        choices: Any = None,
+        choices: _Choices[str] | None = None,
         quotes: bool | None = None,
         regex: str | None = None,
         ignore_case: bool = False,
@@ -1093,7 +1104,7 @@ class StrOpt(Opt):
         return kwargs
 
 
-class BoolOpt(Opt):
+class BoolOpt(Opt[bool]):
     r"""Boolean options.
 
     Bool opts are set to True or False on the command line using --optname or
@@ -1166,7 +1177,7 @@ class BoolOpt(Opt):
         return kwargs
 
 
-class IntOpt(Opt):
+class IntOpt(Opt[int]):
     r"""Option with Integer type
 
     Option with ``type`` :class:`oslo_config.types.Integer`
@@ -1200,7 +1211,7 @@ class IntOpt(Opt):
         name: str,
         min: int | None = None,
         max: int | None = None,
-        choices: Any = None,
+        choices: _Choices[int] | None = None,
         sample_min: str | None = None,
         sample_max: str | None = None,
         **kwargs: Any,
@@ -1218,7 +1229,7 @@ class IntOpt(Opt):
         )
 
 
-class FloatOpt(Opt):
+class FloatOpt(Opt[float]):
     r"""Option with Float type
 
     Option with ``type`` :class:`oslo_config.types.Float`
@@ -1243,7 +1254,7 @@ class FloatOpt(Opt):
         super().__init__(name, type=types.Float(min, max), **kwargs)
 
 
-class ListOpt(Opt):
+class ListOpt(Opt[list[T_item]]):
     r"""Option with List(String) type
 
     Option with ``type`` :class:`oslo_config.types.List`
@@ -1260,7 +1271,7 @@ class ListOpt(Opt):
     def __init__(
         self,
         name: str,
-        item_type: types.ConfigType[Any] | None = None,
+        item_type: types.ConfigType[T_item] | None = None,
         bounds: bool | None = None,
         **kwargs: Any,
     ) -> None:
@@ -1271,7 +1282,7 @@ class ListOpt(Opt):
         )
 
 
-class DictOpt(Opt):
+class DictOpt(Opt[dict[str, str]]):
     r"""Option with Dict(String) type
 
     Option with ``type`` :class:`oslo_config.types.Dict`
@@ -1286,7 +1297,7 @@ class DictOpt(Opt):
         super().__init__(name, type=types.Dict(), **kwargs)
 
 
-class IPOpt(Opt):
+class IPOpt(Opt[str]):
     r"""Opt with IPAddress type
 
     Option with ``type`` :class:`oslo_config.types.IPAddress`
@@ -1305,7 +1316,7 @@ class IPOpt(Opt):
         super().__init__(name, type=types.IPAddress(version), **kwargs)
 
 
-class PortOpt(Opt):
+class PortOpt(Opt[int]):
     r"""Option for a TCP/IP port number.  Ports can range from 0 to 65535.
 
     Option with ``type`` :class:`oslo_config.types.Integer`
@@ -1334,7 +1345,7 @@ class PortOpt(Opt):
         name: str,
         min: int | None = None,
         max: int | None = None,
-        choices: Any = None,
+        choices: _Choices[int] | None = None,
         **kwargs: Any,
     ) -> None:
         type = types.Port(
@@ -1343,7 +1354,7 @@ class PortOpt(Opt):
         super().__init__(name, type=type, **kwargs)
 
 
-class HostnameOpt(Opt):
+class HostnameOpt(Opt[str]):
     r"""Option for a hostname.  Only accepts valid hostnames.
 
     Option with ``type`` :class:`oslo_config.types.Hostname`
@@ -1358,7 +1369,7 @@ class HostnameOpt(Opt):
         super().__init__(name, type=types.Hostname(), **kwargs)
 
 
-class HostAddressOpt(Opt):
+class HostAddressOpt(Opt[str]):
     r"""Option for either an IP or a hostname.
 
     Accepts valid hostnames and valid IP addresses.
@@ -1379,7 +1390,7 @@ class HostAddressOpt(Opt):
         super().__init__(name, type=types.HostAddress(version), **kwargs)
 
 
-class HostDomainOpt(Opt):
+class HostDomainOpt(Opt[str]):
     r"""Option for either an IP or a hostname.
 
     Like HostAddress with the support of _ character.
@@ -1400,7 +1411,7 @@ class HostDomainOpt(Opt):
         super().__init__(name, type=types.HostDomain(version), **kwargs)
 
 
-class URIOpt(Opt):
+class URIOpt(Opt[str]):
     r"""Opt with URI type
 
     Option with ``type`` :class:`oslo_config.types.URI`
@@ -1430,7 +1441,7 @@ class URIOpt(Opt):
         super().__init__(name, type=type, **kwargs)
 
 
-class MultiOpt(Opt):
+class MultiOpt(Opt[T_co]):
     r"""Multi-value option.
 
     Multi opt values are typed opts which may be specified multiple times.
@@ -1458,7 +1469,7 @@ class MultiOpt(Opt):
     multi: bool = True
 
     def __init__(
-        self, name: str, item_type: types.ConfigType[Any], **kwargs: Any
+        self, name: str, item_type: types.ConfigType[T_co], **kwargs: Any
     ) -> None:
         super().__init__(name, item_type, **kwargs)
 
@@ -1474,7 +1485,7 @@ class MultiOpt(Opt):
         return kwargs
 
 
-class MultiStrOpt(MultiOpt):
+class MultiStrOpt(MultiOpt[str]):
     r"""MultiOpt with a MultiString ``item_type``.
 
     MultiOpt with a default :class:`oslo_config.types.MultiString` item
@@ -1488,7 +1499,7 @@ class MultiStrOpt(MultiOpt):
         super().__init__(name, item_type=types.MultiString(), **kwargs)
 
 
-class SubCommandOpt(Opt):
+class SubCommandOpt(Opt[Any]):
     """Sub-command options.
 
     Sub-command options allow argparse sub-parsers to be used to parse
@@ -1554,7 +1565,7 @@ class SubCommandOpt(Opt):
             self.handler(subparsers)
 
 
-class _ConfigFileOpt(Opt):
+class _ConfigFileOpt(Opt[list[str]]):
     """The --config-file option.
 
     This is an private option type which handles the special processing
@@ -1612,7 +1623,7 @@ class _ConfigFileOpt(Opt):
         return kwargs
 
 
-class _ConfigDirOpt(Opt):
+class _ConfigDirOpt(Opt[list[str]]):
     """The --config-dir option.
 
     This is an private option type which handles the special processing
@@ -1707,7 +1718,7 @@ class _OptGroupGeneratorData(TypedDict):
     help: str
     dynamic_group_owner: str
     driver_option: str
-    driver_opts: dict[str, list[Opt]]
+    driver_opts: dict[str, Sequence[Opt[Any] | str]]
 
 
 class OptGroup:
@@ -1759,13 +1770,15 @@ class OptGroup:
         self._opts: dict[str, _OptInfo] = {}  # keyed by opt dest
         self._argparse_group: argparse._ArgumentGroup | None = None
         self._driver_opts: dict[
-            str, list[Opt]
+            str, Sequence[Opt[Any] | str]
         ] = {}  # populated by the config generator
 
-    def _save_driver_opts(self, opts: dict[str, list[Opt]]) -> None:
+    def _save_driver_opts(
+        self, opts: Mapping[str, Sequence[Opt[Any] | str]]
+    ) -> None:
         """Save known driver opts.
 
-        :param opts: mapping between driver name and list of opts
+        :param opts: mapping between driver name and list of opt names or opts
 
         """
         self._driver_opts.update(opts)
@@ -1924,14 +1937,18 @@ class ConfigParser(iniparser.BaseParser):
     section names.
     """
 
-    def __init__(self, filename: str, sections: dict[str, dict[str, Any]]):
+    def __init__(
+        self, filename: str, sections: dict[str, dict[str, list[str]]]
+    ):
         super().__init__()
         self.filename = filename
         self.sections = sections
-        self._normalized: dict[str, dict[str, Any]] | None = None
+        self._normalized: dict[str, dict[str, list[str]]] | None = None
         self.section: str | None = None
 
-    def _add_normalized(self, normalized: dict[str, dict[str, Any]]) -> None:
+    def _add_normalized(
+        self, normalized: dict[str, dict[str, list[str]]]
+    ) -> None:
         self._normalized = normalized
 
     def parse(self) -> None:  # type: ignore[override]
@@ -1952,7 +1969,9 @@ class ConfigParser(iniparser.BaseParser):
 
         joined = '\n'.join(value)
 
-        def append(sections: dict[str, dict[str, Any]], section: str) -> None:
+        def append(
+            sections: dict[str, dict[str, list[str]]], section: str
+        ) -> None:
             sections[section].setdefault(key, [])
             sections[section][key].append(joined)
 
@@ -1978,8 +1997,8 @@ class ConfigParser(iniparser.BaseParser):
         """
         config_file = _fixpath(config_file)
 
-        sections: dict[str, dict[str, Any]] = {}
-        normalized: dict[str, dict[str, Any]] = {}
+        sections: dict[str, dict[str, list[str]]] = {}
+        normalized: dict[str, dict[str, list[str]]] = {}
         parser = cls(config_file, sections)
         parser._add_normalized(normalized)
 
@@ -2024,8 +2043,8 @@ class _Namespace(argparse.Namespace):
 
     def __init__(self, conf: 'ConfigOpts') -> None:
         self._conf = conf
-        self._parsed: list[dict[str, dict[str, Any]]] = []
-        self._normalized: list[dict[str, dict[str, Any]]] = []
+        self._parsed: list[dict[str, dict[str, list[str]]]] = []
+        self._normalized: list[dict[str, dict[str, list[str]]]] = []
         self._emitted_deprecations: set[tuple[str | None, str]] = set()
         self._files_not_found: list[str] = []
         self._files_permission_denied: list[str] = []
@@ -2035,8 +2054,8 @@ class _Namespace(argparse.Namespace):
     def _parse_cli_opts_from_config_file(
         self,
         config_file: str,
-        sections: dict[str, dict[str, Any]],
-        normalized: dict[str, dict[str, Any]],
+        sections: dict[str, dict[str, list[str]]],
+        normalized: dict[str, dict[str, list[str]]],
     ) -> None:
         """Parse CLI options from a config file.
 
@@ -2089,8 +2108,8 @@ class _Namespace(argparse.Namespace):
     def _add_parsed_config_file(
         self,
         filename: str,
-        sections: dict[str, dict[str, Any]],
-        normalized: dict[str, dict[str, Any]],
+        sections: dict[str, dict[str, list[str]]],
+        normalized: dict[str, dict[str, list[str]]],
     ) -> None:
         """Add a parsed config file to the list of parsed files.
 
@@ -2149,7 +2168,7 @@ class _Namespace(argparse.Namespace):
         multi: bool = False,
         normalized: bool = False,
         current_name: tuple[str | None, str] | None = None,
-    ) -> tuple[Any, 'LocationInfo | None']:
+    ) -> tuple[list[str], 'LocationInfo | None']:
         """Fetch a config file value from the parsed files.
 
         :param names: a list of (section, name) tuples
@@ -2624,7 +2643,11 @@ class ConfigOpts(Mapping[str, Any]):
         for name, value in state['setup_attrs'].items():
             setattr(self, name, value)
 
-    def __reduce__(self) -> tuple[Any, tuple[dict[str, Any]]]:
+    def __reduce__(
+        self,
+    ) -> tuple[
+        Callable[[Mapping[str, Any]], 'ConfigOpts'], tuple[dict[str, Any]]
+    ]:
         if self is CONF:
             return (_import_global_config_opts_state, (self.export_state(),))
         return (_import_config_opts_state, (self.export_state(),))
@@ -4042,7 +4065,7 @@ class ConfigOpts(Mapping[str, Any]):
             self._namespace = namespace
             return True
 
-    def register_mutate_hook(self, hook: Callable[..., Any]) -> None:
+    def register_mutate_hook(self, hook: _MutationHook) -> None:
         """Registers a hook to be called by mutate_config_files.
 
         :param hook: a function accepting this ConfigOpts object and a dict of

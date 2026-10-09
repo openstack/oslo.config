@@ -129,7 +129,7 @@ def register_cli_opts(conf: cfg.ConfigOpts) -> None:
     conf.register_cli_opts(_generator_opts)
 
 
-def _format_defaults(opt: Any) -> list[str]:
+def _format_defaults(opt: cfg.Opt) -> list[str]:
     "Return a list of formatted default values."
     defaults: list[Any]
     if isinstance(opt, cfg.MultiStrOpt):
@@ -140,7 +140,8 @@ def _format_defaults(opt: Any) -> list[str]:
         elif not opt.default:
             defaults = ['']
         else:
-            defaults = opt.default
+            # MultiStringOpt is weird
+            defaults = opt.default  # type: ignore
     else:
         if opt.sample_default is not None:
             default_str = str(opt.sample_default)
