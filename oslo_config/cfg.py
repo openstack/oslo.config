@@ -1293,7 +1293,7 @@ class IPOpt(Opt):
 
     :param name: the option's name
     :param version: one of either ``4``, ``6``, or ``None`` to specify
-       either version.
+        either version.
     :param \*\*kwargs: arbitrary keyword arguments passed to :class:`Opt`
 
     .. versionadded:: 1.4
@@ -1367,7 +1367,7 @@ class HostAddressOpt(Opt):
 
     :param name: the option's name
     :param version: one of either ``4``, ``6``, or ``None`` to specify
-       either version.
+        either version.
     :param \*\*kwargs: arbitrary keyword arguments passed to :class:`Opt`
 
     .. versionadded:: 3.22
@@ -1388,7 +1388,7 @@ class HostDomainOpt(Opt):
 
     :param name: the option's name
     :param version: one of either ``4``, ``6``, or ``None`` to specify
-       either version.
+        either version.
     :param \*\*kwargs: arbitrary keyword arguments passed to :class:`Opt`
 
     .. versionadded:: 8.6
@@ -1407,7 +1407,7 @@ class URIOpt(Opt):
 
     :param name: the option's name
     :param max_length: If positive integer, the value must be less than or
-                       equal to this parameter.
+        equal to this parameter.
     :param schemes: iterable of valid URI schemes, e.g. 'https', 'ftp', 'git'
     :param \*\*kwargs: arbitrary keyword arguments passed to :class:`Opt`
 
@@ -1644,7 +1644,7 @@ class _ConfigDirOpt(Opt):
             """Handle a --config-dir command line argument.
 
             :raises: ConfigFileParseError, ConfigFileValueError,
-                     ConfigDirNotFoundError
+                ConfigDirNotFoundError
             """
             assert isinstance(values, str)
             assert isinstance(namespace, _Namespace)
@@ -1734,9 +1734,9 @@ class OptGroup:
     :param title: the group title for --help
     :param help: the group description for --help
     :param dynamic_group_owner: The name of the option that controls
-                                repeated instances of this group.
+        repeated instances of this group.
     :param driver_option: The name of the option within the group that
-                          controls which driver will register options.
+        controls which driver will register options.
     """
 
     def __init__(
@@ -2197,13 +2197,13 @@ class _Namespace(argparse.Namespace):
         """Check for usage of deprecated names.
 
         :param name: A tuple of the form (group, name) representing the group
-                     and name where an opt value was found.
+            and name where an opt value was found.
         :param current: A tuple of the form (group, name) representing the
-                        current name for an option.
+            current name for an option.
         :param deprecated: A list of tuples with the same format as the name
-                    param which represent any deprecated names for an option.
-                    If the name param matches any entries in this list a
-                    deprecation warning will be logged.
+            param which represent any deprecated names for an option. If the
+            name param matches any entries in this list a deprecation warning
+            will be logged.
         """
         if name in deprecated and name not in self._emitted_deprecations:
             self._emitted_deprecations.add(name)
@@ -2796,10 +2796,11 @@ class ConfigOpts(Mapping[str, Any]):
         :param default_config_dirs: config dirs to use by default
         :param validate_default_values: whether to validate the default values
         :param use_env: If True (the default) look in the environment as one
-                        source of option values.
+            source of option values.
         :raises: SystemExit, ConfigFilesNotFoundError, ConfigFileParseError,
-                 ConfigFilesPermissionDeniedError,
-                 RequiredOptError, DuplicateOptError
+            ConfigFilesPermissionDeniedError, RequiredOptError,
+            DuplicateOptError
+
         .. versionchanged:: 9.5.0
         Added shell-completion option for generate a shell completion script.
         """
@@ -2949,9 +2950,9 @@ class ConfigOpts(Mapping[str, Any]):
 
         :param template: tamplate for generate script
         :param maps: a dict mapping short and long option name with destination
-                        variable
+            variable
         :param opts: a dict of option (destination is key, short and long name
-                        is in a list in value)
+            is in a list in value)
         :param descr: dict of help message for option
         :param opts_sub: dict of subcommand
         :param multi: list of MultiOPt
@@ -3009,9 +3010,9 @@ class ConfigOpts(Mapping[str, Any]):
 
         :param template: tamplate for generate script
         :param maps: a dict mapping short and long option name with destination
-                        variable
+            variable
         :param opts: a dict of option (destination is key, short and long name
-                        is in a list in value)
+            is in a list in value)
         :param descr: dict of help message for option
         :param opts_sub: dict of subcommand
         :param multi: list of MultiOPt
@@ -3528,7 +3529,7 @@ class ConfigOpts(Mapping[str, Any]):
 
         :param logger: a logging.Logger object
         :param lvl: the log level (for example logging.DEBUG) arg to
-                    logger.log()
+            logger.log()
         """
         logger.log(lvl, "*" * 80)
         logger.log(lvl, "Configuration options gathered from:")
@@ -3625,10 +3626,10 @@ class ConfigOpts(Mapping[str, Any]):
         :param name: the opt name (or 'dest', more precisely)
         :param group: an OptGroup
         :param namespace: the namespace object to get the option value from
-        :returns: 2-tuple of the option value or a GroupAttr object
-                  and LocationInfo or None
+        :returns: 2-tuple of the option value or a GroupAttr object and
+            LocationInfo or None
         :raises: NoSuchOptError, NoSuchGroupError, ConfigFileValueError,
-                 TemplateSubstitutionError
+            TemplateSubstitutionError
         """
         if group is None and name in self._groups:
             return (self.GroupAttr(self, self._get_group(name)), None)
@@ -3754,7 +3755,7 @@ class ConfigOpts(Mapping[str, Any]):
         :param value: the string value, or list of string values
         :param group: the group that retrieves the option value from
         :param namespace: the namespace object that retrieves the option
-                          value from
+            value from
         :returns: the substituted string(s)
         """
         if isinstance(value, list):
@@ -3928,8 +3929,8 @@ class ConfigOpts(Mapping[str, Any]):
 
         :param args: the command line arguments
         :returns: a _Namespace object containing the parsed option values
-        :raises: SystemExit, DuplicateOptError
-                 ConfigFileParseError, ConfigFileValueError
+        :raises: SystemExit, DuplicateOptError, ConfigFileParseError,
+            ConfigFileValueError
 
         """
         self._args = list(args)
@@ -3943,8 +3944,8 @@ class ConfigOpts(Mapping[str, Any]):
         """Parse configure files options.
 
         :raises: SystemExit, ConfigFilesNotFoundError, ConfigFileParseError,
-                 ConfigFilesPermissionDeniedError,
-                 RequiredOptError, DuplicateOptError
+            ConfigFilesPermissionDeniedError, RequiredOptError,
+            DuplicateOptError
         """
         namespace = _Namespace(self)
 
@@ -4043,7 +4044,7 @@ class ConfigOpts(Mapping[str, Any]):
         """Registers a hook to be called by mutate_config_files.
 
         :param hook: a function accepting this ConfigOpts object and a dict of
-                     config mutations, as returned by mutate_config_files.
+            config mutations, as returned by mutate_config_files.
         :return: None
         """
         self._mutate_hooks.add(hook)
@@ -4173,7 +4174,7 @@ class ConfigOpts(Mapping[str, Any]):
 
         :param name: The name of the option.
         :param group: The name of the group of the option. Defaults to
-                      ``'DEFAULT'``.
+            ``'DEFAULT'``.
         :return: LocationInfo
 
         .. seealso::
@@ -4276,7 +4277,7 @@ class ConfigOpts(Mapping[str, Any]):
             :param conf: a ConfigOpts object
             :param group: an OptGroup object
             :param namespace: the namespace object that retrieves the option
-                              value from
+                value from
             """
             self.conf = conf
             self.group = group

@@ -76,21 +76,18 @@ class String(ConfigType):
 
     :param choices: Optional sequence of either valid values or tuples of valid
         values with descriptions. Mutually exclusive with 'regex'.
-    :param quotes: If True and string is enclosed with single or double
-                   quotes, will strip those quotes. Will signal error if
-                   string have quote at the beginning and no quote at
-                   the end. Turned off by default. Useful if used with
-                   container types like List.
-    :param regex: Optional regular expression (string or compiled
-                  regex) that the value must match on an unanchored
-                  search. Mutually exclusive with 'choices'.
-    :param ignore_case:  If True case differences (uppercase vs. lowercase)
-                         between 'choices' or 'regex' will be ignored;
-                         defaults to False.
-    :param max_length:  Optional integer. If a positive value is specified,
-                        a maximum length of an option value must be less than
-                        or equal to this parameter. Otherwise no length check
-                        will be done.
+    :param quotes: If True and string is enclosed with single or double quotes,
+        will strip those quotes. Will signal error if string have quote at the
+        beginning and no quote at the end. Turned off by default. Useful if
+        used with container types like List.
+    :param regex: Optional regular expression (string or compiled regex) that
+        the value must match on an unanchored search. Mutually exclusive with
+        'choices'.
+    :param ignore_case: If True case differences (uppercase vs. lowercase)
+        between 'choices' or 'regex' will be ignored; defaults to False.
+    :param max_length: Optional integer. If a positive value is specified, a
+        maximum length of an option value must be less than or equal to this
+        parameter. Otherwise no length check will be done.
     :param type_name: Type name to be used in the sample config file.
 
     .. versionchanged:: 2.1
@@ -292,9 +289,9 @@ class Number(ConfigType):
     :param min: Optional check that value is greater than or equal to min.
     :param max: Optional check that value is less than or equal to max.
     :param sample_min: Optional display value when generating config file,
-                       replacing min.
+        replacing min.
     :param sample_max: Optional display value when generating config file,
-                       replacing max.
+        replacing max.
     :param choices: Optional sequence of either valid values or tuples of valid
         values with descriptions.
 
@@ -421,9 +418,9 @@ class Integer(Number):
     :param choices: Optional sequence of either valid values or tuples of valid
         values with descriptions.
     :param sample_min: Optional display value when generating config file,
-                       replacing min.
+        replacing min.
     :param sample_max: Optional display value when generating config file,
-                       replacing max.
+        replacing max.
 
     .. versionchanged:: 2.4
        The class now honors zero for *min* and *max* parameters.
@@ -546,7 +543,7 @@ class List(ConfigType):
     In the later case it will signal validation error.
 
     :param item_type: Type of list items. Should be an instance of
-                      ``ConfigType``.
+        ``ConfigType``.
     :param bounds: if True, value should be inside "[" and "]" pair
     :param type_name: Type name to be used in the sample config file.
 
@@ -656,7 +653,7 @@ class Range(ConfigType):
     valid range.
 
     :param min: Optional check that lower bound is greater than or equal to
-                min.
+        min.
     :param max: Optional check that upper bound is less than or equal to max.
     :param inclusive: True if the right bound is to be included in the range.
     :param type_name: Type name to be used in the sample config file.
@@ -914,7 +911,6 @@ class Hostname(ConfigType):
     end with a hyphen.
 
     :param type_name: Type name to be used in the sample config file.
-
     """
 
     HOSTNAME_REGEX = '(?!-)[A-Z0-9-]{1,63}(?<!-)$'
@@ -976,8 +972,8 @@ class HostAddress(ConfigType):
     Performs strict checks for both IP addresses and valid hostnames,
     matching the opt values to the respective types as per RFC1912.
 
-    :param version: defines which version should be explicitly
-                    checked (4 or 6) in case of an IP address
+    :param version: defines which version should be explicitly checked (4 or 6)
+        in case of an IP address
     :param type_name: Type name to be used in the sample config file.
     """
 
@@ -1024,8 +1020,8 @@ class HostDomain(HostAddress):
 
     Like HostAddress with the support of _ character.
 
-    :param version: defines which version should be explicitly
-                    checked (4 or 6) in case of an IP address
+    :param version: defines which version should be explicitly checked (4 or 6)
+        in case of an IP address
     :param type_name: Type name to be used in the sample config file.
     """
 
@@ -1072,10 +1068,9 @@ class URI(ConfigType):
 
     Represents URI. Value will be validated as RFC 3986.
 
-    :param max_length: Optional integer. If a positive value is specified,
-                       a maximum length of an option value must be less than
-                       or equal to this parameter. Otherwise no length check
-                       will be done.
+    :param max_length: Optional integer. If a positive value is specified, a
+        maximum length of an option value must be less than or equal to this
+        parameter. Otherwise no length check will be done.
     :param schemes: List of valid schemes.
     :param type_name: Type name to be used in the sample config file.
 

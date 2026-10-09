@@ -553,9 +553,9 @@ def _get_driver_opts(
     """List the options available from plugins for drivers based on the option.
 
     :param driver_option_name: The name of the option controlling the
-                               driver options.
+        driver options.
     :param namespaces: a list of namespaces registered under
-                       'oslo.config.opts.' + driver_option_name
+        'oslo.config.opts.' + driver_option_name
     :returns: a dict mapping driver name to option list
 
     """
@@ -663,9 +663,9 @@ def _get_groups(conf_ns: list[Any]) -> dict[str, _GroupInfo]:
     """Invert a list of groups by namespace into a dict by group name.
 
     :param conf_ns: a list of (namespace, [(<group>, [opt_1, opt_2])]) tuples,
-                    such as returned by _list_opts.
+        such as returned by _list_opts.
     :returns: {<group_name>, {'object': <group_object>,
-                              'namespaces': [(<namespace>, <opts>)]}}
+        'namespaces': [(<namespace>, <opts>)]}}
 
     <group> may be a string or a group object.
     <group_name> is always a string.
@@ -713,7 +713,7 @@ def _build_entry(
     :param group: The name of the group containing opt.
     :param namespace: The name of the namespace containing opt.
     :param conf: The ConfigOpts object containing the options for the
-                 generator tool
+        generator tool
     """
     entry = {
         key: value
@@ -768,7 +768,7 @@ def _generate_machine_readable_data(
 
     :param groups: A dict of groups as returned by _get_groups.
     :param conf: The ConfigOpts object containing the options for the
-                 generator tool
+        generator tool
     """
     output_data: dict[str, Any] = {
         'options': {},
@@ -842,7 +842,7 @@ def _output_machine_readable(
     :param groups: A dict of groups as returned by _get_groups.
     :param output_file: A file-like object to which the data should be written.
     :param conf: The ConfigOpts object containing the options for the
-                 generator tool
+        generator tool
     """
     output_data = _generate_machine_readable_data(groups, conf)
     if conf.format_ == 'yaml':
