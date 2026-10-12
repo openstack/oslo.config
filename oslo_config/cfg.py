@@ -523,50 +523,7 @@ class Opt(Generic[T_co]):
     :param advanced: indicates whether this option has advanced usage and is
         not normally used by the majority of users
 
-    An Opt object has no public methods, but has a number of public properties:
-
-    .. py:attribute:: name
-
-        the name of the option, which may include hyphens
-
-    .. py:attribute:: type
-
-        a callable object that takes string and returns converted and
-        validated value.  Default types are available from
-        :class:`oslo_config.types`
-
-    .. py:attribute:: dest
-
-        the (hyphen-less) :class:`.ConfigOpts` property which contains the
-        option value
-
-    .. py:attribute:: short
-
-        a single character CLI option name
-
-    .. py:attribute:: default
-
-        the default value of the option
-
-    .. py:attribute:: sample_default
-
-        a sample default value string to include in sample config files
-
-    .. py:attribute:: positional
-
-        True if the option is a positional CLI argument
-
-    .. py:attribute:: metavar
-
-        the name shown as the argument to a CLI option in --help output
-
-    .. py:attribute:: help
-
-        a string explaining how the option's value is used
-
-    .. py:attribute:: advanced
-
-        in sample files, a bool value indicating the option is advanced
+    An Opt object has no public methods, but has a number of public properties.
 
     .. versionchanged:: 1.2
        Added *deprecated_opts* parameter.
@@ -593,6 +550,29 @@ class Opt(Generic[T_co]):
        Added *advanced* parameter and attribute.
     """
 
+    #: The name of the option, which may include hyphens
+    name: str
+    #: A callable object that takes string and returns converted and validated
+    #: value.  Default types are available from :class:`oslo_config.types`
+    type: types.ConfigType[T_co]
+    #: The (hyphen-less) :class:`.ConfigOpts` property which contains the
+    #: option value
+    dest: str
+    #: A single character CLI option name
+    short: str | None
+    #: The default value of the option
+    default: T_co | None
+    #: A sample default value string to include in sample config files
+    sample_default: str | None
+    #: True if the option is a positional CLI argument
+    positional: bool
+    #: the name shown as the argument to a CLI option in --help output
+    metavar: str | None
+    #: A string explaining how the option's value is used
+    help: str | None
+    #: In sample files, a bool value indicating the option is advanced
+    advanced: bool
+    #: Whether this accepts multiple options or not.
     multi: bool = False
 
     def __init__(
