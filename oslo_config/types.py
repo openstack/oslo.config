@@ -645,7 +645,7 @@ class List(ConfigType[list[T_item]]):
         return result
 
     def __repr__(self) -> str:
-        return f'List of {repr(self.item_type)}'
+        return f'List of {self.item_type!r}'
 
     def __eq__(self, other: object) -> bool:
         if not isinstance(other, List):
@@ -845,7 +845,7 @@ class Dict(ConfigType[dict[str, T_item]]):
         return result
 
     def __repr__(self) -> str:
-        return f'Dict of {repr(self.value_type)}'
+        return f'Dict of {self.value_type!r}'
 
     def __eq__(self, other: object) -> bool:
         if not isinstance(other, Dict):

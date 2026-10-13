@@ -4459,7 +4459,7 @@ class SadPathTestCase(BaseTestCase):
         self._do_test_bad_cli_value(cfg.FloatOpt)
 
     def test_conf_file_not_found(self):
-        (fd, path) = tempfile.mkstemp()
+        _, path = tempfile.mkstemp()
 
         os.remove(path)
 
@@ -4471,9 +4471,9 @@ class SadPathTestCase(BaseTestCase):
         os.getuid() == 0, "Not supported with the root privileges"
     )
     def test_conf_file_permission_denied(self):
-        (fd, path) = tempfile.mkstemp()
+        _, path = tempfile.mkstemp()
 
-        os.chmod(path, 0x000)
+        os.chmod(path, 0o000)
 
         self.assertRaises(
             cfg.ConfigFilesPermissionDeniedError,
@@ -4699,7 +4699,7 @@ class OptDumpingTestCase(BaseTestCase):
         self._do_test_log_opt_values(self._args)
 
     def test_log_opt_values_from_sys_argv(self):
-        self.useFixture(fixtures.MonkeyPatch('sys.argv', ['foo'] + self._args))
+        self.useFixture(fixtures.MonkeyPatch('sys.argv', ['foo', *self._args]))
         self._do_test_log_opt_values(None)
 
     def test_log_opt_values_empty_config(self):

@@ -474,7 +474,7 @@ class ConfigGroup(rst.Directive):
         first_child['ids'].append(target_name)
 
         indexnode = addnodes.index(entries=[])
-        return [indexnode] + node.children
+        return [indexnode, *node.children]
 
 
 class ConfigOption(ObjectDescription[str]):
@@ -544,7 +544,7 @@ class ConfigDomain(Domain):
     ) -> nodes.reference | None:
         """Resolve cross-references"""
         if typ == 'option':
-            group_name, option_name = target.split('.', 1)
+            _group_name, option_name = target.split('.', 1)
             return make_refnode(
                 builder,
                 fromdocname,

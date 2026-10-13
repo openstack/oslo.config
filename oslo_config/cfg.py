@@ -691,8 +691,7 @@ class Opt(Generic[T_co]):
         # defined when comparing them. Ideally we could use this to
         # detect duplicate settings in code bases, but as long as the
         # options match otherwise they should be safe.
-        if '_set_location' in v:
-            del v['_set_location']
+        v.pop('_set_location', None)
 
         return v
 
@@ -2067,12 +2066,12 @@ class _Namespace(argparse.Namespace):
         for opt, group in self._conf._all_cli_opts():
             group_name = group.name if group is not None else None
             try:
-                value, loc = opt._get_from_namespace(namespace, group_name)
+                value, _ = opt._get_from_namespace(namespace, group_name)
             except KeyError:
                 continue
             except ValueError as ve:
                 raise ConfigFileValueError(
-                    f"Value for option {opt.name} is not valid: {str(ve)}"
+                    f"Value for option {opt.name} is not valid: {ve!s}"
                 )
 
             if group_name is None:
@@ -3545,7 +3544,7 @@ class ConfigOpts(Mapping[str, Any]):
         logger.log(
             lvl,
             "config files: %s",
-            hasattr(self, 'config_file') and self.config_file or [],
+            (hasattr(self, 'config_file') and self.config_file) or [],
         )
         logger.log(lvl, "=" * 80)
 
@@ -3619,7 +3618,7 @@ class ConfigOpts(Mapping[str, Any]):
                 return self.__cache[key]
             except KeyError:  # nosec: Valid control flow instruction
                 pass
-        value, loc = self._do_get(name, group, namespace)
+        value, _ = self._do_get(name, group, namespace)
         self.__cache[key] = value
         return value
 
@@ -3711,7 +3710,7 @@ class ConfigOpts(Mapping[str, Any]):
             except ValueError as ve:
                 message = (
                     f"Value for option {opt.name} from {alt_loc} "
-                    f"is not valid: {str(ve)}"
+                    f"is not valid: {ve!s}"
                 )
                 # Preserve backwards compatibility for file-based value
                 # errors.
@@ -3741,7 +3740,7 @@ class ConfigOpts(Mapping[str, Any]):
                 except ValueError as e:
                     raise ConfigFileValueError(
                         f"Default value for option {opt.name} is not valid: "
-                        f"{str(e)}"
+                        f"{e!s}"
                     )
 
         if opt.default is not None:
@@ -3997,7 +3996,7 @@ class ConfigOpts(Mapping[str, Any]):
         ):
             group_name = group.name if group else None
             try:
-                value, loc = opt._get_from_namespace(namespace, group_name)
+                value, _ = opt._get_from_namespace(namespace, group_name)
             except KeyError:
                 continue
 
@@ -4007,7 +4006,7 @@ class ConfigOpts(Mapping[str, Any]):
                 self._convert_value(value, opt)
             except ValueError:
                 sys.stderr.write(
-                    f"argument --{opt.dest}: Invalid {repr(opt.type)} value: {value}\n"  # noqa: E501
+                    f"argument --{opt.dest}: Invalid {opt.type!r} value: {value}\n"  # noqa: E501
                 )
                 raise SystemExit(1)
 
@@ -4192,7 +4191,7 @@ class ConfigOpts(Mapping[str, Any]):
         .. versionadded:: 5.3.0
         """
         opt_group = OptGroup(group) if group is not None else None
-        value, loc = self._do_get(name, opt_group, None)
+        _value, loc = self._do_get(name, opt_group, None)
         return loc
 
     class GroupAttr(Mapping[str, Any]):

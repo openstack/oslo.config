@@ -494,19 +494,19 @@ class GeneratorTestCase(base.BaseTestCase):
 # From test
 #
 
-'''  # noqa
+'''
                 '# Lorem ipsum dolor sit amet, consectetur adipisicing elit, sed do eiusmod '  # noqa
                 'tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, '  # noqa
                 'quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo '  # noqa
                 'consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse '  # noqa
                 'cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat '  # noqa
                 'non proident, sunt in culpa qui officia deserunt mollit anim id est laborum. '  # noqa
-                '(string value)'  # noqa
+                '(string value)'
                 '''
 #long_help = <None>
 ''',
             ),
-        ),  # noqa
+        ),
         (
             'long_help_with_preformatting',
             dict(
@@ -1857,7 +1857,7 @@ class IgnoreDoublesTestCase(base.BaseTestCase):
         self.assertEqual(o, generator._cleanup_opts(o))
 
     def test_cleanup_opts_dup_opt(self):
-        o = [("namespace1", [("group1", self.opts + [self.opts[0]])])]
+        o = [("namespace1", [("group1", [*self.opts, self.opts[0]])])]
         e = [("namespace1", [("group1", self.opts)])]
         self.assertEqual(e, generator._cleanup_opts(o))
 
@@ -1866,9 +1866,9 @@ class IgnoreDoublesTestCase(base.BaseTestCase):
             (
                 "namespace1",
                 [
-                    ("group1", self.opts + [self.opts[1]]),
+                    ("group1", [*self.opts, self.opts[1]]),
                     ("group2", self.opts),
-                    ("group3", self.opts + [self.opts[2]]),
+                    ("group3", [*self.opts, self.opts[2]]),
                 ],
             )
         ]
@@ -1890,11 +1890,11 @@ class IgnoreDoublesTestCase(base.BaseTestCase):
                 "namespace1",
                 [
                     ("default", self.opts),
-                    ("Default", self.opts + [self.opts[1]]),
-                    ("DEFAULT", self.opts + [self.opts[2]]),
-                    ("group1", self.opts + [self.opts[1]]),
+                    ("Default", [*self.opts, self.opts[1]]),
+                    ("DEFAULT", [*self.opts, self.opts[2]]),
+                    ("group1", [*self.opts, self.opts[1]]),
                     ("Group1", self.opts),
-                    ("GROUP1", self.opts + [self.opts[2]]),
+                    ("GROUP1", [*self.opts, self.opts[2]]),
                 ],
             )
         ]
@@ -1906,14 +1906,14 @@ class IgnoreDoublesTestCase(base.BaseTestCase):
             (
                 "namespace1",
                 [
-                    ("group1", self.opts + [self.opts[1]]),
+                    ("group1", [*self.opts, self.opts[1]]),
                     ("group2", self.opts),
                 ],
             ),
             (
                 "namespace2",
                 [
-                    ("group1", self.opts + [self.opts[2]]),
+                    ("group1", [*self.opts, self.opts[2]]),
                     ("group2", self.opts),
                 ],
             ),
@@ -1980,7 +1980,7 @@ class GeneratorAdditionalTestCase(base.BaseTestCase):
         ]
         groups = generator._get_groups(config)
 
-        fd, tmp_file = tempfile.mkstemp()
+        _, tmp_file = tempfile.mkstemp()
         with open(tmp_file, 'w+') as f:
             formatter = build_formatter(f)
             generator._output_opts(formatter, 'DEFAULT', groups.pop('DEFAULT'))
@@ -1994,7 +1994,7 @@ class GeneratorAdditionalTestCase(base.BaseTestCase):
         config = [("namespace1", [("alpha", [self.opts[0]])])]
         groups = generator._get_groups(config)
 
-        fd, tmp_file = tempfile.mkstemp()
+        _, tmp_file = tempfile.mkstemp()
         with open(tmp_file, 'w+') as f:
             formatter = build_formatter(f)
             generator._output_opts(formatter, 'alpha', groups.pop('alpha'))
@@ -2016,7 +2016,7 @@ class GeneratorAdditionalTestCase(base.BaseTestCase):
         config = [("namespace1", [("alpha", [opt])])]
         groups = generator._get_groups(config)
 
-        fd, tmp_file = tempfile.mkstemp()
+        _, tmp_file = tempfile.mkstemp()
         f = open(tmp_file, 'w+')
         formatter = build_formatter(f)
         expected = f'''[alpha]
@@ -2146,7 +2146,7 @@ class RequiredOptionTestCase(base.BaseTestCase):
         config = [("namespace1", [("alpha", self.opts)])]
         groups = generator._get_groups(config)
 
-        fd, tmp_file = tempfile.mkstemp()
+        _, tmp_file = tempfile.mkstemp()
         with open(tmp_file, 'w+') as f:
             formatter = build_formatter(f, minimal=True)
             generator._output_opts(formatter, 'alpha', groups.pop('alpha'))
@@ -2203,7 +2203,7 @@ messages!""",
         config = [('namespace1', [('alpha', self.opts)])]
         groups = generator._get_groups(config)
 
-        fd, tmp_file = tempfile.mkstemp()
+        _, tmp_file = tempfile.mkstemp()
         with open(tmp_file, 'w+') as f:
             formatter = build_formatter(f, summarize=True)
             generator._output_opts(formatter, 'alpha', groups.pop('alpha'))
@@ -2241,7 +2241,7 @@ class AdvancedOptionsTestCase(base.BaseTestCase):
         config = [("namespace1", [("alpha", self.opts)])]
         groups = generator._get_groups(config)
 
-        fd, tmp_file = tempfile.mkstemp()
+        _, tmp_file = tempfile.mkstemp()
         with open(tmp_file, 'w+') as f:
             formatter = build_formatter(f)
             generator._output_opts(formatter, 'alpha', groups.pop('alpha'))
