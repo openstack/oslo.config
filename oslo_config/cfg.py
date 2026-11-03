@@ -554,7 +554,7 @@ class Opt(Generic[T_co]):
     name: str
     #: A callable object that takes string and returns converted and validated
     #: value.  Default types are available from :class:`oslo_config.types`
-    type: Callable[..., T_co | None]
+    type: types.ConfigType[T_co]
     #: The (hyphen-less) :class:`.ConfigOpts` property which contains the
     #: option value
     dest: str
@@ -578,7 +578,7 @@ class Opt(Generic[T_co]):
     def __init__(
         self,
         name: str,
-        type: Callable[..., T_co | None] | None = None,
+        type: types.ConfigType[T_co] | None = None,
         dest: str | None = None,
         short: str | None = None,
         default: T_co | None = None,
@@ -1448,10 +1448,7 @@ class MultiOpt(Opt[T_co]):
     multi: bool = True
 
     def __init__(
-        self,
-        name: str,
-        item_type: Callable[..., T_co | None] | None = None,
-        **kwargs: Any,
+        self, name: str, item_type: types.ConfigType[T_co], **kwargs: Any
     ) -> None:
         super().__init__(name, item_type, **kwargs)
 
