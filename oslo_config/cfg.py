@@ -29,7 +29,16 @@ import os
 import pickle
 import string
 import sys
-from typing import IO, Any, Generic, Protocol, TypeAlias, TypedDict, cast
+from typing import (
+    IO,
+    Any,
+    Generic,
+    Protocol,
+    TypeAlias,
+    TypedDict,
+    cast,
+    overload,
+)
 
 if sys.version_info >= (3, 13):
     from typing import TypeVar
@@ -554,7 +563,7 @@ class Opt(Generic[T_co]):
     name: str
     #: A callable object that takes string and returns converted and validated
     #: value.  Default types are available from :class:`oslo_config.types`
-    type: types.ConfigType[T_co]
+    type: Callable[..., T_co | None]
     #: The (hyphen-less) :class:`.ConfigOpts` property which contains the
     #: option value
     dest: str
@@ -575,10 +584,60 @@ class Opt(Generic[T_co]):
     #: Whether this accepts multiple options or not.
     multi: bool = False
 
+    # Keep the ConfigType overload first so empty container defaults do not
+    # prevent inference of the value type from the converter.
+    @overload
     def __init__(
         self,
         name: str,
-        type: types.ConfigType[T_co] | None = None,
+        type: types.ConfigType[T_co],
+        dest: str | None = None,
+        short: str | None = None,
+        default: T_co | None = None,
+        positional: bool = False,
+        metavar: str | None = None,
+        help: str | None = None,
+        secret: bool = False,
+        required: bool | None = None,
+        deprecated_name: str | None = None,
+        deprecated_group: str | None = None,
+        deprecated_opts: Sequence['DeprecatedOpt'] | None = None,
+        sample_default: str | None = None,
+        deprecated_for_removal: bool = False,
+        deprecated_reason: str | None = None,
+        deprecated_since: str | None = None,
+        mutable: bool = False,
+        advanced: bool = False,
+    ) -> None: ...
+
+    @overload
+    def __init__(
+        self,
+        name: str,
+        type: Callable[..., T_co | None] | None = None,
+        dest: str | None = None,
+        short: str | None = None,
+        default: T_co | None = None,
+        positional: bool = False,
+        metavar: str | None = None,
+        help: str | None = None,
+        secret: bool = False,
+        required: bool | None = None,
+        deprecated_name: str | None = None,
+        deprecated_group: str | None = None,
+        deprecated_opts: Sequence['DeprecatedOpt'] | None = None,
+        sample_default: str | None = None,
+        deprecated_for_removal: bool = False,
+        deprecated_reason: str | None = None,
+        deprecated_since: str | None = None,
+        mutable: bool = False,
+        advanced: bool = False,
+    ) -> None: ...
+
+    def __init__(
+        self,
+        name: str,
+        type: Callable[..., T_co | None] | None = None,
         dest: str | None = None,
         short: str | None = None,
         default: T_co | None = None,
@@ -1447,8 +1506,24 @@ class MultiOpt(Opt[T_co]):
 
     multi: bool = True
 
+    @overload
     def __init__(
         self, name: str, item_type: types.ConfigType[T_co], **kwargs: Any
+    ) -> None: ...
+
+    @overload
+    def __init__(
+        self,
+        name: str,
+        item_type: Callable[..., T_co | None],
+        **kwargs: Any,
+    ) -> None: ...
+
+    def __init__(
+        self,
+        name: str,
+        item_type: Callable[..., T_co | None],
+        **kwargs: Any,
     ) -> None:
         super().__init__(name, item_type, **kwargs)
 

@@ -24,7 +24,7 @@ import queue
 import shutil
 import sys
 import tempfile
-from typing import Any, cast
+from typing import Any, assert_type, cast
 import unittest
 from unittest import mock
 
@@ -6069,6 +6069,47 @@ class ConfigOptsSerializationTestCase(BaseTestCase):
 
 
 class OptTestCase(base.BaseTestCase):
+    def test_dict_type_with_empty_default(self):
+        opt = cfg.Opt(
+            'params', type=types.Dict(types.String(quotes=True)), default={}
+        )
+        assert_type(opt, cfg.Opt[dict[str, str]])
+        self.assertEqual({}, opt.default)
+        self.assertEqual({'foo': 'bar'}, opt.type('foo:bar'))
+
+    def test_list_type_with_empty_default(self):
+        opt = cfg.Opt('items', type=types.List(types.String()), default=[])
+        assert_type(opt, cfg.Opt[list[str]])
+        self.assertEqual([], opt.default)
+        self.assertEqual(['foo', 'bar'], opt.type('foo,bar'))
+
+    def test_callable_type(self):
+        opt = cfg.Opt('count', type=int, default=0)
+        assert_type(opt, cfg.Opt[int])
+        self.assertEqual(0, opt.default)
+        self.assertEqual(42, opt.type('42'))
+
+    def test_optional_callable_type(self):
+        def convert(value: str) -> int | None:
+            return int(value) if value else None
+
+        opt = cfg.Opt('count', type=convert)
+        assert_type(opt, cfg.Opt[int])
+        self.assertIsNone(opt.type(''))
+        self.assertEqual(42, opt.type('42'))
+
+    def test_multi_config_type(self):
+        opt = cfg.MultiOpt('params', types.Dict(types.String()))
+        assert_type(opt, cfg.MultiOpt[dict[str, str]])
+        self.assertIsNone(opt.default)
+        self.assertEqual({'foo': 'bar'}, opt.type('foo:bar'))
+
+    def test_multi_callable_type(self):
+        opt = cfg.MultiOpt('counts', int)
+        assert_type(opt, cfg.MultiOpt[int])
+        self.assertIsNone(opt.default)
+        self.assertEqual(42, opt.type('42'))
+
     def test_opt_eq(self):
         d1 = cfg.ListOpt('oldfoo')
         d2 = cfg.ListOpt('oldfoo')
