@@ -224,7 +224,8 @@ Some services register group names dynamically at runtime based on other
 configuration. This is problematic for the validator because these groups won't
 be present in the sample config data. The ``--exclude-group`` option for the
 validator can be used to ignore such groups and allow the other options in a
-config file to be validated normally.
+config file to be validated normally. The option can be specified multiple
+times to exclude multiple groups.
 
 .. note:: The ``keystone_authtoken`` group is always ignored because of the
           unusual way the options from that library are generated. The sample
